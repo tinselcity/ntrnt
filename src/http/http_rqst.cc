@@ -44,23 +44,23 @@ http_rqst::http_rqst(void):
 //! ----------------------------------------------------------------------------
 http_rqst::~http_rqst(void)
 {
-        if(m_url_buf) { free(m_url_buf); m_url_buf = NULL; m_url_buf_len = 0;}
+        if (m_url_buf) { free(m_url_buf); m_url_buf = NULL; m_url_buf_len = 0;}
         // -------------------------------------------------
         // delete query args
         // -------------------------------------------------
-        if(m_query_list)
+        if (m_query_list)
         {
                 for(mutable_arg_list_t::iterator i_q = m_query_list->begin();
                     i_q != m_query_list->end();
                     ++i_q)
                 {
-                        if(i_q->m_key) { free(i_q->m_key); i_q->m_key = NULL; }
-                        if(i_q->m_val) { free(i_q->m_val); i_q->m_val = NULL; }
+                        if (i_q->m_key) { free(i_q->m_key); i_q->m_key = NULL; }
+                        if (i_q->m_val) { free(i_q->m_val); i_q->m_val = NULL; }
                 }
                 delete m_query_list;
                 m_query_list = NULL;
         }
-        if(m_query_map) { delete m_query_map; m_query_map = NULL; }
+        if (m_query_map) { delete m_query_map; m_query_map = NULL; }
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO
@@ -83,7 +83,7 @@ void http_rqst::init(void)
         // -------------------------------------------------
         // settings
         // -------------------------------------------------
-        if(m_http_parser_settings)
+        if (m_http_parser_settings)
         {
                 m_http_parser_settings->on_status = hp_on_status;
                 m_http_parser_settings->on_message_complete = hp_on_message_complete;
@@ -94,28 +94,28 @@ void http_rqst::init(void)
                 m_http_parser_settings->on_headers_complete = hp_on_headers_complete;
                 m_http_parser_settings->on_body = hp_on_body;
         }
-        if(m_http_parser)
+        if (m_http_parser)
         {
                 http_parser_init(m_http_parser, HTTP_REQUEST);
                 m_http_parser->data = this;
         }
-        if(m_url_buf) { free(m_url_buf); m_url_buf = NULL; m_url_buf_len = 0;}
+        if (m_url_buf) { free(m_url_buf); m_url_buf = NULL; m_url_buf_len = 0;}
         // -------------------------------------------------
         // delete query args
         // -------------------------------------------------
-        if(m_query_list)
+        if (m_query_list)
         {
                 for(mutable_arg_list_t::iterator i_q = m_query_list->begin();
                     i_q != m_query_list->end();
                     ++i_q)
                 {
-                        if(i_q->m_key) { free(i_q->m_key); i_q->m_key = NULL; }
-                        if(i_q->m_val) { free(i_q->m_val); i_q->m_val = NULL; }
+                        if (i_q->m_key) { free(i_q->m_key); i_q->m_key = NULL; }
+                        if (i_q->m_val) { free(i_q->m_val); i_q->m_val = NULL; }
                 }
                 delete m_query_list;
                 m_query_list = NULL;
         }
-        if(m_query_map) { delete m_query_map; m_query_map = NULL; }
+        if (m_query_map) { delete m_query_map; m_query_map = NULL; }
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO
@@ -124,10 +124,10 @@ void http_rqst::init(void)
 //! ----------------------------------------------------------------------------
 const data_t &http_rqst::get_url()
 {
-        if(!m_url_parsed)
+        if (!m_url_parsed)
         {
                 int32_t l_s = parse_uri();
-                if(l_s != NTRNT_STATUS_OK)
+                if (l_s != NTRNT_STATUS_OK)
                 {
                         // return empty string
                         return m_url;
@@ -142,10 +142,10 @@ const data_t &http_rqst::get_url()
 //! ----------------------------------------------------------------------------
 const data_t &http_rqst::get_url_host()
 {
-        if(!m_url_parsed)
+        if (!m_url_parsed)
         {
                 int32_t l_s = parse_uri();
-                if(l_s != NTRNT_STATUS_OK)
+                if (l_s != NTRNT_STATUS_OK)
                 {
                         // do nothing...
                 }
@@ -159,10 +159,10 @@ const data_t &http_rqst::get_url_host()
 //! ----------------------------------------------------------------------------
 const data_t &http_rqst::get_url_path()
 {
-        if(!m_url_parsed)
+        if (!m_url_parsed)
         {
                 int32_t l_s = parse_uri();
-                if(l_s != NTRNT_STATUS_OK)
+                if (l_s != NTRNT_STATUS_OK)
                 {
                         // do nothing...
                 }
@@ -176,10 +176,10 @@ const data_t &http_rqst::get_url_path()
 //! ----------------------------------------------------------------------------
 const data_t &http_rqst::get_url_query()
 {
-        if(!m_url_parsed)
+        if (!m_url_parsed)
         {
                 int32_t l_s = parse_uri();
-                if(l_s != NTRNT_STATUS_OK)
+                if (l_s != NTRNT_STATUS_OK)
                 {
                         // do nothing...
                 }
@@ -193,10 +193,10 @@ const data_t &http_rqst::get_url_query()
 //! ----------------------------------------------------------------------------
 const data_t &http_rqst::get_url_fragment()
 {
-        if(!m_url_parsed)
+        if (!m_url_parsed)
         {
                 int32_t l_s = parse_uri();
-                if(l_s != NTRNT_STATUS_OK)
+                if (l_s != NTRNT_STATUS_OK)
                 {
                         // do nothing...
                 }
@@ -225,7 +225,7 @@ const char *http_rqst::get_method_str()
 //! ----------------------------------------------------------------------------
 const mutable_arg_list_t& http_rqst::get_query_list()
 {
-        if(m_query_list)
+        if (m_query_list)
         {
                 return *m_query_list;
         }
@@ -241,7 +241,7 @@ const mutable_arg_list_t& http_rqst::get_query_list()
                          get_url_query().m_data,
                          get_url_query().m_len,
                          '&');
-        if(l_s != NTRNT_STATUS_OK)
+        if (l_s != NTRNT_STATUS_OK)
         {
                 // TODO log reason???
                 return *m_query_list;
@@ -255,7 +255,7 @@ const mutable_arg_list_t& http_rqst::get_query_list()
 //! ----------------------------------------------------------------------------
 const mutable_data_map_list_t& http_rqst::get_query_map()
 {
-        if(m_query_map)
+        if (m_query_map)
         {
                 return *m_query_map;
         }
@@ -275,7 +275,7 @@ const mutable_data_map_list_t& http_rqst::get_query_map()
                 l_v.m_data = i_q->m_val;
                 l_v.m_len = i_q->m_val_len;
                 mutable_data_map_list_t::iterator i_obj = m_query_map->find(l_k);
-                if(i_obj != m_query_map->end())
+                if (i_obj != m_query_map->end())
                 {
                         i_obj->second.push_back(l_v);
                 }
@@ -295,13 +295,13 @@ const mutable_data_map_list_t& http_rqst::get_query_map()
 //! ----------------------------------------------------------------------------
 int32_t http_rqst::parse_uri()
 {
-        if(m_url_parsed)
+        if (m_url_parsed)
         {
                 return NTRNT_STATUS_OK;
         }
         // Copy out the url...
         // TODO zero copy???
-        if(!m_q ||
+        if (!m_q ||
            !m_p_url.m_len)
         {
                 NDBG_PRINT("ERROR!\n");
@@ -310,7 +310,7 @@ int32_t http_rqst::parse_uri()
         // -------------------------------------------------
         // copy in url for parsing...
         // -------------------------------------------------
-        if(m_url_buf) { free(m_url_buf); m_url_buf = NULL; m_url_buf_len = 0;}
+        if (m_url_buf) { free(m_url_buf); m_url_buf = NULL; m_url_buf_len = 0;}
         m_url_buf = copy_part(*m_q, m_p_url.m_off, m_p_url.m_len);
         m_url_buf_len = m_p_url.m_len;
         http_parser_url l_url;
@@ -322,11 +322,11 @@ int32_t http_rqst::parse_uri()
         // -------------------------------------------------
         int l_s;
         l_s = http_parser_parse_url(m_url_buf, m_url_buf_len, 0, &l_url);
-        if(l_s != 0)
+        if (l_s != 0)
         {
                 TRC_ERROR("parsing url: %.*s\n", m_url_buf_len, m_url_buf);
                 // TODO get error msg from http_parser
-                if(m_url_buf) { free(m_url_buf); m_url_buf = NULL; m_url_buf_len = 0;}
+                if (m_url_buf) { free(m_url_buf); m_url_buf = NULL; m_url_buf_len = 0;}
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -336,7 +336,7 @@ int32_t http_rqst::parse_uri()
         {
                 //NDBG_PRINT("i_part: %d offset: %d len: %d\n", i_part, l_url.field_data[i_part].off, l_url.field_data[i_part].len);
                 //NDBG_PRINT("len+off: %d\n",       l_url.field_data[i_part].len + l_url.field_data[i_part].off);
-                if(l_url.field_data[i_part].len &&
+                if (l_url.field_data[i_part].len &&
                   // TODO Some bug with parser -parsing urls like "http://127.0.0.1" sans paths
                   ((l_url.field_data[i_part].len + l_url.field_data[i_part].off) <= m_url_buf_len))
                 {

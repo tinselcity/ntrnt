@@ -329,7 +329,7 @@ int main(int argc, char** argv)
         char l_short_arg_list[] = "hp:sue";
         while ((l_opt = getopt_long_only(argc, argv, l_short_arg_list, l_long_options, &l_opt_index)) != -1)
         {
-                if(optarg)
+                if (optarg)
                 {
                         l_arg = std::string(optarg);
                 }
@@ -355,7 +355,7 @@ int main(int argc, char** argv)
                 {
                         int l_port_val;
                         l_port_val = atoi(l_arg.c_str());
-                        if((l_port_val < 1) ||
+                        if ((l_port_val < 1) ||
                            (l_port_val > 65535))
                         {
                                 NDBG_OUTPUT("Error bad port value: %d.\n", l_port_val);
@@ -425,7 +425,7 @@ int main(int argc, char** argv)
         // -------------------------------------------------
         // unset port forwarding
         // -------------------------------------------------
-        else if(l_flag_unset)
+        else if (l_flag_unset)
         {
                 l_s = l_upnp.init();
                 // TODO check for error
@@ -437,7 +437,7 @@ int main(int argc, char** argv)
         // -------------------------------------------------
         // run echo server
         // -------------------------------------------------
-        else if(l_flag_echo)
+        else if (l_flag_echo)
         {
                 l_s = echo_server(l_port);
                 if (l_s != NTRNT_STATUS_OK)

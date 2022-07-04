@@ -61,6 +61,58 @@ std::string to_string(const T& a_num)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
+tracker::tracker(void):
+                m_announce(),
+                m_scheme(SCHEME_NONE),
+                m_host(),
+                m_port(0),
+                m_root()
+{
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+tracker::~tracker(void)
+{
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+void tracker::display(void)
+{
+        NDBG_OUTPUT("+-----------------------------------------------------------\n");
+        NDBG_OUTPUT("|                       T R A C K E R\n");
+        NDBG_OUTPUT("+-----------------------------------------------------------\n");
+        NDBG_OUTPUT("| announce: %s\n", m_announce.c_str());
+        NDBG_OUTPUT("| host:     %s\n", m_host.c_str());
+        NDBG_OUTPUT("| root:     %s\n", m_root.c_str());
+        NDBG_OUTPUT("+-----------------------------------------------------------\n");
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+std::string tracker::str(void)
+{
+        std::string l_str;
+        l_str += get_scheme_str(m_scheme);
+        l_str += "://";
+        l_str += m_host;
+        l_str += ":";
+        l_str += to_string(m_port);
+        l_str += m_root;
+        return l_str;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
 int32_t init_tracker_w_url(tracker** ao_tracker, const char* a_url, size_t a_url_len)
 {
         if ((!a_url) ||
@@ -123,7 +175,7 @@ int32_t init_tracker_w_url(tracker** ao_tracker, const char* a_url, size_t a_url
                                 std::string l_scheme_str;
                                 l_scheme_str.assign(l_part, l_part_len);
                                 l_scheme = get_scheme(l_scheme_str);
-                                if(l_scheme == SCHEME_NONE)
+                                if (l_scheme == SCHEME_NONE)
                                 {
                                         NTRNT_PERROR("unrecognized scheme: %s", l_scheme_str.c_str());
                                         // TODO get error msg from http_parser
@@ -149,7 +201,7 @@ int32_t init_tracker_w_url(tracker** ao_tracker, const char* a_url, size_t a_url
                                 l_port_str.assign(l_part, l_part_len);
                                 int l_port_val;
                                 l_port_val = atoi(l_port_str.c_str());
-                                if((l_port_val < 1) ||
+                                if ((l_port_val < 1) ||
                                    (l_port_val > 65535))
                                 {
                                         NTRNT_PERROR("bad port value: %d", l_port_val);
@@ -199,8 +251,8 @@ int32_t init_tracker_w_url(tracker** ao_tracker, const char* a_url, size_t a_url
         // -------------------------------------------------
         case SCHEME_TLS:
         {
-                NTRNT_PERROR("not supported.");
-                return NTRNT_STATUS_ERROR;
+                *ao_tracker = new tracker_http();
+                break;
         }
         // -------------------------------------------------
         // SCHEME_UDP
@@ -246,51 +298,55 @@ int32_t init_tracker_w_url(tracker** ao_tracker, const char* a_url, size_t a_url
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-tracker::tracker(void):
-                m_announce(),
-                m_scheme(SCHEME_NONE),
-                m_host(),
-                m_port(0),
-                m_root()
+void http_escape(std::string& ao_out, std::string a_in, bool a_escp_rsvd)
 {
+        static const std::string s_rsvd_chars = "!*'();:@&=+$,/?%#[]";
+        static const std::string s_unescpd_chars = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ-_.~";
+        for (auto& ch : a_in)
+        {
+                if ((s_unescpd_chars.find(ch) != s_unescpd_chars.npos) ||
+                    (!a_escp_rsvd &&
+                    (s_rsvd_chars.find(ch) != s_rsvd_chars.npos)))
+                {
+                        ao_out += ch;
+                }
+                else
+                {
+                        char buf[16];
+                        snprintf(buf, sizeof(buf), "%%%02X", (unsigned)(ch & 0xFF));
+                        ao_out += buf;
+                }
+        }
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-tracker::~tracker(void)
+void encode_digest(char* a_out, const uint8_t* a_digest, size_t a_digest_len)
 {
-}
-//! ----------------------------------------------------------------------------
-//! \details: TODO
-//! \return:  TODO
-//! \param:   TODO
-//! ----------------------------------------------------------------------------
-void tracker::display(void)
-{
-        NDBG_OUTPUT("+-----------------------------------------------------------\n");
-        NDBG_OUTPUT("|                       T R A C K E R\n");
-        NDBG_OUTPUT("+-----------------------------------------------------------\n");
-        NDBG_OUTPUT("| announce: %s\n", m_announce.c_str());
-        NDBG_OUTPUT("| host:     %s\n", m_host.c_str());
-        NDBG_OUTPUT("| root:     %s\n", m_root.c_str());
-        NDBG_OUTPUT("+-----------------------------------------------------------\n");
-}
-//! ----------------------------------------------------------------------------
-//! \details: TODO
-//! \return:  TODO
-//! \param:   TODO
-//! ----------------------------------------------------------------------------
-std::string tracker::str(void)
-{
-        std::string l_str;
-        l_str += get_scheme_str(m_scheme);
-        l_str += "://";
-        l_str += m_host;
-        l_str += ":";
-        l_str += to_string(m_port);
-        l_str += m_root;
-        return l_str;
+        for (size_t i_c = 0; i_c < a_digest_len; ++i_c)
+        {
+                // -----------------------------------------
+                // see: rfc2396
+                //      unreserved  = alphanum | mark
+                // -----------------------------------------
+                uint8_t l_c = a_digest[i_c];
+                if (('0' <= l_c && l_c <= '9') ||
+                    ('A' <= l_c && l_c <= 'Z') ||
+                    ('a' <= l_c && l_c <= 'z') ||
+                    l_c == '.' ||
+                    l_c == '-' ||
+                    l_c == '_' ||
+                    l_c == '~')
+                {
+                        *a_out++ = (char)l_c;
+                }
+                else
+                {
+                        a_out += snprintf(a_out, 4, "%%%02x", (unsigned int)l_c);
+                }
+        }
+        *a_out = '\0';
 }
 }

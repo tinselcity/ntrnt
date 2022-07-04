@@ -45,7 +45,7 @@ inline void kv_map_list_insert(kv_map_list_t &ao_kv_map_list,
                                const std::string &a_val)
 {
         kv_map_list_t::iterator i_obj = ao_kv_map_list.find(a_key);
-        if(i_obj != ao_kv_map_list.end())
+        if (i_obj != ao_kv_map_list.end())
         {
                 i_obj->second.push_back(a_val);
         }
@@ -69,7 +69,7 @@ int32_t break_header_string(const std::string &a_header_str,
 	// Find port prefix ":"
 	size_t l_colon_pos = 0;
 	l_colon_pos = a_header_str.find(":", 0);
-	if(l_colon_pos == std::string::npos)
+	if (l_colon_pos == std::string::npos)
 	{
 		return -1;
 	}
@@ -89,11 +89,11 @@ std::string get_file_wo_path(const std::string &a_filename)
 {
         std::string fName(a_filename);
         size_t pos = fName.rfind("/");
-        if(pos == std::string::npos)
+        if (pos == std::string::npos)
         {
                 return fName;
         }
-        if(pos == 0)
+        if (pos == 0)
         {
                 return fName;
         }
@@ -108,11 +108,11 @@ std::string get_file_path(const std::string &a_filename)
 {
         std::string fName(a_filename);
         size_t pos = fName.rfind("/");
-        if(pos == std::string::npos)
+        if (pos == std::string::npos)
         {
                 return fName;
         }
-        if(pos == 0)
+        if (pos == 0)
         {
                 return fName;
         }
@@ -127,11 +127,11 @@ std::string get_base_filename(const std::string &a_filename)
 {
         std::string fName(a_filename);
         size_t pos = fName.rfind(".");
-        if(pos == std::string::npos)
+        if (pos == std::string::npos)
         {
                 return fName;
         }
-        if(pos == 0)
+        if (pos == 0)
         {
                 return fName;
         }
@@ -146,11 +146,11 @@ std::string get_file_ext(const std::string &a_filename)
 {
         std::string fName(a_filename);
         size_t pos = fName.rfind(".");
-        if(pos == std::string::npos)
+        if (pos == std::string::npos)
         {
                 return std::string();
         }
-        if(pos == 0)
+        if (pos == 0)
         {
                 return std::string();
         }
@@ -165,11 +165,11 @@ std::string get_file_wo_ext(const std::string &a_filename)
 {
         std::string fName(a_filename);
         size_t pos = fName.rfind(".");
-        if(pos == std::string::npos)
+        if (pos == std::string::npos)
         {
                 return std::string();
         }
-        if(pos == 0)
+        if (pos == 0)
         {
                 return std::string();
         }
@@ -183,7 +183,7 @@ std::string get_file_wo_ext(const std::string &a_filename)
 int32_t convert_hex_to_uint(uint64_t &ao_val, const char *a_str)
 {
         ao_val = strtoull(a_str, NULL, 16);
-        if((ao_val == ULLONG_MAX) ||
+        if ((ao_val == ULLONG_MAX) ||
            (ao_val == 0))
         {
                 ao_val = 0;
@@ -206,7 +206,7 @@ int32_t urldecode_ns(char **ao_buf,
         // -------------------------------------------------
         // check exist
         // -------------------------------------------------
-        if(!a_buf ||
+        if (!a_buf ||
            !a_len)
         {
                 // TODO -log reason???
@@ -223,16 +223,16 @@ int32_t urldecode_ns(char **ao_buf,
                 // -----------------------------------------
                 // encoding...
                 // -----------------------------------------
-                if(l_buf[i_char] == '%')
+                if (l_buf[i_char] == '%')
                 {
                         // ---------------------------------
                         // enough bytes available???
                         // ---------------------------------
-                        if(i_char + 2 < a_len)
+                        if (i_char + 2 < a_len)
                         {
                                 char l_c1 = l_buf[i_char + 1];
                                 char l_c2 = l_buf[i_char + 2];
-                                if(VALID_HEX(l_c1) &&
+                                if (VALID_HEX(l_c1) &&
                                    VALID_HEX(l_c2))
                                 {
                                         // Valid encoding - decode it.
@@ -270,7 +270,7 @@ int32_t urldecode_ns(char **ao_buf,
                 // -----------------------------------------
                 else
                 {
-                        if(l_buf[i_char] == '+')
+                        if (l_buf[i_char] == '+')
                         {
                                 *l_d = ' ';
                         }
@@ -310,7 +310,7 @@ int32_t parse_args(mutable_arg_list_t &ao_arg_list,
         // -------------------------------------------------
         // TODO -make zero copy impl
         // -------------------------------------------------
-        if(!a_buf ||
+        if (!a_buf ||
            !a_buf_len)
         {
                 // TODO log reason???
@@ -319,7 +319,7 @@ int32_t parse_args(mutable_arg_list_t &ao_arg_list,
         }
         char *l_buf;
         l_buf = (char *)malloc(a_buf_len + 1);
-        if(!l_buf)
+        if (!l_buf)
         {
                 // TODO log reason???
                 return NTRNT_STATUS_ERROR;
@@ -343,13 +343,13 @@ int32_t parse_args(mutable_arg_list_t &ao_arg_list,
                 // Special case if there is no param
                 // e.g ?&a=b&&&c=d
                 // status = 0 means a param key
-                if(a_buf[i_char] == a_arg_sep &&
+                if (a_buf[i_char] == a_arg_sep &&
                    l_status == 0)
                 {
                         ++i_char;
                         continue;
                 }
-                if(l_status == 0)
+                if (l_status == 0)
                 {
                         uint32_t l_key_off = i_char;
                         while((i_char < a_buf_len) &&
@@ -382,11 +382,11 @@ int32_t parse_args(mutable_arg_list_t &ao_arg_list,
                 // -----------------------------------------
                 //
                 // -----------------------------------------
-                if(l_status == 0)
+                if (l_status == 0)
                 {
                         //NDBG_PRINT("decode: %.*s\n", (int)l_key_orig_len, l_buf);
                         //Empty key, set it to null
-                        if(!l_key_orig_len)
+                        if (!l_key_orig_len)
                         {
                                 l_arg.m_key = NULL;
                                 l_arg.m_key_len = 0;
@@ -399,7 +399,7 @@ int32_t parse_args(mutable_arg_list_t &ao_arg_list,
                                            l_key_orig_len);
                         UNUSED(l_s);
                         // TODO -check for error
-                        if((i_char < a_buf_len) &&
+                        if ((i_char < a_buf_len) &&
                            (a_buf[i_char] == a_arg_sep))
                         {
                                 // Empty parameter
@@ -421,7 +421,7 @@ int32_t parse_args(mutable_arg_list_t &ao_arg_list,
                 else
                 {
                         //NDBG_PRINT("decode: %.*s\n", (int)l_val_orig_len, l_val);
-                        if(!l_val ||
+                        if (!l_val ||
                            !l_val_orig_len)
                         {
                                // Empty parameter
@@ -457,7 +457,7 @@ int32_t parse_args(mutable_arg_list_t &ao_arg_list,
         // -------------------------------------------------
         // last parameter empty
         // -------------------------------------------------
-        if(l_status == 1)
+        if (l_status == 1)
         {
                 l_arg.m_val = NULL;
                 l_arg.m_val_len = 0;
@@ -465,7 +465,7 @@ int32_t parse_args(mutable_arg_list_t &ao_arg_list,
                 ao_arg_list.push_back(l_arg);
 
         }
-        if(l_buf) { free(l_buf); l_buf = NULL;}
+        if (l_buf) { free(l_buf); l_buf = NULL;}
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -478,7 +478,7 @@ static bool is_char_in_set(const char *a_arr, uint32_t a_arr_len, char a_char)
 {
         for(uint32_t i_c = 0; i_c < a_arr_len; ++i_c)
         {
-                if(a_char == a_arr[i_c]) return true;
+                if (a_char == a_arr[i_c]) return true;
         }
         return false;
 }
@@ -535,7 +535,7 @@ int32_t parse_cookies(arg_list_t &ao_cookie_list,
                 // -----------------------------------------
                 case '\0':
                 {
-                        if(l_val)
+                        if (l_val)
                         {
                                 // we got "key=value; "
                                 l_arg.m_key = l_key;
@@ -588,7 +588,7 @@ int32_t parse_cookies(arg_list_t &ao_cookie_list,
                 // -----------------------------------------
                 case ';':
                 {
-                        if(l_val)
+                        if (l_val)
                         {
                                 // we got "key=value;"
                                 l_arg.m_key = l_key;

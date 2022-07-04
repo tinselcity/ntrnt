@@ -25,7 +25,7 @@ evr_select::evr_select(void) :
 
         // Create ctrl fd
         int l_status = pipe(m_ctrl_fd);
-        if(l_status == -1)
+        if (l_status == -1)
         {
                 TRC_ERROR("pipe() failed: %s\n", strerror(errno));
                 exit(-1);
@@ -45,14 +45,14 @@ int evr_select::wait(evr_events_t* a_ev, int a_max_events, int a_timeout_msec)
         fd_set l_rfdset = m_rfdset;
         fd_set l_wfdset = m_wfdset;
         struct timeval l_timeout;
-        if(a_timeout_msec >= 0)
+        if (a_timeout_msec >= 0)
         {
                 l_timeout.tv_sec = a_timeout_msec / 1000L;
                 l_timeout.tv_usec = (a_timeout_msec % 1000L) * 1000L;
         }
         int l_s = 0;
         uint32_t l_fdsize = 1;
-        if(m_conn_map.size())
+        if (m_conn_map.size())
         {
                 l_fdsize = m_conn_map.rbegin()->first + 1;
         }
@@ -69,18 +69,18 @@ int evr_select::wait(evr_events_t* a_ev, int a_max_events, int a_timeout_msec)
         } while((l_s < 0) &&
                 (errno == EINTR));
         //NDBG_PRINT("l_s: %d\n", l_s);
-        if(l_s < 0)
+        if (l_s < 0)
         {
                 //NDBG_PRINT("Error select() failed. Reason: %s\n", strerror(errno));
                 return NTRNT_STATUS_ERROR;
         }
-        if(l_s > a_max_events)
+        if (l_s > a_max_events)
         {
                 //NDBG_PRINT("Error select() returned too many events (got %d, expected <= %d)\n",
                 //                l_s, a_max_events);
                 return NTRNT_STATUS_ERROR;
         }
-        if(FD_ISSET(m_ctrl_fd[0], &l_rfdset))
+        if (FD_ISSET(m_ctrl_fd[0], &l_rfdset))
         {
                 // NDBG_PRINT("Control fd fired, exiting\n");
                 return NTRNT_STATUS_OK;
@@ -91,24 +91,24 @@ int evr_select::wait(evr_events_t* a_ev, int a_max_events, int a_timeout_msec)
         {
                 int l_fd = i_conn->first;
                 bool l_inset = false;
-                if(FD_ISSET(l_fd, &l_wfdset))
+                if (FD_ISSET(l_fd, &l_wfdset))
                 {
                         //NDBG_PRINT("INSET: EPOLLOUT fd: %d\n", l_fd);
                         a_ev[l_p].events |= EVR_EV_OUT;
                         l_inset = true;
                 }
-                if(FD_ISSET(l_fd, &l_rfdset))
+                if (FD_ISSET(l_fd, &l_rfdset))
                 {
                         //NDBG_PRINT("INSET: EPOLLIN fd: %d\n", l_fd);
                         a_ev[l_p].events |= EVR_EV_IN;
                         l_inset = true;
                 }
-                if(l_inset)
+                if (l_inset)
                 {
                         //NDBG_PRINT("INSET: fd: %d\n", l_fd);
                         a_ev[l_p].data.ptr = i_conn->second;
                         ++l_p;
-                        if(l_p > l_s)
+                        if (l_p > l_s)
                         {
                                 //NDBG_PRINT("Error num events exceeds select result.\n");
                                 return NTRNT_STATUS_ERROR;
@@ -146,11 +146,11 @@ int evr_select::mod(int a_fd, uint32_t a_attr_mask, evr_fd_t *a_evr_fd_event)
         //           a_fd, a_attr_mask);
         FD_CLR(a_fd, &m_wfdset);
         FD_CLR(a_fd, &m_rfdset);
-        if(a_attr_mask & EVR_FILE_ATTR_MASK_READ)         { FD_SET(a_fd, &m_rfdset); }
-        if(a_attr_mask & EVR_FILE_ATTR_MASK_WRITE)        { FD_SET(a_fd, &m_wfdset); }
-        if(a_attr_mask & EVR_FILE_ATTR_MASK_RD_HUP)       { FD_SET(a_fd, &m_rfdset); }
-        if(a_attr_mask & EVR_FILE_ATTR_MASK_HUP)          { FD_SET(a_fd, &m_rfdset); }
-        if(a_attr_mask & EVR_FILE_ATTR_MASK_STATUS_ERROR) { FD_SET(a_fd, &m_rfdset); }
+        if (a_attr_mask & EVR_FILE_ATTR_MASK_READ)         { FD_SET(a_fd, &m_rfdset); }
+        if (a_attr_mask & EVR_FILE_ATTR_MASK_WRITE)        { FD_SET(a_fd, &m_wfdset); }
+        if (a_attr_mask & EVR_FILE_ATTR_MASK_RD_HUP)       { FD_SET(a_fd, &m_rfdset); }
+        if (a_attr_mask & EVR_FILE_ATTR_MASK_HUP)          { FD_SET(a_fd, &m_rfdset); }
+        if (a_attr_mask & EVR_FILE_ATTR_MASK_STATUS_ERROR) { FD_SET(a_fd, &m_rfdset); }
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -180,7 +180,7 @@ int evr_select::signal(void)
         ssize_t l_write_status = 0;
         //NDBG_PRINT("WRITING m_ctrl_fd: %d\n", m_ctrl_fd[1]);
         l_write_status = write(m_ctrl_fd[1], &l_value, sizeof (l_value));
-        if(l_write_status == -1)
+        if (l_write_status == -1)
         {
                 //NDBG_PRINT("l_write_status: %ld\n", l_write_status);
                 return NTRNT_STATUS_ERROR;

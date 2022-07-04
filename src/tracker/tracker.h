@@ -51,5 +51,7 @@ private:
 //! prototypes
 //! ----------------------------------------------------------------------------
 int32_t init_tracker_w_url(tracker** ao_tracker, const char* a_url, size_t a_url_len);
+void http_escape(std::string& ao_out, std::string a_in, bool a_escp_rsvd);
+void encode_digest(char* a_out, const uint8_t* a_digest, size_t a_digest_len);
 }
 #endif

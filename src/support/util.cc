@@ -37,12 +37,12 @@ int32_t read_file(const char *a_file, char **a_buf, size_t *a_len)
         struct stat l_stat;
         int32_t l_status = NTRNT_STATUS_OK;
         l_status = stat(a_file, &l_stat);
-        if(l_status != 0)
+        if (l_status != 0)
         {
                 NTRNT_PERROR("error performing stat on file: %s.  Reason: %s", a_file, strerror(errno));
                 return NTRNT_STATUS_ERROR;
         }
-        if(!(l_stat.st_mode & S_IFREG))
+        if (!(l_stat.st_mode & S_IFREG))
         {
                 NTRNT_PERROR("error opening file: %s.  Reason: is NOT a regular file", a_file);
                 return NTRNT_STATUS_ERROR;
@@ -59,7 +59,7 @@ int32_t read_file(const char *a_file, char **a_buf, size_t *a_len)
         l_buf = (char *)malloc(sizeof(char)*l_size+1);
         int32_t l_read_size;
         l_read_size = fread(l_buf, 1, l_size, l_file);
-        if(l_read_size != l_size)
+        if (l_read_size != l_size)
         {
                 NTRNT_PERROR("error performing fread.  Reason: %s [%d:%d]", strerror(errno), l_read_size, l_size);
                 return NTRNT_STATUS_ERROR;

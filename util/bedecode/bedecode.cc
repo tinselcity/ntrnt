@@ -147,11 +147,11 @@ int main(int argc, char** argv)
                         // ---------------------------------
                         // get the host...
                         // ---------------------------------
-                        if(argv[optind])
+                        if (argv[optind])
                         {
                                 l_be_file = argv[optind];
                         }
-                        if(!l_be_file.empty())
+                        if (!l_be_file.empty())
                         {
                                 l_input_flag = true;
                         }

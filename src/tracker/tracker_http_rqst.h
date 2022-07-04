@@ -22,9 +22,9 @@ class nbq;
 class session;
 class http_resp;
 //! ----------------------------------------------------------------------------
-//! tracker_http_subr
+//! tracker_http_rqst
 //! ----------------------------------------------------------------------------
-class tracker_http_subr
+class tracker_http_rqst
 {
 public:
         // -------------------------------------------------
@@ -40,8 +40,8 @@ public:
         // -------------------------------------------------
         // public methods
         // -------------------------------------------------
-        tracker_http_subr(void);
-        ~tracker_http_subr();
+        tracker_http_rqst(void);
+        ~tracker_http_rqst();
         int set_query(const std::string &a_key, const std::string &a_val);
         int32_t serialize(nbq &ao_q);
         const std::string &get_label(void);
@@ -58,7 +58,7 @@ public:
         static int32_t evr_event_readable_cb(void *a_data);
         static int32_t evr_event_writeable_cb(void *a_data);
         int32_t cancel_evr_timer(void);
-        static int32_t teardown(tracker_http_subr *a_subr,
+        static int32_t teardown(tracker_http_rqst *a_subr,
                                 session &a_session,
                                 nconn &a_nconn,
                                 http_status_t a_status);
@@ -99,8 +99,8 @@ private:
         // private  methods
         // -------------------------------------------------
         // Disallow copy/assign
-        tracker_http_subr& operator=(const tracker_http_subr &);
-        tracker_http_subr(const tracker_http_subr &);
+        tracker_http_rqst& operator=(const tracker_http_rqst &);
+        tracker_http_rqst(const tracker_http_rqst &);
 };
 } //namespace ns_ntrnt {
 #endif

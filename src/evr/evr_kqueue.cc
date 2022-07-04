@@ -34,7 +34,7 @@ int evr_kqueue::wait(evr_events_t* a_ev, int a_max_events, int a_timeout_msec)
         int l_ne;
         struct timespec l_to;
         struct timespec *l_to_p = NULL;
-        if(a_timeout_msec > -1)
+        if (a_timeout_msec > -1)
         {
                 l_to.tv_sec = a_timeout_msec/1000;
                 l_to.tv_nsec = (a_timeout_msec%1000)*1000000;
@@ -69,7 +69,7 @@ int evr_kqueue::add(int a_fd, uint32_t a_attr_mask, evr_fd_t *a_evr_fd_event)
 {
         struct kevent l_ke;
         // TODO -map attributes...
-        if(a_attr_mask & AE_READABLE)
+        if (a_attr_mask & AE_READABLE)
         {
                 EV_SET(&l_ke, a_fd, EVFILT_READ, EV_ADD, 0, 0, NULL);
                 if (kevent(m_fd, &l_ke, 1, NULL, 0, NULL) == -1)
@@ -77,10 +77,10 @@ int evr_kqueue::add(int a_fd, uint32_t a_attr_mask, evr_fd_t *a_evr_fd_event)
                         return NTRNT_STATUS_ERROR;
                 }
         }
-        if(a_attr_mask & AE_WRITABLE)
+        if (a_attr_mask & AE_WRITABLE)
         {
                 EV_SET(&l_ke, a_fd, EVFILT_WRITE, EV_ADD, 0, 0, NULL);
-                if(kevent(m_fd, &l_ke, 1, NULL, 0, NULL) == -1)
+                if (kevent(m_fd, &l_ke, 1, NULL, 0, NULL) == -1)
                 {
                         return NTRNT_STATUS_ERROR;
                 }

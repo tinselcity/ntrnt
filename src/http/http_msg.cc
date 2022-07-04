@@ -44,21 +44,21 @@ http_msg::http_msg(void):
 //! ----------------------------------------------------------------------------
 http_msg::~http_msg(void)
 {
-        if(m_http_parser_settings) { free(m_http_parser_settings); m_http_parser_settings = NULL; }
-        if(m_http_parser) { free(m_http_parser); m_http_parser = NULL; }
-        if(m_header_list)
+        if (m_http_parser_settings) { free(m_http_parser_settings); m_http_parser_settings = NULL; }
+        if (m_http_parser) { free(m_http_parser); m_http_parser = NULL; }
+        if (m_header_list)
         {
                 for(mutable_arg_list_t::iterator i_q = m_header_list->begin();
                     i_q != m_header_list->end();
                     ++i_q)
                 {
-                        if(i_q->m_key) { free(i_q->m_key); i_q->m_key = NULL; }
-                        if(i_q->m_val) { free(i_q->m_val); i_q->m_val = NULL; }
+                        if (i_q->m_key) { free(i_q->m_key); i_q->m_key = NULL; }
+                        if (i_q->m_val) { free(i_q->m_val); i_q->m_val = NULL; }
                 }
-                if(m_header_list) { delete m_header_list; m_header_list = NULL; }
+                if (m_header_list) { delete m_header_list; m_header_list = NULL; }
         }
-        if(m_header_map) { delete m_header_map; m_header_map = NULL; }
-        if(m_body_q) { delete m_body_q; m_body_q = NULL; }
+        if (m_header_map) { delete m_header_map; m_header_map = NULL; }
+        if (m_body_q) { delete m_body_q; m_body_q = NULL; }
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO
@@ -77,19 +77,19 @@ void http_msg::init(void)
         m_cur_buf = NULL;
         m_cur_off = 0;
         m_expect_resp_body_flag = true;
-        if(m_header_list)
+        if (m_header_list)
         {
                 for(mutable_arg_list_t::iterator i_q = m_header_list->begin();
                     i_q != m_header_list->end();
                     ++i_q)
                 {
-                        if(i_q->m_key) { free(i_q->m_key); i_q->m_key = NULL; }
-                        if(i_q->m_val) { free(i_q->m_val); i_q->m_val = NULL; }
+                        if (i_q->m_key) { free(i_q->m_key); i_q->m_key = NULL; }
+                        if (i_q->m_val) { free(i_q->m_val); i_q->m_val = NULL; }
                 }
-                if(m_header_list) { delete m_header_list; m_header_list = NULL; }
+                if (m_header_list) { delete m_header_list; m_header_list = NULL; }
         }
-        if(m_header_map) { delete m_header_map; m_header_map = NULL; }
-        if(m_body_q) { delete m_body_q; m_body_q = NULL; }
+        if (m_header_map) { delete m_header_map; m_header_map = NULL; }
+        if (m_body_q) { delete m_body_q; m_body_q = NULL; }
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO
@@ -116,17 +116,17 @@ nbq *http_msg::get_q(void) const
 //! ----------------------------------------------------------------------------
 nbq *http_msg::get_body_q(void)
 {
-        if(m_body_q)
+        if (m_body_q)
         {
                 return m_body_q;
         }
-        if(!m_p_body.m_off)
+        if (!m_p_body.m_off)
         {
                 return NULL;
         }
         int32_t l_s;
         l_s = m_q->split(&m_body_q, m_p_body.m_off);
-        if(l_s != NTRNT_STATUS_OK)
+        if (l_s != NTRNT_STATUS_OK)
         {
                 return NULL;
         }
@@ -151,7 +151,7 @@ const mutable_arg_list_t& http_msg::get_header_list()
         // -------------------------------------------------
         // create header list
         // -------------------------------------------------
-        if(!m_header_list)
+        if (!m_header_list)
         {
                 m_header_list = new mutable_arg_list_t();
                 cr_list_t::const_iterator i_k = m_p_h_list_key.begin();
@@ -180,7 +180,7 @@ const mutable_data_map_list_t& http_msg::get_header_map()
         // -------------------------------------------------
         // create header map
         // -------------------------------------------------
-        if(!m_header_map)
+        if (!m_header_map)
         {
                 const mutable_arg_list_t &l_list = get_header_list();
                 m_header_map = new mutable_data_map_list_t();
@@ -195,7 +195,7 @@ const mutable_data_map_list_t& http_msg::get_header_map()
                         l_v.m_data = i_q->m_val;
                         l_v.m_len = i_q->m_val_len;
                         mutable_data_map_list_t::iterator i_obj = m_header_map->find(l_k);
-                        if(i_obj != m_header_map->end())
+                        if (i_obj != m_header_map->end())
                         {
                                 i_obj->second.push_back(l_v);
                         }

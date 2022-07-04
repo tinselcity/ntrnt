@@ -15,8 +15,8 @@
 #include "support/net_util.h"
 #include "core/torrent.h"
 #include "core/session.h"
-#include "tracker/tracker_http.h"
-#include "tracker/tracker_http_rqst.h"
+#include "tracker/tracker_udp.h"
+#include "tracker/tracker_http_udp.h"
 // ---------------------------------------------------------
 // ext
 // ---------------------------------------------------------
@@ -51,7 +51,7 @@ namespace ns_ntrnt {
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-tracker_http::tracker_http(void):
+tracker_udp::tracker_udp(void):
                 tracker()
 {
 }
@@ -60,7 +60,7 @@ tracker_http::tracker_http(void):
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-tracker_http::~tracker_http(void)
+tracker_udp::~tracker_udp(void)
 {
 }
 //! ----------------------------------------------------------------------------
@@ -68,7 +68,7 @@ tracker_http::~tracker_http(void)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t tracker_http::announce(session& a_session, torrent& a_torrent)
+int32_t tracker_udp::announce(session& a_session, torrent& a_torrent)
 {
         // -------------------------------------------------
         // get ipv6
@@ -84,7 +84,7 @@ int32_t tracker_http::announce(session& a_session, torrent& a_torrent)
         // -------------------------------------------------
         // create subrequest
         // -------------------------------------------------
-        tracker_http_rqst *l_rqst = new tracker_http_rqst();
+        tracker_http_subr *l_rqst = new tracker_http_subr();
         l_rqst->m_scheme = m_scheme;
         l_rqst->m_port = m_port;
         l_rqst->m_host = m_host;

@@ -43,11 +43,11 @@ ns_ntrnt::session *g_session = NULL;
 //! ----------------------------------------------------------------------------
 static void _sig_handler(int signo)
 {
-        if(!g_session)
+        if (!g_session)
         {
                 return;
         }
-        if(signo == SIGINT)
+        if (signo == SIGINT)
         {
                 // Kill program
                 g_session->stop();

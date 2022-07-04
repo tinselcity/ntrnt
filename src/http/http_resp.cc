@@ -53,7 +53,7 @@ void http_resp::init(void)
         m_tls_info_protocol_str = NULL;
         m_tls_info_cipher_str =  NULL;
         m_status = HTTP_STATUS_NONE;
-        if(m_http_parser_settings)
+        if (m_http_parser_settings)
         {
                 m_http_parser_settings->on_status = hp_on_status;
                 m_http_parser_settings->on_message_complete = hp_on_message_complete;
@@ -64,7 +64,7 @@ void http_resp::init(void)
                 m_http_parser_settings->on_headers_complete = hp_on_headers_complete;
                 m_http_parser_settings->on_body = hp_on_body;
         }
-        if(m_http_parser_settings)
+        if (m_http_parser_settings)
         {
                 m_http_parser->data = this;
                 http_parser_init(m_http_parser, HTTP_RESPONSE);

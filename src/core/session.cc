@@ -18,7 +18,7 @@
 #include "conn/nconn.h"
 #include "conn/nconn_tls.h"
 #include "tracker/tracker.h"
-#include "tracker/tracker_http_subr.h"
+#include "tracker/tracker_http_rqst.h"
 #include "dns/nresolver.h"
 // ---------------------------------------------------------
 // openssl includes
@@ -71,7 +71,7 @@ session::~session(void)
         // -------------------------------------------------
         // resolver
         // -------------------------------------------------
-        if(m_nresolver)
+        if (m_nresolver)
         {
                 delete m_nresolver;
                 m_nresolver = NULL;
@@ -87,12 +87,12 @@ session::~session(void)
         // -------------------------------------------------
         // orphan q
         // -------------------------------------------------
-        if(m_orphan_in_q)
+        if (m_orphan_in_q)
         {
                 delete m_orphan_in_q;
                 m_orphan_in_q = NULL;
         }
-        if(m_orphan_out_q)
+        if (m_orphan_out_q)
         {
                 delete m_orphan_out_q;
                 m_orphan_out_q = NULL;
@@ -100,7 +100,7 @@ session::~session(void)
         // -------------------------------------------------
         // tls cleanup
         // -------------------------------------------------
-        if(m_client_ssl_ctx)
+        if (m_client_ssl_ctx)
         {
                 SSL_CTX_free(m_client_ssl_ctx);
                 m_client_ssl_ctx = NULL;
@@ -134,12 +134,11 @@ int32_t session::init(void)
                 l_unused,   // tls key
                 l_unused,   // tls crt
                 true);      // force h1 -for now
-        if(!m_client_ssl_ctx)
+        if (!m_client_ssl_ctx)
         {
                 TRC_ERROR("Error: performing ssl_init(client)\n");
                 return NTRNT_STATUS_ERROR;
         }
-
         // -------------------------------------------------
         // init resolver with cache
         // TODO make configurable
@@ -148,7 +147,7 @@ int32_t session::init(void)
         int32_t l_s;
         std::string l_ai_cache_file = NRESOLVER_DEFAULT_AI_CACHE_FILE;
         l_s = m_nresolver->init(true, l_ai_cache_file);
-        if(l_s != NTRNT_STATUS_OK)
+        if (l_s != NTRNT_STATUS_OK)
         {
                 TRC_ERROR("Error performing resolver init with ai_cache: %s\n",
                                 l_ai_cache_file.c_str());
@@ -228,7 +227,7 @@ int32_t session::run(void)
         // -------------------------------------------------
         int32_t l_s;
         l_s = init();
-        if(l_s != STATUS_OK)
+        if (l_s != STATUS_OK)
         {
                 TRC_ERROR("Error performing init.\n");
                 return NULL;
@@ -238,7 +237,7 @@ int32_t session::run(void)
         // start stats
         // -------------------------------------------------
         m_stat.clear();
-        if(m_t_conf->m_stat_update_ms)
+        if (m_t_conf->m_stat_update_ms)
         {
                 // Add timers...
                 void *l_timer = NULL;
@@ -261,7 +260,7 @@ int32_t session::run(void)
                 NDBG_PRINT("run\n");
                 //++m_stat.m_total_run;
                 l_s = m_evr_loop->run();
-                if(l_s != NTRNT_STATUS_OK)
+                if (l_s != NTRNT_STATUS_OK)
                 {
                         // TODO log error
                 }
@@ -284,7 +283,7 @@ void session::signal(void)
 {
         int32_t l_status;
         l_status = m_evr_loop->signal();
-        if(l_status != NTRNT_STATUS_OK)
+        if (l_status != NTRNT_STATUS_OK)
         {
                 // TODO ???
         }
@@ -304,12 +303,12 @@ void session::stop(void)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t session::enqueue(tracker_http_subr& a_subr)
+int32_t session::enqueue(tracker_http_rqst& a_subr)
 {
         // -------------------------------------------------
         // enqueue
         // -------------------------------------------------
-        a_subr.m_state = tracker_http_subr::STATE_QUEUED;
+        a_subr.m_state = tracker_http_rqst::STATE_QUEUED;
         m_http_subr_list.push_back(&a_subr);
         // -------------------------------------------------
         // queue event
@@ -387,20 +386,20 @@ int32_t session::http_subr_dequeue(void *a_data)
                 // get front
                 // -----------------------------------------
                 NDBG_PRINT("%sSTART%s\n", ANSI_COLOR_BG_GREEN, ANSI_COLOR_OFF);
-                tracker_http_subr &l_subr = *(l_session.m_http_subr_list.front());
+                tracker_http_rqst &l_rqst = *(l_session.m_http_subr_list.front());
                 l_session.m_http_subr_list.pop_front();
                 // -----------------------------------------
                 // start
                 // -----------------------------------------
                 int32_t l_s = NTRNT_STATUS_OK;
-                l_s = l_subr.start(l_session);
+                l_s = l_rqst.start(l_session);
                 if (l_s == NTRNT_STATUS_AGAIN)
                 {
                         // break since ran out of available connections
-                        l_session.enqueue(l_subr);
+                        l_session.enqueue(l_rqst);
                         break;
                 }
-                else if(l_s != NTRNT_STATUS_OK)
+                else if (l_s != NTRNT_STATUS_OK)
                 {
                         // TODO -log error???
                         return NTRNT_STATUS_ERROR;
