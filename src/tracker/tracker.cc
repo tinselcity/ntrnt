@@ -9,7 +9,8 @@
 // internal includes
 // ---------------------------------------------------------
 #include "tracker/tracker.h"
-#include "tracker/tracker_http.h"
+#include "tracker/tracker_tcp.h"
+#include "tracker/tracker_udp.h"
 #include "core/torrent.h"
 #include "conn/scheme.h"
 #include "support/trace.h"
@@ -243,7 +244,7 @@ int32_t init_tracker_w_url(tracker** ao_tracker, const char* a_url, size_t a_url
         // -------------------------------------------------
         case SCHEME_TCP:
         {
-                *ao_tracker = new tracker_http();
+                *ao_tracker = new tracker_tcp();
                 break;
         }
         // -------------------------------------------------
@@ -251,7 +252,7 @@ int32_t init_tracker_w_url(tracker** ao_tracker, const char* a_url, size_t a_url
         // -------------------------------------------------
         case SCHEME_TLS:
         {
-                *ao_tracker = new tracker_http();
+                *ao_tracker = new tracker_tcp();
                 break;
         }
         // -------------------------------------------------
@@ -259,8 +260,8 @@ int32_t init_tracker_w_url(tracker** ao_tracker, const char* a_url, size_t a_url
         // -------------------------------------------------
         case SCHEME_UDP:
         {
-                NTRNT_PERROR("not supported.");
-                return NTRNT_STATUS_ERROR;
+                *ao_tracker = new tracker_udp();
+                break;
         }
         // -------------------------------------------------
         // SCHEME_WSS

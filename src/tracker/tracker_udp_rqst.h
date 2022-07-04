@@ -1,8 +1,9 @@
-#ifndef _HTTP_SUBR_H
-#define _HTTP_SUBR_H
+#ifndef _TRACKER_UDP_RQST_H
+#define _TRACKER_UDP_RQST_H
 //! ----------------------------------------------------------------------------
 //! includes
 //! ----------------------------------------------------------------------------
+#if 0
 // ---------------------------------------------------------
 // internal
 // ---------------------------------------------------------
@@ -14,7 +15,9 @@
 // ---------------------------------------------------------
 #include <string>
 #include <list>
+#endif
 namespace ns_ntrnt {
+#if 0
 //! ----------------------------------------------------------------------------
 //! fwd decl's
 //! ----------------------------------------------------------------------------
@@ -22,9 +25,9 @@ class nbq;
 class session;
 class http_resp;
 //! ----------------------------------------------------------------------------
-//! tracker_http_rqst
+//! tracker_udp_rqst
 //! ----------------------------------------------------------------------------
-class tracker_http_rqst
+class tracker_udp_rqst
 {
 public:
         // -------------------------------------------------
@@ -40,8 +43,8 @@ public:
         // -------------------------------------------------
         // public methods
         // -------------------------------------------------
-        tracker_http_rqst(void);
-        ~tracker_http_rqst();
+        tracker_udp_rqst(void);
+        ~tracker_udp_rqst();
         int set_query(const std::string &a_key, const std::string &a_val);
         int32_t serialize(nbq &ao_q);
         const std::string &get_label(void);
@@ -58,7 +61,7 @@ public:
         static int32_t evr_event_readable_cb(void *a_data);
         static int32_t evr_event_writeable_cb(void *a_data);
         int32_t cancel_evr_timer(void);
-        static int32_t teardown(tracker_http_rqst *a_subr,
+        static int32_t teardown(tracker_udp_rqst *a_subr,
                                 session &a_session,
                                 nconn &a_nconn,
                                 http_status_t a_status);
@@ -99,8 +102,9 @@ private:
         // private  methods
         // -------------------------------------------------
         // Disallow copy/assign
-        tracker_http_rqst& operator=(const tracker_http_rqst &);
-        tracker_http_rqst(const tracker_http_rqst &);
+        tracker_udp_rqst& operator=(const tracker_udp_rqst &);
+        tracker_udp_rqst(const tracker_udp_rqst &);
 };
+#endif
 } //namespace ns_ntrnt {
 #endif

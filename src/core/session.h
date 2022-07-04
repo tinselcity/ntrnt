@@ -20,7 +20,7 @@ namespace ns_ntrnt {
 class nbq;
 class torrent;
 class tracker;
-class tracker_http_rqst;
+class tracker_tcp_rqst;
 class nresolver;
 //! ----------------------------------------------------------------------------
 //! types
@@ -34,7 +34,7 @@ public:
         // -------------------------------------------------
         // public types
         // -------------------------------------------------
-        typedef std::list <tracker_http_rqst *> http_subr_list_t;
+        typedef std::list <tracker_tcp_rqst *> http_subr_list_t;
         // -------------------------------------------------
         // public methods
         // -------------------------------------------------
@@ -45,7 +45,7 @@ public:
         int32_t run(void);
         void signal(void);
         void stop(void);
-        int32_t enqueue(tracker_http_rqst& a_subr);
+        int32_t enqueue(tracker_tcp_rqst& a_subr);
         void display(void);
         bool is_running(void) { return !m_stopped; }
         bool get_stopped(void) { return (bool)m_stopped; }
@@ -67,7 +67,7 @@ private:
         // disallow copy/assign
         session(const session&);
         session& operator=(const session&);
-        int32_t subr_start(tracker_http_rqst &a_subr);
+        int32_t subr_start(tracker_tcp_rqst &a_subr);
         // -------------------------------------------------
         // private static
         // -------------------------------------------------

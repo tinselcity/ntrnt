@@ -18,12 +18,13 @@
 #include "conn/nconn.h"
 #include "conn/nconn_tls.h"
 #include "tracker/tracker.h"
-#include "tracker/tracker_http_rqst.h"
 #include "dns/nresolver.h"
 // ---------------------------------------------------------
 // openssl includes
 // ---------------------------------------------------------
 #include <openssl/ssl.h>
+
+#include "../tracker/tracker_tcp_rqst.h"
 //! ----------------------------------------------------------------------------
 //! constants
 //! ----------------------------------------------------------------------------
@@ -303,12 +304,12 @@ void session::stop(void)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t session::enqueue(tracker_http_rqst& a_subr)
+int32_t session::enqueue(tracker_tcp_rqst& a_subr)
 {
         // -------------------------------------------------
         // enqueue
         // -------------------------------------------------
-        a_subr.m_state = tracker_http_rqst::STATE_QUEUED;
+        a_subr.m_state = tracker_tcp_rqst::STATE_QUEUED;
         m_http_subr_list.push_back(&a_subr);
         // -------------------------------------------------
         // queue event
@@ -386,7 +387,7 @@ int32_t session::http_subr_dequeue(void *a_data)
                 // get front
                 // -----------------------------------------
                 NDBG_PRINT("%sSTART%s\n", ANSI_COLOR_BG_GREEN, ANSI_COLOR_OFF);
-                tracker_http_rqst &l_rqst = *(l_session.m_http_subr_list.front());
+                tracker_tcp_rqst &l_rqst = *(l_session.m_http_subr_list.front());
                 l_session.m_http_subr_list.pop_front();
                 // -----------------------------------------
                 // start

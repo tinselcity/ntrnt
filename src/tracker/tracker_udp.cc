@@ -16,7 +16,7 @@
 #include "core/torrent.h"
 #include "core/session.h"
 #include "tracker/tracker_udp.h"
-#include "tracker/tracker_http_udp.h"
+#include "tracker/tracker_udp_rqst.h"
 // ---------------------------------------------------------
 // ext
 // ---------------------------------------------------------
@@ -84,6 +84,8 @@ int32_t tracker_udp::announce(session& a_session, torrent& a_torrent)
         // -------------------------------------------------
         // create subrequest
         // -------------------------------------------------
+        // TODO
+#if 0
         tracker_http_subr *l_rqst = new tracker_http_subr();
         l_rqst->m_scheme = m_scheme;
         l_rqst->m_port = m_port;
@@ -129,6 +131,7 @@ int32_t tracker_udp::announce(session& a_session, torrent& a_torrent)
                 // TODO --cancel pending...
                 return NTRNT_STATUS_ERROR;
         }
+#endif
         return NTRNT_STATUS_OK;
 }
 }

@@ -15,11 +15,6 @@
 #include "support/net_util.h"
 #include "core/torrent.h"
 #include "core/session.h"
-#include "tracker/tracker_http.h"
-#include "tracker/tracker_http_rqst.h"
-// ---------------------------------------------------------
-// ext
-// ---------------------------------------------------------
 #include "http_parser/http_parser.h"
 // ---------------------------------------------------------
 // sha1
@@ -41,6 +36,10 @@
 // ---------------------------------------------------------
 #include <map>
 #include <sstream>
+
+#include "tracker_tcp.h"
+
+#include "tracker_tcp_rqst.h"
 //! ----------------------------------------------------------------------------
 //! constants
 //! ----------------------------------------------------------------------------
@@ -51,7 +50,7 @@ namespace ns_ntrnt {
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-tracker_http::tracker_http(void):
+tracker_tcp::tracker_tcp(void):
                 tracker()
 {
 }
@@ -60,7 +59,7 @@ tracker_http::tracker_http(void):
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-tracker_http::~tracker_http(void)
+tracker_tcp::~tracker_tcp(void)
 {
 }
 //! ----------------------------------------------------------------------------
@@ -68,7 +67,7 @@ tracker_http::~tracker_http(void)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t tracker_http::announce(session& a_session, torrent& a_torrent)
+int32_t tracker_tcp::announce(session& a_session, torrent& a_torrent)
 {
         // -------------------------------------------------
         // get ipv6
@@ -84,7 +83,7 @@ int32_t tracker_http::announce(session& a_session, torrent& a_torrent)
         // -------------------------------------------------
         // create subrequest
         // -------------------------------------------------
-        tracker_http_rqst *l_rqst = new tracker_http_rqst();
+        tracker_tcp_rqst *l_rqst = new tracker_tcp_rqst();
         l_rqst->m_scheme = m_scheme;
         l_rqst->m_port = m_port;
         l_rqst->m_host = m_host;

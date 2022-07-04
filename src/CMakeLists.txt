@@ -99,8 +99,10 @@ SET(SRCS
     # tracker
     # ------------------------------------------------------
     tracker/tracker.cc
-    tracker/tracker_http.cc
-    tracker/tracker_http_rqst.cc
+    tracker/tracker_tcp.cc
+    tracker/tracker_tcp_rqst.cc
+    tracker/tracker_udp.cc
+    tracker/tracker_udp_rqst.cc
     # ------------------------------------------------------
     # tracker
     # ------------------------------------------------------

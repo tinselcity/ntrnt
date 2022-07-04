@@ -1,6 +1,7 @@
 //! ----------------------------------------------------------------------------
 //! includes
 //! ----------------------------------------------------------------------------
+#if 0
 // ---------------------------------------------------------
 // external
 // ---------------------------------------------------------
@@ -18,7 +19,6 @@
 #include "core/session.h"
 #include "dns/nresolver.h"
 #include "http/http_resp.h"
-#include "tracker/tracker_http_rqst.h"
 #include "bencode/bencode.h"
 // ---------------------------------------------------------
 // 3rd party
@@ -28,6 +28,7 @@
 // std
 // ---------------------------------------------------------
 #include <string.h>
+#endif
 //! ----------------------------------------------------------------------------
 //! macros
 //! ----------------------------------------------------------------------------
@@ -42,6 +43,7 @@
                 } \
         } while(0)
 namespace ns_ntrnt {
+#if 0
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
@@ -72,7 +74,7 @@ static int32_t run_state_machine(void *a_data, evr_mode_t a_conn_mode)
                 return NTRNT_STATUS_DONE;
         }
         session &l_ses = *(static_cast<session *>(l_nconn.get_ctx()));
-        tracker_http_rqst *l_rqst = static_cast<tracker_http_rqst *>(l_nconn.get_data());
+        tracker_udp_rqst *l_rqst = static_cast<tracker_udp_rqst *>(l_nconn.get_data());
         // -------------------------------------------------
         // mode switch
         // -------------------------------------------------
@@ -85,7 +87,7 @@ static int32_t run_state_machine(void *a_data, evr_mode_t a_conn_mode)
         {
                 TRC_ERROR("connection error: label: %s\n", l_nconn.get_label().c_str());
                 int32_t l_s;
-                l_s = tracker_http_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_BAD_GATEWAY);
+                l_s = tracker_udp_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_BAD_GATEWAY);
                 // TODO -check status...
                 UNUSED(l_s);
                 return NTRNT_STATUS_DONE;
@@ -121,7 +123,7 @@ static int32_t run_state_machine(void *a_data, evr_mode_t a_conn_mode)
                         //TRC_VERBOSE("teardown status: %d\n", HTTP_STATUS_GATEWAY_TIMEOUT);
                         TRC_ERROR("connection error: label: %s\n", l_nconn.get_label().c_str());
                         int32_t l_s;
-                        l_s = tracker_http_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_BAD_GATEWAY);
+                        l_s = tracker_udp_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_BAD_GATEWAY);
                         // TODO -check status...
                         UNUSED(l_s);
                         return NTRNT_STATUS_DONE;
@@ -206,7 +208,7 @@ state_top:
                 if (l_s == nconn::NC_STATUS_ERROR)
                 {
                         int32_t l_s;
-                        l_s = tracker_http_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_BAD_GATEWAY);
+                        l_s = tracker_udp_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_BAD_GATEWAY);
                         // TODO -check status...
                         UNUSED(l_s);
                         return NTRNT_STATUS_DONE;
@@ -229,7 +231,7 @@ state_top:
         case nconn::NC_STATE_DONE:
         {
                 int32_t l_s;
-                l_s = tracker_http_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_OK);
+                l_s = tracker_udp_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_OK);
                 // TODO -check status...
                 UNUSED(l_s);
                 return NTRNT_STATUS_DONE;
@@ -289,7 +291,7 @@ state_top:
                                 // disassociate connection
                                 l_nconn.set_data(NULL);
                                 int32_t l_s;
-                                l_s = tracker_http_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_OK);
+                                l_s = tracker_udp_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_OK);
                                 // TODO -check status...
                                 UNUSED(l_s);
                                 return NTRNT_STATUS_DONE;
@@ -300,7 +302,7 @@ state_top:
                         case nconn::NC_STATUS_ERROR:
                         {
                                 int32_t l_s;
-                                l_s = tracker_http_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_BAD_GATEWAY);
+                                l_s = tracker_udp_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_BAD_GATEWAY);
                                 // TODO -check status...
                                 UNUSED(l_s);
                                 return NTRNT_STATUS_DONE;
@@ -359,7 +361,7 @@ state_top:
                         {
                                 TRC_ERROR("unhandled connection state: %d\n", l_s);
                                 int32_t l_s;
-                                l_s = tracker_http_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_BAD_GATEWAY);
+                                l_s = tracker_udp_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_BAD_GATEWAY);
                                 // TODO -check status...
                                 UNUSED(l_s);
                                 return NTRNT_STATUS_DONE;
@@ -395,7 +397,7 @@ state_top:
                                         //TRC_VERBOSE("teardown status: %d\n", HTTP_STATUS_BAD_GATEWAY);
                                         TRC_ERROR("unhandled connection state: %d\n", l_s);
                                         int32_t l_s;
-                                        l_s = tracker_http_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_BAD_GATEWAY);
+                                        l_s = tracker_udp_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_BAD_GATEWAY);
                                         // TODO -check status...
                                         UNUSED(l_s);
                                         return NTRNT_STATUS_DONE;
@@ -453,7 +455,7 @@ state_top:
                                 // -------------------------
                                 // set state to done
                                 // -------------------------
-                                l_rqst->m_state = tracker_http_rqst::STATE_NONE;
+                                l_rqst->m_state = tracker_udp_rqst::STATE_NONE;
                                 if (!l_nconn_can_reuse ||
                                    !l_keepalive ||
                                    !l_hmsg_keep_alive)
@@ -607,7 +609,7 @@ state_top:
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-tracker_http_rqst::tracker_http_rqst(void):
+tracker_udp_rqst::tracker_udp_rqst(void):
         m_label(),
         m_scheme(SCHEME_NONE),
         m_port(0),
@@ -632,7 +634,7 @@ tracker_http_rqst::tracker_http_rqst(void):
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-tracker_http_rqst::~tracker_http_rqst(void)
+tracker_udp_rqst::~tracker_udp_rqst(void)
 {
         if (m_resp)
         {
@@ -655,7 +657,7 @@ tracker_http_rqst::~tracker_http_rqst(void)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-const std::string &tracker_http_rqst::get_label(void)
+const std::string &tracker_udp_rqst::get_label(void)
 {
         if (m_label.empty())
         {
@@ -668,7 +670,7 @@ const std::string &tracker_http_rqst::get_label(void)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-void tracker_http_rqst::reset_label(void)
+void tracker_udp_rqst::reset_label(void)
 {
         switch(m_scheme)
         {
@@ -703,7 +705,7 @@ void tracker_http_rqst::reset_label(void)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-bool tracker_http_rqst::get_expect_resp_body_flag(void)
+bool tracker_udp_rqst::get_expect_resp_body_flag(void)
 {
         if (m_verb == "HEAD")
         {
@@ -719,7 +721,7 @@ bool tracker_http_rqst::get_expect_resp_body_flag(void)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int tracker_http_rqst::set_query(const std::string &a_key, const std::string &a_val)
+int tracker_udp_rqst::set_query(const std::string &a_key, const std::string &a_val)
 {
         m_query_list.push_back(std::pair<std::string, std::string>(a_key, a_val));
         return NTRNT_STATUS_OK;
@@ -729,7 +731,7 @@ int tracker_http_rqst::set_query(const std::string &a_key, const std::string &a_
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t tracker_http_rqst::serialize(nbq &ao_q)
+int32_t tracker_udp_rqst::serialize(nbq &ao_q)
 {
         // -------------------------------------------------
         // make path
@@ -790,7 +792,7 @@ int32_t tracker_http_rqst::serialize(nbq &ao_q)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t tracker_http_rqst::start(session &a_session)
+int32_t tracker_udp_rqst::start(session &a_session)
 {
         NDBG_PRINT("start...\n");
         int32_t l_s;
@@ -798,7 +800,7 @@ int32_t tracker_http_rqst::start(session &a_session)
         // -------------------------------------------------
         // set state to none
         // -------------------------------------------------
-        m_state = tracker_http_rqst::STATE_NONE;
+        m_state = tracker_udp_rqst::STATE_NONE;
         // -------------------------------------------------
         // try get idle from proxy pool
         // -------------------------------------------------
@@ -852,9 +854,9 @@ int32_t tracker_http_rqst::start(session &a_session)
                 // TODO make configurable
                 l_nconn->set_num_reqs_per_conn(1000);
                 //l_nconn->set_collect_stats(l_t_conf.m_collect_stats);
-                l_nconn->setup_evr_fd(tracker_http_rqst::evr_fd_readable_cb,
-                                      tracker_http_rqst::evr_fd_writeable_cb,
-                                      tracker_http_rqst::evr_fd_error_cb);
+                l_nconn->setup_evr_fd(tracker_udp_rqst::evr_fd_readable_cb,
+                                      tracker_udp_rqst::evr_fd_writeable_cb,
+                                      tracker_udp_rqst::evr_fd_error_cb);
                 if (l_nconn->get_scheme() == SCHEME_TLS)
                 {
                         SSL_CTX* l_ctx = a_session.get_client_ssl_ctx();
@@ -922,19 +924,19 @@ int32_t tracker_http_rqst::start(session &a_session)
         l_s = serialize(*(m_out_q));
         if (l_s != NTRNT_STATUS_OK)
         {
-                return tracker_http_rqst::evr_fd_error_cb(l_nconn);
+                return tracker_udp_rqst::evr_fd_error_cb(l_nconn);
         }
         // -------------------------------------------------
         // start writing request
         // -------------------------------------------------
-        return tracker_http_rqst::evr_fd_writeable_cb(l_nconn);
+        return tracker_udp_rqst::evr_fd_writeable_cb(l_nconn);
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t tracker_http_rqst::teardown(tracker_http_rqst *a_subr,
+int32_t tracker_udp_rqst::teardown(tracker_udp_rqst *a_subr,
                             session &a_session,
                             nconn &a_nconn,
                             http_status_t a_status)
@@ -957,7 +959,7 @@ int32_t tracker_http_rqst::teardown(tracker_http_rqst *a_subr,
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t tracker_http_rqst::cancel_evr_timer(void)
+int32_t tracker_udp_rqst::cancel_evr_timer(void)
 {
         if (!m_evr_timeout)
         {
@@ -971,7 +973,7 @@ int32_t tracker_http_rqst::cancel_evr_timer(void)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t tracker_http_rqst::evr_fd_readable_cb(void *a_data)
+int32_t tracker_udp_rqst::evr_fd_readable_cb(void *a_data)
 {
         return run_state_machine(a_data, EVR_MODE_READ);
 }
@@ -980,7 +982,7 @@ int32_t tracker_http_rqst::evr_fd_readable_cb(void *a_data)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t tracker_http_rqst::evr_fd_writeable_cb(void *a_data)
+int32_t tracker_udp_rqst::evr_fd_writeable_cb(void *a_data)
 {
         return run_state_machine(a_data, EVR_MODE_WRITE);
 }
@@ -989,7 +991,7 @@ int32_t tracker_http_rqst::evr_fd_writeable_cb(void *a_data)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t tracker_http_rqst::evr_fd_error_cb(void *a_data)
+int32_t tracker_udp_rqst::evr_fd_error_cb(void *a_data)
 {
         return run_state_machine(a_data, EVR_MODE_ERROR);
 }
@@ -998,7 +1000,7 @@ int32_t tracker_http_rqst::evr_fd_error_cb(void *a_data)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t tracker_http_rqst::evr_event_timeout_cb(void *a_data)
+int32_t tracker_udp_rqst::evr_event_timeout_cb(void *a_data)
 {
         if (!a_data)
         {
@@ -1008,7 +1010,7 @@ int32_t tracker_http_rqst::evr_event_timeout_cb(void *a_data)
         // clear event
         // -------------------------------------------------
         nconn* l_nconn = static_cast<nconn*>(a_data);
-        tracker_http_rqst *l_rqst = static_cast<tracker_http_rqst *>(l_nconn->get_data());
+        tracker_udp_rqst *l_rqst = static_cast<tracker_udp_rqst *>(l_nconn->get_data());
         if (l_rqst &&
             l_rqst->m_evr_timeout)
         {
@@ -1021,7 +1023,7 @@ int32_t tracker_http_rqst::evr_event_timeout_cb(void *a_data)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t tracker_http_rqst::evr_event_readable_cb(void *a_data)
+int32_t tracker_udp_rqst::evr_event_readable_cb(void *a_data)
 {
         if (!a_data)
         {
@@ -1031,7 +1033,7 @@ int32_t tracker_http_rqst::evr_event_readable_cb(void *a_data)
         // clear event
         // -------------------------------------------------
         nconn* l_nconn = static_cast<nconn*>(a_data);
-        tracker_http_rqst *l_rqst = static_cast<tracker_http_rqst *>(l_nconn->get_data());
+        tracker_udp_rqst *l_rqst = static_cast<tracker_udp_rqst *>(l_nconn->get_data());
         if (l_rqst &&
             l_rqst->m_evr_readable)
         {
@@ -1045,7 +1047,7 @@ int32_t tracker_http_rqst::evr_event_readable_cb(void *a_data)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t tracker_http_rqst::evr_event_writeable_cb(void *a_data)
+int32_t tracker_udp_rqst::evr_event_writeable_cb(void *a_data)
 {
         if (!a_data)
         {
@@ -1055,7 +1057,7 @@ int32_t tracker_http_rqst::evr_event_writeable_cb(void *a_data)
         // clear event
         // -------------------------------------------------
         nconn* l_nconn = static_cast<nconn*>(a_data);
-        tracker_http_rqst *l_rqst = static_cast<tracker_http_rqst *>(l_nconn->get_data());
+        tracker_udp_rqst *l_rqst = static_cast<tracker_udp_rqst *>(l_nconn->get_data());
         if (l_rqst &&
             l_rqst->m_evr_writeable)
         {
@@ -1069,7 +1071,7 @@ int32_t tracker_http_rqst::evr_event_writeable_cb(void *a_data)
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
 #if 0
-void tracker_http_rqst::show(bool a_color)
+void tracker_udp_rqst::show(bool a_color)
 {
         std::string l_host_color = "";
         std::string l_query_color = "";
@@ -1109,5 +1111,6 @@ void tracker_http_rqst::show(bool a_color)
         // Body
         NDBG_OUTPUT("%sBody%s: %s\n", l_body_color.c_str(), l_off_color.c_str(), m_body.c_str());
 }
+#endif
 #endif
 } //namespace ns_ntrnt {
