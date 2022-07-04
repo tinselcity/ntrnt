@@ -2,6 +2,10 @@
 //! includes
 //! ----------------------------------------------------------------------------
 // ---------------------------------------------------------
+// external includes
+// ---------------------------------------------------------
+#include "ntrnt/def.h"
+// ---------------------------------------------------------
 // this app
 // ---------------------------------------------------------
 #include "upnp.h"
@@ -17,12 +21,24 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <getopt.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
 #include <arpa/inet.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+// ---------------------------------------------------------
+// c++ std library
+// ---------------------------------------------------------
+#include <string>
+//! ----------------------------------------------------------------------------
+//! macros
+//! ----------------------------------------------------------------------------
+#ifndef UNUSED
+#define UNUSED(x) ( (void)(x) )
+#endif
+namespace ns_ntrnt {
 //! ----------------------------------------------------------------------------
 //! types
 //! ----------------------------------------------------------------------------
@@ -38,7 +54,26 @@ typedef enum _upnp_igd_status
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t upnp_setup(uint16_t a_port)
+upnp::upnp(void):
+        m_urls(),
+        m_datas(),
+        m_lan_addr()
+{
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+upnp::~upnp(void)
+{
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int32_t upnp::init(void)
 {
         NDBG_OUTPUT(": MINIUPNPC_API_VERSION: %d\n", MINIUPNPC_API_VERSION);
         // -------------------------------------------------
@@ -60,18 +95,15 @@ int32_t upnp_setup(uint16_t a_port)
         if (l_dev == NULL)
         {
                 NDBG_PRINT("error performing upnpDiscover. Reason[%d]: %s\n", errno, strerror(errno));
-                return STATUS_ERROR;
+                return NTRNT_STATUS_ERROR;
         }
         NDBG_OUTPUT(": upnpDiscover: done...\n");
         // -------------------------------------------------
         // find internet gateway device
         // -------------------------------------------------
         int32_t l_s;
-        struct UPNPUrls l_urls;
-        struct IGDdatas l_datas;
-        char l_lan_addr[16];
         NDBG_OUTPUT(": UPNP_GetValidIGD: ...\n");
-        l_s = UPNP_GetValidIGD(l_dev, &l_urls, &l_datas, l_lan_addr, sizeof(l_lan_addr));
+        l_s = UPNP_GetValidIGD(l_dev, &m_urls, &m_datas, m_lan_addr, sizeof(m_lan_addr));
         if (l_s != UPNP_IGD_VALID_CONNECTED)
         {
                 NDBG_PRINT("error performing UPNP_GetValidIGD. Reason[%d]: %s\n", errno, strerror(errno));
@@ -79,8 +111,8 @@ int32_t upnp_setup(uint16_t a_port)
                 freeUPNPDevlist(l_dev);
         }
         NDBG_OUTPUT(": UPNP_GetValidIGD: done...\n");
-        NDBG_OUTPUT(": Found Internet Gateway Device: %s\n", l_urls.controlURL);
-        NDBG_OUTPUT(": Local Address:                 %s\n", l_lan_addr);
+        NDBG_OUTPUT(": Found Internet Gateway Device: %s\n", m_urls.controlURL);
+        NDBG_OUTPUT(": Local Address:                 %s\n", m_lan_addr);
         freeUPNPDevlist(l_dev);
         // -------------------------------------------------
         // status info
@@ -88,8 +120,8 @@ int32_t upnp_setup(uint16_t a_port)
         char l_upnp_stat_status[1024];
         char l_upnp_stat_last_conn_err[1024];
         uint32_t l_upnp_stat_uptime;
-        l_s = UPNP_GetStatusInfo(l_urls.controlURL,
-                                 l_datas.first.servicetype,
+        l_s = UPNP_GetStatusInfo(m_urls.controlURL,
+                                 m_datas.first.servicetype,
                                  l_upnp_stat_status,
                                  &l_upnp_stat_uptime,
                                  l_upnp_stat_last_conn_err);
@@ -100,16 +132,16 @@ int32_t upnp_setup(uint16_t a_port)
         // connection type
         // -------------------------------------------------
         char l_upnp_stat_conn_type[1024];
-        l_s = UPNP_GetConnectionTypeInfo(l_urls.controlURL,
-                                         l_datas.first.servicetype,
+        l_s = UPNP_GetConnectionTypeInfo(m_urls.controlURL,
+                                         m_datas.first.servicetype,
                                          l_upnp_stat_conn_type);
         NDBG_OUTPUT(": UPNP_STAT: conn_type_info:     %s\n", l_upnp_stat_status);
         // -------------------------------------------------
         // external IP address
         // -------------------------------------------------
         char l_upnp_stat_ext_ip[1024];
-        l_s = UPNP_GetExternalIPAddress(l_urls.controlURL,
-                                        l_datas.first.servicetype,
+        l_s = UPNP_GetExternalIPAddress(m_urls.controlURL,
+                                        m_datas.first.servicetype,
                                         l_upnp_stat_ext_ip);
         NDBG_OUTPUT(": UPNP_STAT: ext_ip_address:     %s\n", l_upnp_stat_ext_ip);
         // -------------------------------------------------
@@ -117,12 +149,32 @@ int32_t upnp_setup(uint16_t a_port)
         // -------------------------------------------------
         uint32_t l_upnp_stat_br_down;
         uint32_t l_upnp_stat_br_up;
-        l_s = UPNP_GetLinkLayerMaxBitRates(l_urls.controlURL,
-                                           l_datas.first.servicetype,
+        l_s = UPNP_GetLinkLayerMaxBitRates(m_urls.controlURL,
+                                           m_datas.first.servicetype,
                                            &l_upnp_stat_br_down,
                                            &l_upnp_stat_br_up);
         NDBG_OUTPUT(": UPNP_STAT: bitrate_down:       %u\n", l_upnp_stat_br_down);
         NDBG_OUTPUT(": UPNP_STAT: bitrate_up:         %u\n", l_upnp_stat_br_up);
+        return NTRNT_STATUS_OK;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int32_t upnp::teardown(void)
+{
+        // ??? do nothing???
+        return NTRNT_STATUS_OK;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int32_t upnp::add_port_mapping(uint16_t a_port)
+{
+        int32_t l_s;
         // -------------------------------------------------
         // create port string
         // -------------------------------------------------
@@ -136,14 +188,13 @@ int32_t upnp_setup(uint16_t a_port)
         // -------------------------------------------------
         // add port mapping (TCP)
         // -------------------------------------------------
-#if 0
         errno = 0;
         NDBG_OUTPUT(": UPNP_AddPortMapping(TCP): port[%u]\n", a_port);
-        l_s = UPNP_AddPortMapping(l_urls.controlURL,
-                                  l_datas.first.servicetype,
+        l_s = UPNP_AddPortMapping(m_urls.controlURL,
+                                  m_datas.first.servicetype,
                                   l_port_str,
                                   l_port_str,
-                                  l_lan_addr,
+                                  m_lan_addr,
                                   l_desc,
                                   "TCP",
                                   NULL,
@@ -153,18 +204,16 @@ int32_t upnp_setup(uint16_t a_port)
                 NDBG_PRINT("error performing UPNP_AddPortMapping (TCP). Reason[%d]: %s\n", errno, strerror(errno));
         }
         NDBG_OUTPUT(": UPNP_AddPortMapping(TCP): port[%u]: done...\n", a_port);
-#endif
         // -------------------------------------------------
         // add port mapping (UDP)
         // -------------------------------------------------
-#if 0
         errno = 0;
         NDBG_OUTPUT(": UPNP_AddPortMapping(UDP): port[%u]\n", a_port);
-        l_s = UPNP_AddPortMapping(l_urls.controlURL,
-                                  l_datas.first.servicetype,
+        l_s = UPNP_AddPortMapping(m_urls.controlURL,
+                                  m_datas.first.servicetype,
                                   l_port_str,
                                   l_port_str,
-                                  l_lan_addr,
+                                  m_lan_addr,
                                   l_desc,
                                   "UDP",
                                   NULL,
@@ -174,84 +223,237 @@ int32_t upnp_setup(uint16_t a_port)
                 NDBG_PRINT("error performing UPNP_AddPortMapping (UDP). Reason[%d]: %s\n", errno, strerror(errno));
         }
         NDBG_OUTPUT(": UPNP_AddPortMapping(UDP): port[%u]: done...\n", a_port);
-#if 1
-        // -------------------------------------------------
-        // teardown
-        // -------------------------------------------------
-        NDBG_OUTPUT(": UPNP_DeletePortMapping(TCP): port[%u]\n", a_port);
-        l_s = UPNP_DeletePortMapping(l_urls.controlURL,
-                                     l_datas.first.servicetype,
-                                     l_port_str,
-                                     "TCP",
-                                     NULL);
-        NDBG_OUTPUT(": UPNP_DeletePortMapping(UDP): port[%u]\n", a_port);
-        l_s = UPNP_DeletePortMapping(l_urls.controlURL,
-                                     l_datas.first.servicetype,
-                                     l_port_str,
-                                     "UDP",
-                                     NULL);
-#endif
-#endif
-        return STATUS_OK;
+        return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int main(void)
+int32_t upnp::delete_port_mapping(uint16_t a_port)
 {
         int32_t l_s;
+        // -------------------------------------------------
+        // create port string
+        // -------------------------------------------------
+        char l_port_str[16];
+        snprintf(l_port_str, sizeof(l_port_str), "%u", a_port);
+        // -------------------------------------------------
+        // create desc string
+        // -------------------------------------------------
+        char l_desc[64];
+        snprintf(l_desc, sizeof(l_desc), "%s at %d", "ntrnt", a_port);
+        // -----------------------------------------
+        // remove port mapping (TCP)
+        // -----------------------------------------
+        NDBG_OUTPUT(": UPNP_DeletePortMapping(TCP): port[%u]\n", a_port);
+        errno = 0;
+        l_s = UPNP_DeletePortMapping(m_urls.controlURL,
+                                     m_datas.first.servicetype,
+                                     l_port_str,
+                                     "TCP",
+                                     NULL);
+        if (l_s != 0)
+        {
+                NDBG_PRINT("error performing UPNP_DeletePortMapping (TCP). Reason[%d]: %s\n", errno, strerror(errno));
+        }
+        NDBG_OUTPUT(": UPNP_DeletePortMapping(TCP): port[%u]: done...\n", a_port);
+        // -----------------------------------------
+        // remove port mapping (UDP)
+        // -----------------------------------------
+        NDBG_OUTPUT(": UPNP_DeletePortMapping(UDP): port[%u]\n", a_port);
+        errno = 0;
+        l_s = UPNP_DeletePortMapping(m_urls.controlURL,
+                                     m_datas.first.servicetype,
+                                     l_port_str,
+                                     "UDP",
+                                     NULL);
+        if (l_s != 0)
+        {
+                NDBG_PRINT("error performing UPNP_DeletePortMapping (UDP). Reason[%d]: %s\n", errno, strerror(errno));
+        }
+        NDBG_OUTPUT(": UPNP_DeletePortMapping(UDP): port[%u]: done...\n", a_port);
+        return NTRNT_STATUS_OK;
+}
+}
+#ifdef STANDALONE_UPNP
+//! ----------------------------------------------------------------------------
+//! \details: print the command line help.
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+void print_usage(const char *a_prog, FILE* a_stream, int a_exit_code)
+{
+        fprintf(a_stream, "Usage: %s [options]\n", a_prog);
+        fprintf(a_stream, "Options are:\n");
+        fprintf(a_stream, "  -h, --help     Display this help and exit.\n");
+        fprintf(a_stream, "  -p, --port     port (default 51413 -BitTorrent)\n");
+        fprintf(a_stream, "  -s, --set      set up port forwarding\n");
+        fprintf(a_stream, "  -u, --unset    unset port forwaring\n");
+        fprintf(a_stream, "  -e, --echo     run echo server\n");
+        exit(a_exit_code);
+}
+//! ----------------------------------------------------------------------------
+//! \details: index certificates
+//! \return:  0 on success -1 on error.
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int main(int argc, char** argv)
+{
+        // -------------------------------------------------
+        // defaults
+        // -------------------------------------------------
         uint16_t l_port = 51413;
+        bool l_flag_set = false;
+        bool l_flag_unset = false;
+        bool l_flag_echo = false;
         // -------------------------------------------------
-        // display public address
+        // cmd line args
         // -------------------------------------------------
-#if 0
-        char l_ip_str[INET6_ADDRSTRLEN];
-        l_s = get_public_address(l_ip_str);
-        if (l_s != STATUS_OK)
+        char l_opt = '\0';
+        std::string l_arg;
+        int l_opt_index = 0;
+        struct option l_long_options[] =
+                {
+                { "help",  no_argument,       0, 'h' },
+                { "port",  required_argument, 0, 'p' },
+                { "set",   no_argument,       0, 's' },
+                { "unset", no_argument,       0, 'u' },
+                { "echo",  no_argument,       0, 'e' },
+                // list sentinel
+                { 0, 0, 0, 0 }
+        };
+        // -------------------------------------------------
+        // parse args...
+        // -------------------------------------------------
+        char l_short_arg_list[] = "hp:sue";
+        while ((l_opt = getopt_long_only(argc, argv, l_short_arg_list, l_long_options, &l_opt_index)) != -1)
         {
-                printf(": error performing display_public_address\n");
-                return STATUS_ERROR;
+                if(optarg)
+                {
+                        l_arg = std::string(optarg);
+                }
+                else
+                {
+                        l_arg.clear();
+                }
+                //printf("arg[%c=%d]: %s\n", l_opt, l_option_index, l_argument.c_str());
+                switch (l_opt)
+                {
+                // -----------------------------------------
+                // help
+                // -----------------------------------------
+                case 'h':
+                {
+                        print_usage(argv[0], stdout, 0);
+                        break;
+                }
+                // -----------------------------------------
+                // port
+                // -----------------------------------------
+                case 'p':
+                {
+                        int l_port_val;
+                        l_port_val = atoi(l_arg.c_str());
+                        if((l_port_val < 1) ||
+                           (l_port_val > 65535))
+                        {
+                                NDBG_OUTPUT("Error bad port value: %d.\n", l_port_val);
+                                print_usage(argv[0], stdout, 0);
+                        }
+                        l_port = (uint16_t)l_port_val;
+                        break;
+                }
+                // -----------------------------------------
+                // set
+                // -----------------------------------------
+                case 's':
+                {
+                        l_flag_set = true;
+                        break;
+                }
+                // -----------------------------------------
+                // unset
+                // -----------------------------------------
+                case 'u':
+                {
+                        l_flag_unset = true;
+                        break;
+                }
+                // -----------------------------------------
+                // echo
+                // -----------------------------------------
+                case 'e':
+                {
+                        l_flag_echo = true;
+                        break;
+                }
+                // -----------------------------------------
+                // what???
+                // -----------------------------------------
+                case '?':
+                {
+                        NDBG_OUTPUT("exiting.\n");
+                        print_usage(argv[0], stdout, NTRNT_STATUS_ERROR);
+                        break;
+                }
+                // -----------------------------------------
+                // huh???
+                // -----------------------------------------
+                default:
+                {
+                        NDBG_OUTPUT("unrecognized option.\n");
+                        print_usage(argv[0], stdout,  NTRNT_STATUS_ERROR);
+                        break;
+                }
+                }
         }
-#endif
+        int32_t l_s;
+        ns_ntrnt::upnp l_upnp;
         // -------------------------------------------------
-        // run upnp -to punch hole for port
+        // setup port forwarding
         // -------------------------------------------------
-        l_s = upnp_setup(l_port);
-        if (l_s != STATUS_OK)
+        if (l_flag_set)
         {
-                return STATUS_ERROR;
+                l_s = l_upnp.init();
+                // TODO check for error
+                UNUSED(l_s);
+                l_s = l_upnp.add_port_mapping(l_port);
+                // TODO check for error
+                UNUSED(l_s);
         }
         // -------------------------------------------------
-        // display address/port
+        // unset port forwarding
         // -------------------------------------------------
-#if 0
-        if (memchr(l_ip_str, ':', sizeof(l_ip_str)) != NULL)
+        else if(l_flag_unset)
         {
-                NDBG_OUTPUT(": talk to me at\n:   [%s]:%u\n", l_ip_str, l_port);
+                l_s = l_upnp.init();
+                // TODO check for error
+                UNUSED(l_s);
+                l_s = l_upnp.add_port_mapping(l_port);
+                // TODO check for error
+                UNUSED(l_s);
+        }
+        // -------------------------------------------------
+        // run echo server
+        // -------------------------------------------------
+        else if(l_flag_echo)
+        {
+                l_s = echo_server(l_port);
+                if (l_s != NTRNT_STATUS_OK)
+                {
+                        return NTRNT_STATUS_ERROR;
+                }
         }
         else
         {
-                NDBG_OUTPUT(": talk to me at\n:   %s:%u\n", l_ip_str, l_port);
+                l_s = l_upnp.init();
+                // TODO check for error
+                UNUSED(l_s);
         }
-#endif
-        // -------------------------------------------------
-        // echo server
-        // -------------------------------------------------
-#if 1
-        l_s = echo_server(l_port);
-        if (l_s != STATUS_OK)
-        {
-                return STATUS_ERROR;
-        }
-#endif
-        // -------------------------------------------------
-        // cleanup
-        // -------------------------------------------------
-        // TODO
         // -------------------------------------------------
         // done
         // -------------------------------------------------
         return 0;
 }
+#endif

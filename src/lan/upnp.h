@@ -4,20 +4,18 @@
 //! includes
 //! ----------------------------------------------------------------------------
 #include <stdint.h>
+// ---------------------------------------------------------
+// upnp
+// ---------------------------------------------------------
+#include <miniupnpc/miniupnpc.h>
 //! ----------------------------------------------------------------------------
 //! constants
 //! ----------------------------------------------------------------------------
-#ifndef _TRUE
-#define _TRUE 1
+#ifndef NTRNT_STATUS_OK
+#define NTRNT_STATUS_OK 0
 #endif
-#ifndef _FALSE
-#define _FALSE 0
-#endif
-#ifndef STATUS_OK
-#define STATUS_OK 0
-#endif
-#ifndef STATUS_ERROR
-#define STATUS_ERROR -1
+#ifndef NTRNT_STATUS_ERROR
+#define NTRNT_STATUS_ERROR -1
 #endif
 //! ----------------------------------------------------------------------------
 //! debug macros
@@ -37,6 +35,30 @@
                         fflush(stdout); \
                 } while(0)
 #endif
+namespace ns_ntrnt {
+//! ----------------------------------------------------------------------------
+//! \class: upnp
+//! ----------------------------------------------------------------------------
+class upnp {
+public:
+        // -------------------------------------------------
+        // public methods
+        // -------------------------------------------------
+        upnp(void);
+        ~upnp(void);
+        int32_t init(void);
+        int32_t teardown(void);
+        int32_t add_port_mapping(uint16_t a_port);
+        int32_t delete_port_mapping(uint16_t a_port);
+private:
+        // -------------------------------------------------
+        // public members
+        // -------------------------------------------------
+        struct UPNPUrls m_urls;
+        struct IGDdatas m_datas;
+        char m_lan_addr[16];
+};
+}
 //! ----------------------------------------------------------------------------
 //! prototypes
 //! ----------------------------------------------------------------------------

@@ -32,3 +32,8 @@ build/
 *.exe
 *.out
 *.app
+
+# eclipse project
+.cproject
+.project
+.settings/

@@ -22,6 +22,7 @@
 #include "support/trace.h"
 #include "support/ndebug.h"
 #include "support/util.h"
+#include "lan/upnp.h"
 //! ----------------------------------------------------------------------------
 //! constants
 //! ----------------------------------------------------------------------------
@@ -230,7 +231,7 @@ int main(int argc, char** argv)
                         //':', and preceeded by an automatic
                         // error message.
                         // ---------------------------------
-                        fprintf(stderr, "  Exiting.\n");
+                        NDBG_ERROR_AT("unrecognized argument.  Exiting.\n");
                         return STATUS_ERROR;
                 }
                 // -----------------------------------------
@@ -258,7 +259,7 @@ int main(int argc, char** argv)
         // -------------------------------------------------
         if (l_torrent.empty())
         {
-                fprintf(stderr, "Error torrent file must be specified.\n");
+                NDBG_ERROR_AT("Error torrent file must be specified.\n");
                 return STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -268,7 +269,7 @@ int main(int argc, char** argv)
         l_s = l_trnt.init(l_torrent.c_str());
         if (l_s != NTRNT_STATUS_OK)
         {
-                fprintf(stderr, "Error performing read_file(%s).  Reason: %s.\n",
+                NDBG_ERROR_AT("error performing read_file(%s).  Reason: %s.\n",
                                 l_torrent.c_str(),
                                 ns_ntrnt::get_err_msg());
                 return STATUS_ERROR;
@@ -278,7 +279,7 @@ int main(int argc, char** argv)
         // -------------------------------------------------
         if (signal(SIGINT, _sig_handler) == SIG_ERR)
         {
-                printf("Error: can't catch SIGINT\n");
+                NDBG_ERROR_AT("error: can't catch SIGINT\n");
                 return STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -292,13 +293,54 @@ int main(int argc, char** argv)
         l_peer_id = ns_ntrnt::get_peer_id();
         NDBG_PRINT("peer_id: %s\n", l_peer_id.c_str());
         // -------------------------------------------------
-        // run...
+        // session
         // -------------------------------------------------
         ns_ntrnt::session l_ses(l_peer_id, l_trnt);
         g_session = &l_ses;
-        l_ses.run();
+        // -------------------------------------------------
+        // port forwarding setup
+        // -------------------------------------------------
+        int32_t l_ret = STATUS_OK;
+        uint16_t l_port = 51413;
+        ns_ntrnt::upnp l_upnp;
+        l_s = l_upnp.init();
+        if (l_s != NTRNT_STATUS_OK)
+        {
+                NDBG_ERROR_AT("error performing upnp::init\n");
+                l_ret = STATUS_ERROR;
+                goto cleanup;
+        }
+        l_s = l_upnp.add_port_mapping(l_port);
+        if (l_s != NTRNT_STATUS_OK)
+        {
+                NDBG_ERROR_AT("error performing upnp::add_port_mapping (port: %u)\n", l_port);
+                l_ret = STATUS_ERROR;
+                goto cleanup;
+        }
+        // -------------------------------------------------
+        // run...
+        // -------------------------------------------------
+        l_s = l_ses.run();
+        if (l_s != NTRNT_STATUS_OK)
+        {
+                NDBG_ERROR_AT("error performing session::run\n");
+                l_ret = STATUS_ERROR;
+                goto cleanup;
+        }
         // -------------------------------------------------
         // cleanup...
         // -------------------------------------------------
-        return STATUS_OK;
+cleanup:
+        NDBG_PRINT("shutting down\n");
+        l_s = l_upnp.delete_port_mapping(l_port);
+        if (l_s != NTRNT_STATUS_OK)
+        {
+                NDBG_ERROR_AT("error performing upnp::delete_port_mapping (port: %u)\n", l_port);
+                l_ret = STATUS_ERROR;
+                goto cleanup;
+        }
+        // -------------------------------------------------
+        // done...
+        // -------------------------------------------------
+        return l_ret;
 }

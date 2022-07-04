@@ -65,6 +65,21 @@
 #ifndef NDBG_PRINT_BT
 #define NDBG_PRINT_BT() print_bt(__FILE__,__FUNCTION__,__LINE__)
 #endif
+#ifndef NDBG_ERROR
+#define NDBG_ERROR(...) \
+        do { \
+                fprintf(stderr, __VA_ARGS__); \
+                fflush(stderr); \
+        } while(0)
+#endif
+#ifndef NDBG_ERROR_AT
+#define NDBG_ERROR_AT(...) \
+        do { \
+                fprintf(stderr, "%s:%s.%d: ", __FILE__, __FUNCTION__, __LINE__); \
+                fprintf(stderr, __VA_ARGS__);               \
+                fflush(stderr); \
+        } while(0)
+#endif
 //! ----------------------------------------------------------------------------
 //! POD
 //! ----------------------------------------------------------------------------

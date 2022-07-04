@@ -43,7 +43,7 @@ int32_t echo_server(uint16_t a_port)
         if (listenfd < 0)
         {
                 NDBG_PRINT("ERROR opening socket");
-                return STATUS_ERROR;
+                return NTRNT_STATUS_ERROR;
         }
         optval = 1;
         setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&optval , sizeof(int));
@@ -54,12 +54,12 @@ int32_t echo_server(uint16_t a_port)
         if (bind(listenfd, (struct sockaddr *) &serveraddr, sizeof(serveraddr)) < 0)
         {
                 NDBG_PRINT("ERROR on binding");
-                return STATUS_ERROR;
+                return NTRNT_STATUS_ERROR;
         }
         if (listen(listenfd, 5) < 0)
         {
                 NDBG_PRINT("ERROR on listen");
-                return STATUS_ERROR;
+                return NTRNT_STATUS_ERROR;
         }
         clientlen = sizeof(clientaddr);
         while (1) {
@@ -67,19 +67,19 @@ int32_t echo_server(uint16_t a_port)
                 if (connfd < 0)
                 {
                         NDBG_PRINT("ERROR on accept");
-                        return STATUS_ERROR;
+                        return NTRNT_STATUS_ERROR;
                 }
                 hostp = gethostbyaddr((const char *)&clientaddr.sin_addr.s_addr, sizeof(clientaddr.sin_addr.s_addr), AF_INET);
                 if (hostp == NULL)
                 {
                         NDBG_PRINT("ERROR on gethostbyaddr");
-                        return STATUS_ERROR;
+                        return NTRNT_STATUS_ERROR;
                 }
                 hostaddrp = inet_ntoa(clientaddr.sin_addr);
                 if (hostaddrp == NULL)
                 {
                         NDBG_PRINT("ERROR on inet_ntoa\n");
-                        return STATUS_ERROR;
+                        return NTRNT_STATUS_ERROR;
                 }
                 NDBG_OUTPUT(": server established connection with %s (%s)\n", hostp->h_name, hostaddrp);
                 bzero(buf, BUFSIZE);
@@ -87,16 +87,16 @@ int32_t echo_server(uint16_t a_port)
                 if (n < 0)
                 {
                         NDBG_PRINT("ERROR reading from socket");
-                        return STATUS_ERROR;
+                        return NTRNT_STATUS_ERROR;
                 }
                 NDBG_OUTPUT(": server received %d bytes: %s\n", n, buf);
                 n = write(connfd, buf, strlen(buf));
                 if (n < 0)
                 {
                         NDBG_PRINT("ERROR writing to socket");
-                        return STATUS_ERROR;
+                        return NTRNT_STATUS_ERROR;
                 }
                 close(connfd);
         }
-        return STATUS_OK;
+        return NTRNT_STATUS_OK;
 }

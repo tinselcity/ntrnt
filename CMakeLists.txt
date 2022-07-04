@@ -94,7 +94,11 @@ if(BUILD_TCMALLOC)
     add_definitions(-DBUILD_TCMALLOC)
 endif()
 # ------------------------------------------------------------------------------
-#
+# search for libminiupnpc
+# ------------------------------------------------------------------------------
+fail_if_not_found_library(libminiupnpc.a)
+# ------------------------------------------------------------------------------
+# std libraries
 # ------------------------------------------------------------------------------
 set(LIBRARIES ${LIBRARIES} dl)
 set(LIBRARIES ${LIBRARIES} pthread)
