@@ -81,7 +81,7 @@ int32_t tracker_tcp::announce(session& a_session, torrent& a_torrent)
         char l_info_hash_encoded[64];
         encode_digest(l_info_hash_encoded, a_torrent.get_info_hash(), SHA_DIGEST_LENGTH);
         // -------------------------------------------------
-        // create subrequest
+        // create request
         // -------------------------------------------------
         tracker_tcp_rqst *l_rqst = new tracker_tcp_rqst();
         l_rqst->m_scheme = m_scheme;

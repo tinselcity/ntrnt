@@ -21,6 +21,7 @@ class nbq;
 class torrent;
 class tracker;
 class tracker_tcp_rqst;
+class tracker_udp_rqst;
 class nresolver;
 //! ----------------------------------------------------------------------------
 //! types
@@ -34,7 +35,8 @@ public:
         // -------------------------------------------------
         // public types
         // -------------------------------------------------
-        typedef std::list <tracker_tcp_rqst *> http_subr_list_t;
+        typedef std::list <tracker_tcp_rqst *> tcp_rqst_list_t;
+        typedef std::list <tracker_udp_rqst *> udp_rqst_list_t;
         // -------------------------------------------------
         // public methods
         // -------------------------------------------------
@@ -45,7 +47,8 @@ public:
         int32_t run(void);
         void signal(void);
         void stop(void);
-        int32_t enqueue(tracker_tcp_rqst& a_subr);
+        int32_t enqueue(tracker_udp_rqst& a_rqst);
+        int32_t enqueue(tracker_tcp_rqst& a_rqst);
         void display(void);
         bool is_running(void) { return !m_stopped; }
         bool get_stopped(void) { return (bool)m_stopped; }
@@ -57,7 +60,8 @@ public:
         // -------------------------------------------------
         // public members
         // -------------------------------------------------
-        http_subr_list_t m_http_subr_list;
+        tcp_rqst_list_t m_tcp_rqst_list;
+        udp_rqst_list_t m_udp_rqst_list;
         nbq *m_orphan_in_q;
         nbq *m_orphan_out_q;
 private:
@@ -67,11 +71,11 @@ private:
         // disallow copy/assign
         session(const session&);
         session& operator=(const session&);
-        int32_t subr_start(tracker_tcp_rqst &a_subr);
         // -------------------------------------------------
         // private static
         // -------------------------------------------------
-        static int32_t http_subr_dequeue(void *a_data);
+        static int32_t tcp_rqst_dequeue(void *a_data);
+        static int32_t udp_rqst_dequeue(void *a_data);
         // -------------------------------------------------
         // private members
         // -------------------------------------------------

@@ -82,11 +82,9 @@ int32_t tracker_udp::announce(session& a_session, torrent& a_torrent)
         char l_info_hash_encoded[64];
         encode_digest(l_info_hash_encoded, a_torrent.get_info_hash(), SHA_DIGEST_LENGTH);
         // -------------------------------------------------
-        // create subrequest
+        // create request
         // -------------------------------------------------
-        // TODO
-#if 0
-        tracker_http_subr *l_rqst = new tracker_http_subr();
+        tracker_udp_rqst *l_rqst = new tracker_udp_rqst();
         l_rqst->m_scheme = m_scheme;
         l_rqst->m_port = m_port;
         l_rqst->m_host = m_host;
@@ -131,7 +129,6 @@ int32_t tracker_udp::announce(session& a_session, torrent& a_torrent)
                 // TODO --cancel pending...
                 return NTRNT_STATUS_ERROR;
         }
-#endif
         return NTRNT_STATUS_OK;
 }
 }

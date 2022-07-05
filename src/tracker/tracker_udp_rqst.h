@@ -3,21 +3,20 @@
 //! ----------------------------------------------------------------------------
 //! includes
 //! ----------------------------------------------------------------------------
-#if 0
 // ---------------------------------------------------------
 // internal
 // ---------------------------------------------------------
+#if 0
 #include "http/http_status.h"
 #include "conn/scheme.h"
+#endif
 #include "support/data.h"
 // ---------------------------------------------------------
 // stl
 // ---------------------------------------------------------
 #include <string>
 #include <list>
-#endif
 namespace ns_ntrnt {
-#if 0
 //! ----------------------------------------------------------------------------
 //! fwd decl's
 //! ----------------------------------------------------------------------------
@@ -46,14 +45,17 @@ public:
         tracker_udp_rqst(void);
         ~tracker_udp_rqst();
         int set_query(const std::string &a_key, const std::string &a_val);
+        int32_t start(session &a_session);
         int32_t serialize(nbq &ao_q);
+#if 0
         const std::string &get_label(void);
         void reset_label(void);
-        int32_t start(session &a_session);
+#endif
         bool get_expect_resp_body_flag(void);
         // -------------------------------------------------
         // Public Static (class) methods
         // -------------------------------------------------
+#if 0
         static int32_t evr_fd_readable_cb(void *a_data);
         static int32_t evr_fd_writeable_cb(void *a_data);
         static int32_t evr_fd_error_cb(void *a_data);
@@ -65,6 +67,7 @@ public:
                                 session &a_session,
                                 nconn &a_nconn,
                                 http_status_t a_status);
+#endif
         // -------------------------------------------------
         // public members
         // -------------------------------------------------
@@ -82,12 +85,14 @@ public:
         // -------------------------------------------------
         // event properties
         // -------------------------------------------------
+#if 0
         uint32_t m_timeout_ms;
         uint64_t m_last_active_ms;
         evr_event_t *m_evr_timeout;
         evr_event_t *m_evr_readable;
         evr_event_t *m_evr_writeable;
         bool m_again;
+#endif
         // -------------------------------------------------
         // buffer queues
         // -------------------------------------------------
@@ -105,6 +110,5 @@ private:
         tracker_udp_rqst& operator=(const tracker_udp_rqst &);
         tracker_udp_rqst(const tracker_udp_rqst &);
 };
-#endif
 } //namespace ns_ntrnt {
 #endif

@@ -1,7 +1,6 @@
 //! ----------------------------------------------------------------------------
 //! includes
 //! ----------------------------------------------------------------------------
-#if 0
 // ---------------------------------------------------------
 // external
 // ---------------------------------------------------------
@@ -9,17 +8,21 @@
 // ---------------------------------------------------------
 // internal
 // ---------------------------------------------------------
-#include "support/nbq.h"
-#include "support/nconn_pool.h"
 #include "support/ndebug.h"
-#include "support/trace.h"
+#include "support/nbq.h"
 #include "conn/host_info.h"
-#include "conn/nconn.h"
-#include "conn/nconn_tls.h"
 #include "core/session.h"
 #include "dns/nresolver.h"
 #include "http/http_resp.h"
+#if 0
+#include "support/nconn_pool.h"
+#include "support/trace.h"
+#include "conn/nconn.h"
+#include "conn/nconn_tls.h"
 #include "bencode/bencode.h"
+#endif
+#include "conn/scheme.h"
+#include "tracker/tracker_udp_rqst.h"
 // ---------------------------------------------------------
 // 3rd party
 // ---------------------------------------------------------
@@ -27,11 +30,13 @@
 // ---------------------------------------------------------
 // std
 // ---------------------------------------------------------
+#if 0
 #include <string.h>
 #endif
 //! ----------------------------------------------------------------------------
 //! macros
 //! ----------------------------------------------------------------------------
+#if 0
 #define _SET_NCONN_OPT(_conn, _opt, _buf, _len) \
         do { \
                 int _status = 0; \
@@ -42,6 +47,7 @@
                         return NTRNT_STATUS_ERROR;\
                 } \
         } while(0)
+#endif
 namespace ns_ntrnt {
 #if 0
 //! ----------------------------------------------------------------------------
@@ -53,7 +59,7 @@ static int32_t run_state_machine(void *a_data, evr_mode_t a_conn_mode)
 {
         NDBG_PRINT("RUN a_conn_mode: %d a_data: %p\n", a_conn_mode, a_data);
         //CHECK_FOR_NULL_ERROR(a_data);
-        // TODO -return OK for a_data == NULL
+        // TODO -return OK for a_data == nullptr
         if (!a_data)
         {
                 return NTRNT_STATUS_OK;
@@ -106,7 +112,7 @@ static int32_t run_state_machine(void *a_data, evr_mode_t a_conn_mode)
                 // calc time since last active
                 if (!l_rqst)
                 {
-                        TRC_ERROR("a_conn_mode[%d] session[%p] || t_srvr[%p] == NULL\n",
+                        TRC_ERROR("a_conn_mode[%d] session[%p] || t_srvr[%p] == nullptr\n",
                                         a_conn_mode,
                                         l_rqst,
                                         &l_ses);
@@ -248,7 +254,7 @@ state_top:
                 // -----------------------------------------
                 case EVR_MODE_READ:
                 {
-                        nbq *l_in_q = NULL;
+                        nbq *l_in_q = nullptr;
                         if (l_rqst)
                         {
                                 l_in_q = l_rqst->m_in_q;
@@ -261,12 +267,12 @@ state_top:
                         }
                         if (!l_in_q)
                         {
-                                TRC_ERROR("l_in_q == NULL\n");
+                                TRC_ERROR("l_in_q == nullptr\n");
                                 return NTRNT_STATUS_ERROR;
                         }
                         uint32_t l_read = 0;
                         int32_t l_s = nconn::NC_STATUS_OK;
-                        char *l_buf = NULL;
+                        char *l_buf = nullptr;
                         uint64_t l_off = l_in_q->get_cur_write_offset();
                         l_s = l_nconn.nc_read(l_in_q, &l_buf, l_read);
                         //l_ses.m_stat.m_upsv_bytes_read += l_read;
@@ -289,7 +295,7 @@ state_top:
                                         l_rqst->m_resp->show();
                                 }
                                 // disassociate connection
-                                l_nconn.set_data(NULL);
+                                l_nconn.set_data(nullptr);
                                 int32_t l_s;
                                 l_s = tracker_udp_rqst::teardown(l_rqst, l_ses, l_nconn, HTTP_STATUS_OK);
                                 // TODO -check status...
@@ -344,7 +350,7 @@ state_top:
                                 {
                                         return NTRNT_STATUS_OK;
                                 }
-                                l_nconn.set_data(NULL);
+                                l_nconn.set_data(nullptr);
                                 int32_t l_status;
                                 l_status = l_ses.get_conn_pool().add_idle(&l_nconn);
                                 if (l_status != NTRNT_STATUS_OK)
@@ -415,7 +421,7 @@ state_top:
                                 // -------------------------
                                 l_rqst->cancel_evr_timer();
                                 // TODO Check status
-                                l_rqst->m_evr_timeout = NULL;
+                                l_rqst->m_evr_timeout = nullptr;
                                 // -------------------------
                                 // check can reuse
                                 // -------------------------
@@ -471,20 +477,20 @@ state_top:
                                 if (l_rqst->m_out_q)
                                 {
                                         delete l_rqst->m_out_q;
-                                        l_rqst->m_out_q = NULL;
+                                        l_rqst->m_out_q = nullptr;
                                 }
                                 if (l_rqst->m_resp)
                                 {
                                         delete l_rqst->m_resp;
-                                        l_rqst->m_resp = NULL;
+                                        l_rqst->m_resp = nullptr;
                                 }
                                 delete l_rqst->m_in_q;
-                                l_rqst->m_in_q = NULL;
+                                l_rqst->m_in_q = nullptr;
                                 // -------------------------
                                 // set idle
                                 // -------------------------
-                                //l_rqst->m_nconn = NULL;
-                                l_rqst = NULL;
+                                //l_rqst->m_nconn = nullptr;
+                                l_rqst = nullptr;
                                 l_idle = true;
                                 goto state_top;
                         }
@@ -495,7 +501,7 @@ state_top:
                 // -----------------------------------------
                 case EVR_MODE_WRITE:
                 {
-                        nbq *l_out_q = NULL;
+                        nbq *l_out_q = nullptr;
                         if (l_rqst)
                         {
                                 l_out_q = l_rqst->m_out_q;
@@ -553,7 +559,7 @@ state_top:
                                 {
                                         return NTRNT_STATUS_OK;
                                 }
-                                l_nconn.set_data(NULL);
+                                l_nconn.set_data(nullptr);
                                 int32_t l_status;
                                 l_status = l_ses.get_conn_pool().add_idle(&l_nconn);
                                 if (l_status != NTRNT_STATUS_OK)
@@ -604,6 +610,7 @@ state_top:
         }
         return NTRNT_STATUS_OK;
 }
+#endif
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
@@ -618,15 +625,17 @@ tracker_udp_rqst::tracker_udp_rqst(void):
         m_path(),
         m_verb("GET"),
         m_query_list(),
+#if 0
         m_timeout_ms(10000),
         m_last_active_ms(0),
-        m_evr_timeout(NULL),
-        m_evr_readable(NULL),
-        m_evr_writeable(NULL),
+        m_evr_timeout(nullptr),
+        m_evr_readable(nullptr),
+        m_evr_writeable(nullptr),
         m_again(false),
-        m_in_q(NULL),
-        m_out_q(NULL),
-        m_resp(NULL)
+#endif
+        m_in_q(nullptr),
+        m_out_q(nullptr),
+        m_resp(nullptr)
 {
 }
 //! ----------------------------------------------------------------------------
@@ -636,27 +645,16 @@ tracker_udp_rqst::tracker_udp_rqst(void):
 //! ----------------------------------------------------------------------------
 tracker_udp_rqst::~tracker_udp_rqst(void)
 {
-        if (m_resp)
-        {
-                delete m_resp;
-                m_resp = NULL;
-        }
-        if (m_in_q)
-        {
-                delete m_in_q;
-                m_in_q = NULL;
-        }
-        if (m_out_q)
-        {
-                delete m_out_q;
-                m_out_q = NULL;
-        }
+        if (m_resp) { delete m_resp; m_resp = nullptr; }
+        if (m_in_q) { delete m_in_q; m_in_q = nullptr; }
+        if (m_out_q) { delete m_out_q; m_out_q = nullptr; }
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
+#if 0
 const std::string &tracker_udp_rqst::get_label(void)
 {
         if (m_label.empty())
@@ -700,6 +698,7 @@ void tracker_udp_rqst::reset_label(void)
         snprintf(l_port_str, 16, ":%u", m_port);
         m_label += l_port_str;
 }
+#endif
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
@@ -784,7 +783,7 @@ int32_t tracker_udp_rqst::serialize(nbq &ao_q)
         // -------------------------------------------------
         // body
         // -------------------------------------------------
-        nbq_write_body(ao_q, NULL, 0);
+        nbq_write_body(ao_q, nullptr, 0);
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -795,106 +794,51 @@ int32_t tracker_udp_rqst::serialize(nbq &ao_q)
 int32_t tracker_udp_rqst::start(session &a_session)
 {
         NDBG_PRINT("start...\n");
-        int32_t l_s;
-        std::string l_error;
         // -------------------------------------------------
         // set state to none
         // -------------------------------------------------
         m_state = tracker_udp_rqst::STATE_NONE;
         // -------------------------------------------------
-        // try get idle from proxy pool
+        // resolve host
         // -------------------------------------------------
-        nconn_pool& l_conn_pool = a_session.get_conn_pool();
         nresolver& l_resolver = a_session.get_resolver();
-        nconn *l_nconn = NULL;
-        l_nconn = l_conn_pool.get_idle(get_label());
-        if (!l_nconn)
+        // -------------------------------------------------
+        // try fast resolve
+        // -------------------------------------------------
+        int32_t l_s;
+        host_info l_host_info;
+        NDBG_PRINT("resolve: %s\n", m_host.c_str());
+        l_s = l_resolver.lookup_tryfast(m_host,
+                                        m_port,
+                                        l_host_info);
+        NDBG_PRINT("l_resolver: %d\n", l_s);
+        // -------------------------------------------------
+        // fallback to slow resolve
+        // -------------------------------------------------
+        if (l_s != NTRNT_STATUS_OK)
         {
-                NDBG_PRINT("l_nconn: %p\n", l_nconn);
-                // -----------------------------------------
-                // Check for available active connections
-                // If we maxed out -try again later...
-                // -----------------------------------------
-                if (!l_conn_pool.get_active_available())
-                {
-                        return NTRNT_STATUS_AGAIN;
-                }
-                // Try fast
-                host_info l_host_info;
-                NDBG_PRINT("resolve: %s\n", m_host.c_str());
-                l_s = l_resolver.lookup_tryfast(m_host,
-                                                m_port,
-                                                l_host_info);
-                NDBG_PRINT("l_resolver: %d\n", l_s);
+                // sync dns
+                l_s = l_resolver.lookup_sync(m_host, m_port, l_host_info);
                 if (l_s != NTRNT_STATUS_OK)
                 {
-                        // sync dns
-                        l_s = l_resolver.lookup_sync(m_host, m_port, l_host_info);
-                        if (l_s != NTRNT_STATUS_OK)
-                        {
-                                NDBG_PRINT("Error: performing lookup_sync\n");
-                                //++m_stat.m_upsv_errors;
-                                return NTRNT_STATUS_ERROR;
-                        }
-                        else
-                        {
-                                //++(m_stat.m_dns_resolved);
-                        }
+                        NDBG_PRINT("Error: performing lookup_sync\n");
+                        //++m_stat.m_upsv_errors;
+                        return NTRNT_STATUS_ERROR;
                 }
-                // -----------------------------------------
-                // connection setup
-                // -----------------------------------------
-                l_nconn = l_conn_pool.get_new_active(get_label(), m_scheme);
-                if (!l_nconn)
+                else
                 {
-                        //NDBG_PRINT("Returning NULL\n");
-                        return NTRNT_STATUS_AGAIN;
+                        //++(m_stat.m_dns_resolved);
                 }
-                l_nconn->set_ctx(this);
-                // TODO make configurable
-                l_nconn->set_num_reqs_per_conn(1000);
-                //l_nconn->set_collect_stats(l_t_conf.m_collect_stats);
-                l_nconn->setup_evr_fd(tracker_udp_rqst::evr_fd_readable_cb,
-                                      tracker_udp_rqst::evr_fd_writeable_cb,
-                                      tracker_udp_rqst::evr_fd_error_cb);
-                if (l_nconn->get_scheme() == SCHEME_TLS)
-                {
-                        SSL_CTX* l_ctx = a_session.get_client_ssl_ctx();
-                        bool l_val = true;
-                        _SET_NCONN_OPT((*l_nconn),nconn_tls::OPT_TLS_CTX, l_ctx, sizeof(l_ctx));
-                        _SET_NCONN_OPT((*l_nconn), nconn_tls::OPT_TLS_SNI, &(l_val), sizeof(bool));
-                        _SET_NCONN_OPT((*l_nconn), nconn_tls::OPT_TLS_HOSTNAME, m_host.c_str(), m_host.length());
-                }
-                l_nconn->set_host_info(l_host_info);
-                //a_subr.m_host_info = l_host_info;
-                // -----------------------------------------
-                // Reset stats
-                // -----------------------------------------
-                //l_nconn->reset_stats();
-                // stats
-                //++m_stat.m_upsv_conn_started;
-                //m_stat.m_pool_proxy_conn_active = m_nconn_proxy_pool.get_active_size();
-        }
-        // -------------------------------------------------
-        // If we grabbed an idle connection spoof connect
-        // time for stats
-        // -------------------------------------------------
-        else
-        {
-                // Reset stats
-                //l_nconn->reset_stats();
-                //if (l_nconn->get_collect_stats_flag())
-                //{
-                //        l_nconn->set_connect_start_time_us(get_time_us());
-                //}
         }
         // -------------------------------------------------
         // setup
         // -------------------------------------------------
-        m_evr_timeout = NULL;
+#if 0
+        m_evr_timeout = nullptr;
         //m_nconn = l_nconn;
         l_nconn->set_data(this);
         l_nconn->set_evr_loop(a_session.get_evr_loop());
+#endif
         // -------------------------------------------------
         // resp
         // -------------------------------------------------
@@ -905,14 +849,14 @@ int32_t tracker_udp_rqst::start(session &a_session)
         // -------------------------------------------------
         // in q
         // -------------------------------------------------
-        m_in_q = a_session.get_nbq(NULL);
+        m_in_q = a_session.get_nbq(nullptr);
         m_resp->set_q(m_in_q);
         // -------------------------------------------------
         // out q
         // -------------------------------------------------
         if (!m_out_q)
         {
-                m_out_q = a_session.get_nbq(NULL);
+                m_out_q = a_session.get_nbq(nullptr);
         }
         else
         {
@@ -924,18 +868,24 @@ int32_t tracker_udp_rqst::start(session &a_session)
         l_s = serialize(*(m_out_q));
         if (l_s != NTRNT_STATUS_OK)
         {
+#if 0
                 return tracker_udp_rqst::evr_fd_error_cb(l_nconn);
+#endif
         }
         // -------------------------------------------------
         // start writing request
         // -------------------------------------------------
+#if 0
         return tracker_udp_rqst::evr_fd_writeable_cb(l_nconn);
+#endif
+        return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
+#if 0
 int32_t tracker_udp_rqst::teardown(tracker_udp_rqst *a_subr,
                             session &a_session,
                             nconn &a_nconn,
@@ -965,7 +915,7 @@ int32_t tracker_udp_rqst::cancel_evr_timer(void)
         {
                 return NTRNT_STATUS_OK;
         }
-        m_evr_timeout = NULL;
+        m_evr_timeout = nullptr;
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -1014,7 +964,7 @@ int32_t tracker_udp_rqst::evr_event_timeout_cb(void *a_data)
         if (l_rqst &&
             l_rqst->m_evr_timeout)
         {
-                l_rqst->m_evr_timeout = NULL;
+                l_rqst->m_evr_timeout = nullptr;
         }
         return run_state_machine(a_data, EVR_MODE_TIMEOUT);
 }
@@ -1037,7 +987,7 @@ int32_t tracker_udp_rqst::evr_event_readable_cb(void *a_data)
         if (l_rqst &&
             l_rqst->m_evr_readable)
         {
-                l_rqst->m_evr_readable = NULL;
+                l_rqst->m_evr_readable = nullptr;
         }
         NDBG_PRINT("readable\n");
         return run_state_machine(a_data, EVR_MODE_READ);
@@ -1061,7 +1011,7 @@ int32_t tracker_udp_rqst::evr_event_writeable_cb(void *a_data)
         if (l_rqst &&
             l_rqst->m_evr_writeable)
         {
-                l_rqst->m_evr_writeable = NULL;
+                l_rqst->m_evr_writeable = nullptr;
         }
         return run_state_machine(a_data, EVR_MODE_WRITE);
 }

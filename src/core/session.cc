@@ -17,14 +17,14 @@
 #include "core/session.h"
 #include "conn/nconn.h"
 #include "conn/nconn_tls.h"
-#include "tracker/tracker.h"
 #include "dns/nresolver.h"
+#include "tracker/tracker.h"
+#include "tracker/tracker_tcp_rqst.h"
+#include "tracker/tracker_udp_rqst.h"
 // ---------------------------------------------------------
 // openssl includes
 // ---------------------------------------------------------
 #include <openssl/ssl.h>
-
-#include "../tracker/tracker_tcp_rqst.h"
 //! ----------------------------------------------------------------------------
 //! constants
 //! ----------------------------------------------------------------------------
@@ -37,7 +37,7 @@ namespace ns_ntrnt {
 //! ----------------------------------------------------------------------------
 session::session(const std::string& a_peer_id,
                  torrent& a_torrent):
-        m_http_subr_list(),
+        m_tcp_rqst_list(),
         m_orphan_in_q(NULL),
         m_orphan_out_q(NULL),
         m_is_initd(false),
@@ -304,24 +304,48 @@ void session::stop(void)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t session::enqueue(tracker_tcp_rqst& a_subr)
+int32_t session::enqueue(tracker_tcp_rqst& a_rqst)
 {
         // -------------------------------------------------
         // enqueue
         // -------------------------------------------------
-        a_subr.m_state = tracker_tcp_rqst::STATE_QUEUED;
-        m_http_subr_list.push_back(&a_subr);
+        a_rqst.m_state = tracker_tcp_rqst::STATE_QUEUED;
+        m_tcp_rqst_list.push_back(&a_rqst);
         // -------------------------------------------------
         // queue event
         // TODO -make 0 a define like EVR_EVENT_QUEUE_NOW
         // -------------------------------------------------
         int32_t l_s;
         evr_event *l_event = nullptr;
-        l_s = m_evr_loop->add_event(0, http_subr_dequeue, this, &l_event);
+        l_s = m_evr_loop->add_event(0, tcp_rqst_dequeue, this, &l_event);
         // TODO CHECK STATUS!!!
         (void)l_s;
         return NTRNT_STATUS_OK;
 }
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int32_t session::enqueue(tracker_udp_rqst& a_rqst)
+{
+        // -------------------------------------------------
+        // enqueue
+        // -------------------------------------------------
+        a_rqst.m_state = tracker_udp_rqst::STATE_QUEUED;
+        m_udp_rqst_list.push_back(&a_rqst);
+        // -------------------------------------------------
+        // queue event
+        // TODO -make 0 a define like EVR_EVENT_QUEUE_NOW
+        // -------------------------------------------------
+        int32_t l_s;
+        evr_event *l_event = nullptr;
+        l_s = m_evr_loop->add_event(0, udp_rqst_dequeue, this, &l_event);
+        // TODO CHECK STATUS!!!
+        (void)l_s;
+        return NTRNT_STATUS_OK;
+}
+
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
@@ -358,7 +382,7 @@ void session::display(void)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t session::http_subr_dequeue(void *a_data)
+int32_t session::tcp_rqst_dequeue(void *a_data)
 {
         // TODO FIX!!!
         if (!a_data)
@@ -368,27 +392,82 @@ int32_t session::http_subr_dequeue(void *a_data)
         }
         session &l_session = *(static_cast <session *>(a_data));
         NDBG_PRINT("%sSTART%s\n", ANSI_COLOR_BG_GREEN, ANSI_COLOR_OFF);
-        NDBG_PRINT("l_session.m_http_subr_list.size(): %d\n", (int)l_session.m_http_subr_list.size());
+        NDBG_PRINT("l_session.m_tcp_rqst_list.size(): %d\n", (int)l_session.m_tcp_rqst_list.size());
         // -------------------------------------------------
         // dequeue until stopped or empty
         // -------------------------------------------------
-        while(l_session.m_http_subr_list.size() &&
+        while(l_session.m_tcp_rqst_list.size() &&
               !l_session.get_stopped())
         {
                 // -----------------------------------------
                 // dequeue
                 // -----------------------------------------
-                if (!l_session.m_http_subr_list.front())
+                if (!l_session.m_tcp_rqst_list.front())
                 {
-                        l_session.m_http_subr_list.pop_front();
+                        l_session.m_tcp_rqst_list.pop_front();
                         continue;
                 }
                 // -----------------------------------------
                 // get front
                 // -----------------------------------------
                 NDBG_PRINT("%sSTART%s\n", ANSI_COLOR_BG_GREEN, ANSI_COLOR_OFF);
-                tracker_tcp_rqst &l_rqst = *(l_session.m_http_subr_list.front());
-                l_session.m_http_subr_list.pop_front();
+                tracker_tcp_rqst &l_rqst = *(l_session.m_tcp_rqst_list.front());
+                l_session.m_tcp_rqst_list.pop_front();
+                // -----------------------------------------
+                // start
+                // -----------------------------------------
+                int32_t l_s = NTRNT_STATUS_OK;
+                l_s = l_rqst.start(l_session);
+                if (l_s == NTRNT_STATUS_AGAIN)
+                {
+                        // break since ran out of available connections
+                        l_session.enqueue(l_rqst);
+                        break;
+                }
+                else if (l_s != NTRNT_STATUS_OK)
+                {
+                        // TODO -log error???
+                        return NTRNT_STATUS_ERROR;
+                }
+        }
+        return NTRNT_STATUS_OK;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int32_t session::udp_rqst_dequeue(void *a_data)
+{
+        // TODO FIX!!!
+        if (!a_data)
+        {
+                // TODO -log error???
+                return NTRNT_STATUS_ERROR;
+        }
+        session &l_session = *(static_cast <session *>(a_data));
+        NDBG_PRINT("%sSTART%s\n", ANSI_COLOR_BG_GREEN, ANSI_COLOR_OFF);
+        NDBG_PRINT("l_session.m_udp_rqst_list.size(): %d\n", (int)l_session.m_udp_rqst_list.size());
+        // -------------------------------------------------
+        // dequeue until stopped or empty
+        // -------------------------------------------------
+        while(l_session.m_udp_rqst_list.size() &&
+              !l_session.get_stopped())
+        {
+                // -----------------------------------------
+                // dequeue
+                // -----------------------------------------
+                if (!l_session.m_udp_rqst_list.front())
+                {
+                        l_session.m_udp_rqst_list.pop_front();
+                        continue;
+                }
+                // -----------------------------------------
+                // get front
+                // -----------------------------------------
+                NDBG_PRINT("%sSTART%s\n", ANSI_COLOR_BG_GREEN, ANSI_COLOR_OFF);
+                tracker_udp_rqst &l_rqst = *(l_session.m_udp_rqst_list.front());
+                l_session.m_udp_rqst_list.pop_front();
                 // -----------------------------------------
                 // start
                 // -----------------------------------------
