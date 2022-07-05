@@ -244,24 +244,39 @@ int32_t init_tracker_w_url(tracker** ao_tracker, const char* a_url, size_t a_url
         // -------------------------------------------------
         case SCHEME_TCP:
         {
+#if 1
                 *ao_tracker = new tracker_tcp();
                 break;
+#else
+                NTRNT_PERROR("not supported.");
+                return NTRNT_STATUS_ERROR;
+#endif
         }
         // -------------------------------------------------
         // SCHEME_HTTPS
         // -------------------------------------------------
         case SCHEME_TLS:
         {
+#if 1
                 *ao_tracker = new tracker_tcp();
                 break;
+#else
+                NTRNT_PERROR("not supported.");
+                return NTRNT_STATUS_ERROR;
+#endif
         }
         // -------------------------------------------------
         // SCHEME_UDP
         // -------------------------------------------------
         case SCHEME_UDP:
         {
+#if 0
                 *ao_tracker = new tracker_udp();
                 break;
+#else
+                NTRNT_PERROR("not supported.");
+                return NTRNT_STATUS_ERROR;
+#endif
         }
         // -------------------------------------------------
         // SCHEME_WSS

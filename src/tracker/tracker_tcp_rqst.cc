@@ -73,6 +73,7 @@ static int32_t run_state_machine(void *a_data, evr_mode_t a_conn_mode)
                 return NTRNT_STATUS_DONE;
         }
         session &l_ses = *(static_cast<session *>(l_nconn.get_ctx()));
+        NDBG_PRINT("l_ses: %p\n", &l_ses);
         tracker_tcp_rqst *l_rqst = static_cast<tracker_tcp_rqst *>(l_nconn.get_data());
         // -------------------------------------------------
         // mode switch
@@ -204,6 +205,7 @@ state_top:
                 NDBG_PRINT("%sConnecting%s: host: %s\n", ANSI_COLOR_FG_RED, ANSI_COLOR_OFF, l_nconn.m_label.c_str());
                 int32_t l_s;
                 l_s = l_nconn.ncconnect();
+                NDBG_PRINT("%sConnecting%s: ncconnect: %d\n", ANSI_COLOR_FG_RED, ANSI_COLOR_OFF, l_s);
                 if (l_s == nconn::NC_STATUS_ERROR)
                 {
                         int32_t l_s;
@@ -849,7 +851,7 @@ int32_t tracker_tcp_rqst::start(session &a_session)
                         //NDBG_PRINT("Returning NULL\n");
                         return NTRNT_STATUS_AGAIN;
                 }
-                l_nconn->set_ctx(this);
+                l_nconn->set_ctx(&a_session);
                 // TODO make configurable
                 l_nconn->set_num_reqs_per_conn(1000);
                 //l_nconn->set_collect_stats(l_t_conf.m_collect_stats);
@@ -865,7 +867,7 @@ int32_t tracker_tcp_rqst::start(session &a_session)
                         _SET_NCONN_OPT((*l_nconn), nconn_tls::OPT_TLS_HOSTNAME, m_host.c_str(), m_host.length());
                 }
                 l_nconn->set_host_info(l_host_info);
-                //a_subr.m_host_info = l_host_info;
+                //a_rqst.m_host_info = l_host_info;
                 // -----------------------------------------
                 // Reset stats
                 // -----------------------------------------
@@ -935,21 +937,22 @@ int32_t tracker_tcp_rqst::start(session &a_session)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t tracker_tcp_rqst::teardown(tracker_tcp_rqst *a_subr,
-                            session &a_session,
-                            nconn &a_nconn,
-                            http_status_t a_status)
+int32_t tracker_tcp_rqst::teardown(tracker_tcp_rqst *a_rqst,
+                                   session &a_session,
+                                   nconn &a_nconn,
+                                   http_status_t a_status)
 {
-        NDBG_PRINT("%sTEARDOWN%s: a_nconn: %p a_status: %8d a_ups: %p\n",
-                   ANSI_COLOR_FG_RED, ANSI_COLOR_OFF,
-                   &a_nconn, a_status, a_subr);
-        if (!a_subr)
+        NDBG_PRINT("%sTEARDOWN%s: a_nconn[%s]: %p session: %p a_status: %8d a_rqst: %p\n",
+                   ANSI_COLOR_FG_RED,
+                   ANSI_COLOR_OFF,
+                   a_nconn.get_label().c_str(),
+                   &a_nconn,
+                   &a_session,
+                   a_status,
+                   a_rqst);
+        if(a_session.get_conn_pool().release(&a_nconn) != NTRNT_STATUS_OK)
         {
-                if (a_session.get_conn_pool().release(&a_nconn) != NTRNT_STATUS_OK)
-                {
-                        TRC_ERROR("performing m_nconn_proxy_pool.release: a_nconn: %p\n", &a_nconn);
-                }
-                return NTRNT_STATUS_OK;
+                TRC_ERROR("performing m_nconn_proxy_pool.release: a_nconn: %p\n", &a_nconn);
         }
         return NTRNT_STATUS_OK;
 }

@@ -30,9 +30,8 @@
 // ---------------------------------------------------------
 // std
 // ---------------------------------------------------------
-#if 0
 #include <string.h>
-#endif
+#include <errno.h>
 //! ----------------------------------------------------------------------------
 //! macros
 //! ----------------------------------------------------------------------------
@@ -878,6 +877,78 @@ int32_t tracker_udp_rqst::start(session &a_session)
 #if 0
         return tracker_udp_rqst::evr_fd_writeable_cb(l_nconn);
 #endif
+        // -------------------------------------------------
+        // *************************************************
+        // TODO REMOVE!!!
+        // *************************************************
+        // -------------------------------------------------
+        // -------------------------------------------------
+        // make socket
+        // -------------------------------------------------
+        NDBG_PRINT("socket...\n");
+        int l_fd = -1;
+        errno = 0;
+        l_fd = socket(l_host_info.m_sock_family, SOCK_DGRAM, 0);
+        if (l_fd == -1)
+        {
+                NDBG_PRINT("error performing socket. Reason: %s\n", strerror(errno));
+                return NTRNT_STATUS_ERROR;
+        }
+        NDBG_PRINT("socket: l_fd: %d\n", l_fd);
+        // -------------------------------------------------
+        // sendto
+        // -------------------------------------------------
+        NDBG_PRINT("sendto...\n");
+        errno = 0;
+        l_s = sendto(l_fd,
+                     m_out_q->b_read_ptr(),
+                     (size_t)(m_out_q->b_read_avail()),
+                     0,
+                     (struct sockaddr*)(&l_host_info.m_sa),
+                     l_host_info.m_sa_len);
+        NDBG_PRINT("sendto: l_s: %d\n", l_s);
+        if (l_s == -1)
+        {
+                NDBG_PRINT("error performing sendto. Reason: %s\n", strerror(errno));
+                return NTRNT_STATUS_ERROR;
+        }
+        // and not error?
+        m_out_q->b_read_incr(l_s);
+        m_out_q->shrink();
+        // -------------------------------------------------
+        // recvfrom
+        // -------------------------------------------------
+        NDBG_PRINT("recvfrom...\n");
+        struct sockaddr_storage l_from;
+        socklen_t l_from_len = sizeof(l_from);
+        socklen_t l_srvr_socklen = sizeof(sockaddr_storage);
+        char l_buf[4096];
+        l_s = recvfrom(l_fd,
+                       l_buf,
+                       4096,
+                       0,
+                       (struct sockaddr*)&l_from,
+                       &l_from_len);
+        if (l_s == -1)
+        {
+                NDBG_PRINT("error performing sendto. Reason: %s\n", strerror(errno));
+                close(l_fd);
+                l_fd = -1;
+                return NTRNT_STATUS_ERROR;
+        }
+        NDBG_PRINT("read %d bytes\n", l_s);
+        mem_display((const uint8_t*)l_buf, (size_t)l_s);
+        // -------------------------------------------------
+        // cleanup
+        // -------------------------------------------------
+        errno = 0;
+        l_s = close(l_fd);
+        l_fd = -1;
+        if (l_s != 0)
+        {
+                NDBG_PRINT("error performing close. Reason: %s\n", strerror(errno));
+                return NTRNT_STATUS_ERROR;
+        }
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
