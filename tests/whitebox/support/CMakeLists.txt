@@ -1,0 +1,5 @@
+add_ntrnt_wb_test(util)
+add_ntrnt_wb_test(net_util)
+add_ntrnt_wb_test(nbq)
+add_ntrnt_wb_test(btfield)
+add_ntrnt_wb_test(peer_id)
