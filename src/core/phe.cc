@@ -190,6 +190,10 @@ private:
         uint8_t m_s[256];
 };
 //! ----------------------------------------------------------------------------
+//! select key callback
+//! ----------------------------------------------------------------------------
+phe_select_skey_cb_t phe::s_phe_select_skey_cb = nullptr;
+//! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
 //! \param:   TODO
@@ -831,15 +835,15 @@ int32_t phe::recv_ab(nbq& a_in_q)
         // -------------------------------------------------
         // use req2 sha to look up torrent
         // -------------------------------------------------
-        if (!g_phe_select_skey_cb)
+        if (!s_phe_select_skey_cb)
         {
                 TRC_ERROR("skey selection cb not defined");
                 return NTRNT_STATUS_ERROR;
         }
-        l_s = g_phe_select_skey_cb(this, m_cb_data, l_obfx_xor, sizeof(l_obfx_xor));
+        l_s = s_phe_select_skey_cb(this, m_cb_data, l_obfx_xor, sizeof(l_obfx_xor));
         if (l_s != NTRNT_STATUS_OK)
         {
-                TRC_ERROR("performing g_phe_select_skey_cb");
+                TRC_ERROR("performing s_phe_select_skey_cb");
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------

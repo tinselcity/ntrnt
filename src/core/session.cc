@@ -26,6 +26,7 @@
 #include "core/dht_mgr.h"
 #include "core/session.h"
 #include "core/pickr.h"
+#include "core/phe.h"
 #include "core/peer.h"
 #include "core/peer_mgr.h"
 // ---------------------------------------------------------
@@ -151,6 +152,10 @@ session::session(void):
         m_geoip2_mmdb(nullptr),
         m_geoip2_db()
 {
+        // -------------------------------------------------
+        // set callback
+        // -------------------------------------------------
+        phe::s_phe_select_skey_cb = peer_phe_select_skey_cb;
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO

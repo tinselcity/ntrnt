@@ -135,7 +135,7 @@ static bool _is_handshake(const uint8_t*a_buf, size_t a_len)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-static int _phe_select_skey_cb(void* a_ctx, void* a_cb_ctx, void* a_buf, size_t a_len)
+int peer_phe_select_skey_cb(void* a_ctx, void* a_cb_ctx, void* a_buf, size_t a_len)
 {
         if (!a_ctx ||
             !a_cb_ctx)
@@ -152,10 +152,6 @@ static int _phe_select_skey_cb(void* a_ctx, void* a_cb_ctx, void* a_buf, size_t 
         return NTRNT_STATUS_OK;
 }
 }
-//! ----------------------------------------------------------------------------
-//! phe cb
-//! ----------------------------------------------------------------------------
-phe_select_skey_cb_t g_phe_select_skey_cb = ns_ntrnt::_phe_select_skey_cb;
 namespace ns_ntrnt {
 //! ----------------------------------------------------------------------------
 //! \details: TODO

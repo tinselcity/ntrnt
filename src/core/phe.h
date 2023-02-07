@@ -74,6 +74,10 @@ public:
         void get_recvd_ia(const uint8_t**ao_buf, size_t& ao_len);
         void clear_recvd_ia(void);
         void set_state(state_t a_state) { m_state = a_state; }
+        // -------------------------------------------------
+        // set select key callback
+        // -------------------------------------------------
+        static phe_select_skey_cb_t s_phe_select_skey_cb;
 private:
         // -------------------------------------------------
         // private methods

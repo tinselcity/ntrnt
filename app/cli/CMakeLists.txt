@@ -14,12 +14,6 @@ LIST(APPEND INST_HDRS ${HDRS})
 # ------------------------------------------------------------------------------
 include_directories(
     # ------------------------------------------------------
-    # brew support
-    # ------------------------------------------------------
-    /opt/homebrew/opt/openssl/include
-    /opt/homebrew/opt/miniupnpc/include
-    /opt/homebrew/opt/rapidjson/include
-    # ------------------------------------------------------
     # project
     # ------------------------------------------------------
     ${CMAKE_CURRENT_SOURCE_DIR}
@@ -50,11 +44,6 @@ set(CMAKE_CXX_FLAGS "-std=c++11")
 add_executable(ntrnt_cmd ${HDRS} ${SRCS})
 add_dependencies(ntrnt_cmd ntrnt)
 SET_TARGET_PROPERTIES(ntrnt_cmd PROPERTIES OUTPUT_NAME "ntrnt")
-# brew hacking
-target_link_directories(ntrnt_cmd PUBLIC
-    /opt/homebrew/opt/openssl/lib
-    /opt/homebrew/opt/miniupnpc/lib
-)
 target_link_libraries(ntrnt_cmd
     ${DEBUG_LIBRARIES}
     ${CMAKE_BINARY_DIR}/src/libntrntcore.a
