@@ -28,6 +28,12 @@ LIST(APPEND INST_HDRS ${HDRS})
 include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}
     # ------------------------------------------------------
+    # brew support
+    # ------------------------------------------------------
+    /opt/homebrew/opt/openssl/include
+    /opt/homebrew/opt/miniupnpc/include
+    /opt/homebrew/opt/rapidjson/include
+    # ------------------------------------------------------
     # sub
     # ------------------------------------------------------
     ${CMAKE_SOURCE_DIR}/sub
@@ -210,9 +216,15 @@ target_include_directories(ntrnt PUBLIC
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_BINARY_DIR}
 )
+# brew hacking
+target_link_directories(ntrnt PUBLIC
+    /opt/homebrew/opt/openssl/lib
+    /opt/homebrew/opt/miniupnpc/lib
+)
 target_link_libraries(ntrnt
     ssl
     crypto
+    miniupnpc
 )
 # ------------------------------------------------------------------------------
 # properties
