@@ -216,13 +216,15 @@ target_include_directories(ntrnt PUBLIC
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_BINARY_DIR}
 )
-link_directories(
+# brew hacking
+target_link_directories(ntrnt PUBLIC
     /opt/homebrew/opt/openssl/lib
     /opt/homebrew/opt/miniupnpc/lib
 )
 target_link_libraries(ntrnt
     ssl
     crypto
+    miniupnpc
 )
 # ------------------------------------------------------------------------------
 # properties
