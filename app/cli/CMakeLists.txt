@@ -16,6 +16,7 @@ include_directories(
     # ------------------------------------------------------
     # brew support
     # ------------------------------------------------------
+    /usr/local/include
     /opt/homebrew/opt/openssl/include
     /opt/homebrew/opt/miniupnpc/include
     /opt/homebrew/opt/rapidjson/include
@@ -52,6 +53,7 @@ add_dependencies(ntrnt_cmd ntrnt)
 SET_TARGET_PROPERTIES(ntrnt_cmd PROPERTIES OUTPUT_NAME "ntrnt")
 # brew hacking
 target_link_directories(ntrnt_cmd PUBLIC
+    /usr/local/lib
     /opt/homebrew/opt/openssl/lib
     /opt/homebrew/opt/miniupnpc/lib
 )

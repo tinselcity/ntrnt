@@ -30,6 +30,7 @@ include_directories(
     # ------------------------------------------------------
     # brew support
     # ------------------------------------------------------
+    /usr/local/include
     /opt/homebrew/opt/openssl/include
     /opt/homebrew/opt/miniupnpc/include
     /opt/homebrew/opt/rapidjson/include
@@ -218,6 +219,7 @@ target_include_directories(ntrnt PUBLIC
 )
 # brew hacking
 target_link_directories(ntrnt PUBLIC
+    /usr/local/lib
     /opt/homebrew/opt/openssl/lib
     /opt/homebrew/opt/miniupnpc/lib
 )
