@@ -76,6 +76,8 @@ int32_t stub::init(const std::string& a_file, size_t a_len)
         // -------------------------------------------------
         // alloc size
         // -------------------------------------------------
+        // TODO FIX FOR OS X!!!!
+#if 0
         int l_s = 0;
         errno = 0;
         l_s = posix_fallocate(m_fd, 0, m_len);
@@ -84,6 +86,7 @@ int32_t stub::init(const std::string& a_file, size_t a_len)
                 TRC_ERROR("performing fallocate of size: %zu.  Reason: %s\n", m_len, strerror(errno));
                 return NTRNT_STATUS_ERROR;
         }
+#endif
         // -------------------------------------------------
         // mmap
         // -------------------------------------------------
