@@ -1793,7 +1793,7 @@ int32_t session::run(void)
                         // TODO log error
                 }
         }
-        NDBG_PRINT(": stopped\n");
+        TRC_DEBUG(": stopped\n");
         m_stopped = true;
         return NTRNT_STATUS_OK;
 }

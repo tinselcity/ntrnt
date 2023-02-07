@@ -732,7 +732,6 @@ int main(int argc, char** argv)
         // cleanup...
         // -------------------------------------------------
 cleanup:
-        NDBG_PRINT("shutting down\n");
         if (l_portmap)
         {
                 l_s = l_upnp.delete_port_mapping(l_ext_port);
