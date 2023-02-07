@@ -26,18 +26,18 @@ jobs:
       if: matrix.os == 'ubuntu-22.04'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libssl-dev libunwind-dev libgoogle-perftools-dev rapidjson-dev libminiupnpc-dev
+        sudo apt-get install -y libssl-dev rapidjson-dev libminiupnpc-dev
 
     - name: Install Ubuntu 20/18 dependencies
       if: matrix.os == 'ubuntu-20.04' || matrix.os == 'ubuntu-18.04'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libgoogle-perftools-dev rapidjson-dev libminiupnpc-dev
+        sudo apt-get install -y rapidjson-dev libminiupnpc-dev
 
     - name: Install macOS dependencies
       if: matrix.os == 'macos-latest'
       run: |
-        brew install cmake dpkg openssl gperftools rapidjson miniupnpc
+        brew install cmake dpkg openssl rapidjson miniupnpc
 
     - name: Run build script
       run: |

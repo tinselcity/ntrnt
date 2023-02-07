@@ -28,6 +28,11 @@ LIST(APPEND INST_HDRS ${HDRS})
 include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}
     # ------------------------------------------------------
+    # brew support
+    # ------------------------------------------------------
+    /opt/homebrew/opt/openssl/include
+    /opt/homebrew/opt/miniupnpc/include
+    # ------------------------------------------------------
     # sub
     # ------------------------------------------------------
     ${CMAKE_SOURCE_DIR}/sub
@@ -160,6 +165,7 @@ SET(SRCS
     core/session.cc
     core/api.cc
 )
+set_source_files_properties(${SRCS} PROPERTIES COMPILE_FLAGS "-std=c++11")
 # ------------------------------------------------------------------------------
 # Linux Specific
 # ------------------------------------------------------------------------------
