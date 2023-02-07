@@ -32,6 +32,7 @@ include_directories(
     # ------------------------------------------------------
     /opt/homebrew/opt/openssl/include
     /opt/homebrew/opt/miniupnpc/include
+    /opt/homebrew/opt/rapidjson/include
     # ------------------------------------------------------
     # sub
     # ------------------------------------------------------
