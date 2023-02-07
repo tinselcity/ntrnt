@@ -597,13 +597,13 @@ int main(int argc, char** argv)
                         l_ipv6_address += "]";
                         l_ipv6_address += ":";
                         l_ipv6_address += l_port_str;
-                        l_ses.set_ext_address(l_ipv6_address);
+                        l_ses.set_ext_address_v6(l_ipv6_address);
                 }
                 else
                 {
                         l_address += ":";
                         l_address += l_port_str;
-                        l_ses.set_ext_address(l_address);
+                        l_ses.set_ext_address_v4(l_address);
                 }
         }
         // -------------------------------------------------

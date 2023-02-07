@@ -3,4 +3,4 @@
 # ------------------------------------------------------------------------------
 add_ntrnt_wb_test(peer_mgr)
 add_ntrnt_wb_test(phe)
-
+add_ntrnt_wb_test(stub)

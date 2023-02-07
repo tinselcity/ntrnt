@@ -67,10 +67,10 @@ int32_t pickr::init(info_pickr& a_info_pickr)
         // -------------------------------------------------
         // set blocks bitfields
         // -------------------------------------------------
-        m_info_pieces = &(a_info_pickr.m_info_pieces);
-        m_info_length = (size_t)a_info_pickr.m_info_length;
-        m_info_piece_length = (size_t)a_info_pickr.m_info_piece_length;
-        m_pieces.set_size(a_info_pickr.m_info_pieces.size());
+        m_info_pieces = &(a_info_pickr.get_info_pieces());
+        m_info_length = (size_t)a_info_pickr.get_info_length();
+        m_info_piece_length = (size_t)a_info_pickr.get_info_piece_length();
+        m_pieces.set_size(m_info_pieces->size());
         for (size_t i_idx = 0; i_idx < m_pieces.get_size(); ++i_idx)
         {
                 size_t l_len = m_info_piece_length;
@@ -86,10 +86,12 @@ int32_t pickr::init(info_pickr& a_info_pickr)
                 m_blocks_vec.push_back(l_bs);
         }
         // -------------------------------------------------
-        // init files
+        // init stub
         // -------------------------------------------------
         int32_t l_s;
-        l_s = m_stub.init(a_info_pickr.m_info_name, m_info_length);
+        l_s = m_stub.init(a_info_pickr.get_info_name(),
+                          m_info_length,
+                          a_info_pickr.get_info_files());
         if (l_s != NTRNT_STATUS_OK)
         {
                 TRC_ERROR("performing files init");
@@ -141,11 +143,11 @@ int32_t pickr::write(nbq& a_nbq, uint32_t a_idx, uint32_t a_off, uint32_t a_len)
         size_t l_off = (size_t)(a_idx)*(size_t)m_info_piece_length + a_off;
         size_t l_read = 0;
         size_t l_total_read_avail = a_nbq.read_avail();
-        size_t l_left = (a_len > l_total_read_avail)?l_total_read_avail:a_len;
+        size_t l_left = (a_len > l_total_read_avail) ? l_total_read_avail : a_len;
         while(l_left)
         {
                 size_t l_read_avail = a_nbq.b_read_avail();
-                size_t l_read_size = (l_left > l_read_avail)?l_read_avail:l_left;
+                size_t l_read_size = (l_left > l_read_avail) ? l_read_avail : l_left;
                 int32_t l_s;
                 l_s = m_stub.write((const uint8_t*)a_nbq.b_read_ptr(), l_off, l_read_size);
                 if (l_s != NTRNT_STATUS_OK)
@@ -167,10 +169,11 @@ int32_t pickr::write(nbq& a_nbq, uint32_t a_idx, uint32_t a_off, uint32_t a_len)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
+#if 0
 int32_t pickr::read(uint8_t* a_buf,
-                      uint32_t a_idx,
-                      uint32_t a_off,
-                      uint32_t a_len)
+                    uint32_t a_idx,
+                    uint32_t a_off,
+                    uint32_t a_len)
 {
         if (!m_init)
         {
@@ -186,6 +189,7 @@ int32_t pickr::read(uint8_t* a_buf,
         }
         return NTRNT_STATUS_OK;
 }
+#endif
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
@@ -699,15 +703,8 @@ int32_t pickr::get_piece(peer* a_peer,
                          uint32_t a_idx,
                          uint32_t a_off,
                          uint32_t a_len,
-                         const char** ao_buf)
+                         nbq* a_q)
 {
-        // -------------------------------------------------
-        // sanity check
-        // -------------------------------------------------
-        if (!ao_buf)
-        {
-                return NTRNT_STATUS_ERROR;
-        }
         // -------------------------------------------------
         // check if has
         // -------------------------------------------------
@@ -728,7 +725,16 @@ int32_t pickr::get_piece(peer* a_peer,
         // return ptr to data
         // TODO fix for multifile
         // -------------------------------------------------
-        *ao_buf = ((const char*)(m_stub.get_buf())) + l_off;
+        int32_t l_s;
+        l_s = m_stub.read(a_q, l_off, a_len);
+        if (l_s != NTRNT_STATUS_OK)
+        {
+                TRC_ERROR("performing stub read: [Q: %p] [OFF: %u] [LEN: %u]",
+                          a_q,
+                          (unsigned int)l_off,
+                          a_len);
+                return NTRNT_STATUS_ERROR;
+        }
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------

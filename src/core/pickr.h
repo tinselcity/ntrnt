@@ -89,7 +89,7 @@ public:
         // operations
         // -------------------------------------------------
         int32_t request_blocks(void);
-        int32_t get_piece(peer* a_peer, uint32_t a_idx, uint32_t a_off, uint32_t a_len, const char** ao_buf);
+        int32_t get_piece(peer* a_peer, uint32_t a_idx, uint32_t a_off, uint32_t a_len, nbq* a_q);
         int32_t recv_piece(peer* a_peer, nbq& a_q, uint32_t a_idx, uint32_t a_off, uint32_t l_len);
         // -------------------------------------------------
         // housekeeping
@@ -119,7 +119,7 @@ private:
         // writing/reading/validating
         // -------------------------------------------------
         int32_t write(nbq& a_nbq, uint32_t a_idx, uint32_t a_off, uint32_t a_len);
-        int32_t read(uint8_t* a_buf, uint32_t a_idx, uint32_t a_off, uint32_t a_len);
+        //int32_t read(uint8_t* a_buf, uint32_t a_idx, uint32_t a_off, uint32_t a_len);
         bool validate_piece(uint32_t a_piece);
         // -------------------------------------------------
         // private members

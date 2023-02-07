@@ -28,7 +28,7 @@
 //! ----------------------------------------------------------------------------
 //! bittorrent protocol
 //! ----------------------------------------------------------------------------
-#define _PEER_INQ_BSIZE (8*1024)
+#define _PEER_INQ_BSIZE (32*1024)
 #define _PEER_OUTQ_BSIZE (32*1024)
 namespace ns_ntrnt {
 //! ----------------------------------------------------------------------------
@@ -1022,10 +1022,21 @@ int32_t peer::btp_parse_handshake_ia(const uint8_t* a_buf, size_t a_len)
                 // -----------------------------------------
                 // check for session self address
                 // -----------------------------------------
-                const std::string& l_self = m_session.get_ext_address();
-                if (l_self.empty())
+                if (m_sas.ss_family == AF_INET)
                 {
-                        m_session.set_ext_address(sas_to_str(m_sas));
+                        const std::string& l_self = m_session.get_ext_address_v4();
+                        if (l_self.empty())
+                        {
+                                m_session.set_ext_address_v4(sas_to_str(m_sas));
+                        }
+                }
+                else if (m_sas.ss_family == AF_INET6)
+                {
+                        const std::string& l_self = m_session.get_ext_address_v6();
+                        if (l_self.empty())
+                        {
+                                m_session.set_ext_address_v6(sas_to_str(m_sas));
+                        }
                 }
                 return NTRNT_STATUS_ERROR;
         }
@@ -1125,10 +1136,21 @@ int32_t peer::btp_parse_handshake(void)
                 // -----------------------------------------
                 // check for session self address
                 // -----------------------------------------
-                const std::string& l_self = m_session.get_ext_address();
-                if (l_self.empty())
+                if (m_sas.ss_family == AF_INET)
                 {
-                        m_session.set_ext_address(sas_to_str(m_sas));
+                        const std::string& l_self = m_session.get_ext_address_v4();
+                        if (l_self.empty())
+                        {
+                                m_session.set_ext_address_v4(sas_to_str(m_sas));
+                        }
+                }
+                else if (m_sas.ss_family == AF_INET6)
+                {
+                        const std::string& l_self = m_session.get_ext_address_v6();
+                        if (l_self.empty())
+                        {
+                                m_session.set_ext_address_v6(sas_to_str(m_sas));
+                        }
                 }
                 return NTRNT_STATUS_ERROR;
         }
@@ -1681,11 +1703,11 @@ int32_t peer::btp_send_piece(uint32_t a_idx, uint32_t a_off, uint32_t a_len)
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
-        // get buffer for metadata piece
+        // pre-check -run with q == null
+        // -will perform piece/length checks
         // -------------------------------------------------
         int32_t l_s;
-        const char* l_buf = nullptr;
-        l_s = m_session.get_pickr().get_piece(this, a_idx, a_off, a_len, &l_buf);
+        l_s = m_session.get_pickr().get_piece(this, a_idx, a_off, a_len, nullptr);
         if (l_s != NTRNT_STATUS_OK)
         {
                 TRC_ERROR("performing pickr get piece: [IDX: %u] [OFF: %u] [len: %u]",
@@ -1700,7 +1722,13 @@ int32_t peer::btp_send_piece(uint32_t a_idx, uint32_t a_off, uint32_t a_len)
         m_out_q.write_n8(BTP_CMD_PIECE);
         m_out_q.write_n32(a_idx);
         m_out_q.write_n32(a_off);
-        m_out_q.write((const char*)l_buf, a_len);
+        l_s = m_session.get_pickr().get_piece(this, a_idx, a_off, a_len, &m_out_q);
+        if (l_s != NTRNT_STATUS_OK)
+        {
+                TRC_ERROR("performing pickr get piece: [IDX: %u] [OFF: %u] [len: %u]",
+                          a_idx, a_off, a_len);
+                return NTRNT_STATUS_ERROR;
+        }
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -2442,7 +2470,7 @@ int32_t peer::ltep_recv_handshake(size_t a_len)
         }
         off_t l_read = 0;
         l_read = m_in_q.read((char*)l_buf, l_len);
-        if (l_read != l_len)
+        if ((size_t)l_read != l_len)
         {
                 TRC_ERROR("read < required [read: %d] [requested: %lu]", (int)l_read, l_len);
                 return NTRNT_STATUS_ERROR;

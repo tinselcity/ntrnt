@@ -169,7 +169,7 @@ SET(SRCS
     core/session.cc
     core/api.cc
 )
-set_source_files_properties(${SRCS} PROPERTIES COMPILE_FLAGS "-std=c++11")
+set_source_files_properties(${SRCS} PROPERTIES COMPILE_FLAGS "-Wall -Werror -Weffc++ -std=c++11")
 # ------------------------------------------------------------------------------
 # Linux Specific
 # ------------------------------------------------------------------------------

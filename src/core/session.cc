@@ -126,7 +126,8 @@ session::session(void):
         m_peer_id(),
         m_ext_ip(),
         m_ext_port(NTRNT_DEFAULT_PORT),
-        m_ext_address(),
+        m_ext_address_v4(),
+        m_ext_address_v6(),
         m_peer(),
         m_tracker_list(),
         m_nresolver(nullptr),
@@ -811,10 +812,10 @@ void session::display_info(void)
         NDBG_OUTPUT("| encoding:      %s\n",  m_encoding.c_str());
         NDBG_OUTPUT("| comment:       %s\n",  m_comment.c_str());
         NDBG_OUTPUT("| info_hash:     %s\n",  m_info_hash_str.c_str());
-        NDBG_OUTPUT("| name:          %s\n",  m_info_pickr.m_info_name.c_str());
-        NDBG_OUTPUT("| length:        %u\n",  (unsigned int)m_info_pickr.m_info_length);
-        NDBG_OUTPUT("| num_pieces:    %ld\n", m_info_pickr.m_info_pieces.size());
-        NDBG_OUTPUT("| piece_length:  %u\n",  (unsigned int)m_info_pickr.m_info_piece_length);
+        NDBG_OUTPUT("| name:          %s\n",  m_info_pickr.get_info_name().c_str());
+        NDBG_OUTPUT("| length:        %u\n",  (unsigned int)m_info_pickr.get_info_length());
+        NDBG_OUTPUT("| num_pieces:    %ld\n", m_info_pickr.get_info_pieces_size());
+        NDBG_OUTPUT("| piece_length:  %u\n",  (unsigned int)m_info_pickr.get_info_piece_length());
 #if 0
         NDBG_OUTPUT("| pieces: [num: %lu] --------------->\n", m_info_pieces.size());
         uint32_t l_p = 0;
@@ -827,10 +828,11 @@ void session::display_info(void)
                 ++l_p;
         }
 #endif
-        if (m_info_pickr.m_info_files.size())
+        const files_list_t& l_fl = m_info_pickr.get_info_files();
+        if (l_fl.size())
         {
-        NDBG_OUTPUT("| files: [num: %lu] --------------->\n", m_info_pickr.m_info_files.size());
-        for(auto && i_f : m_info_pickr.m_info_files)
+        NDBG_OUTPUT("| files: [num: %lu] --------------->\n", l_fl.size());
+        for(auto && i_f : l_fl)
         {
         NDBG_OUTPUT("| ");
         for(auto& i_p : i_f.m_path)

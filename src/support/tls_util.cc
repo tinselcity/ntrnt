@@ -360,7 +360,7 @@ int tls_cert_verify_callback_allow_self_signed(int ok, X509_STORE_CTX* store)
         else
         {
                 snprintf(gts_last_tls_error,
-                         256,
+                         sizeof(gts_last_tls_error),
                          "tls_cert_verify_callback_allow_self_signed Error[%d].  Reason: %s",
                          err,
                          X509_verify_cert_error_string(err));
@@ -500,7 +500,9 @@ int32_t validate_server_certificate(SSL *a_tls, const char* a_host, bool a_disal
                 l_status = validate_server_certificate_hostname(l_cert, a_host);
                 if (0 != l_status)
                 {
-                        snprintf(gts_last_tls_error, 256, "Error[%d].  Reason: %s", -1, "hostname check failed");
+                        snprintf(gts_last_tls_error,
+                                 sizeof(gts_last_tls_error),
+                                 "Error[%d].  Reason: %s", -1, "hostname check failed");
                         if (NULL != l_cert)
                         {
                                 X509_free(l_cert);
@@ -526,7 +528,9 @@ int32_t validate_server_certificate(SSL *a_tls, const char* a_host, bool a_disal
                         if ((l_tls_verify_result == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) ||
                             (l_tls_verify_result == X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN))
                         {
-                                snprintf(gts_last_tls_error, 256, "Error[%d].  Reason: %s", -1, "self-signed certificate");
+                                snprintf(gts_last_tls_error,
+                                         sizeof(gts_last_tls_error),
+                                         "Error[%d].  Reason: %s", -1, "self-signed certificate");
                                 // No errors return success(0)
                                 if (NULL != l_cert)
                                 {

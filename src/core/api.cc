@@ -44,13 +44,13 @@ int32_t session::api_get_info(std::string& ao_body)
         l_writer.Key("comment");
         l_writer.String(m_comment.c_str());
         l_writer.Key("info_name");
-        l_writer.String(m_info_pickr.m_info_name.c_str());
+        l_writer.String(m_info_pickr.get_info_name().c_str());
         l_writer.Key("length");
-        l_writer.Int64(m_info_pickr.m_info_length);
+        l_writer.Int64(m_info_pickr.get_info_length());
         l_writer.Key("num_pieces");
-        l_writer.Uint(m_info_pickr.m_info_pieces.size());
+        l_writer.Uint(m_info_pickr.get_info_pieces_size());
         l_writer.Key("pieces_length");
-        l_writer.Int64(m_info_pickr.m_info_piece_length);
+        l_writer.Int64(m_info_pickr.get_info_piece_length());
         // -------------------------------------------------
         // progress
         // -------------------------------------------------

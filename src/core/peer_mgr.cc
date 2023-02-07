@@ -278,11 +278,20 @@ int32_t peer_mgr::add_peer(const sockaddr_storage& a_sas, peer_from_t a_from, pe
         // -------------------------------------------------
         // check for self
         // -------------------------------------------------
-        const std::string& l_self = m_session.get_ext_address();
-        if (!l_self.empty())
+        const std::string* l_self = nullptr;
+        if (a_sas.ss_family == AF_INET)
         {
-                const std::string l_addr = sas_to_str(a_sas);
-                if (l_self == l_addr)
+                l_self = &(m_session.get_ext_address_v4());
+        }
+        else if (a_sas.ss_family == AF_INET6)
+        {
+                l_self = &(m_session.get_ext_address_v6());
+        }
+        if (l_self &&
+            !l_self->empty())
+        {
+                const std::string& l_addr = sas_to_str(a_sas);
+                if (*l_self == l_addr)
                 {
                         TRC_WARN("dropping peer appears to be self: %s", l_addr.c_str());
                         return NTRNT_STATUS_OK;
