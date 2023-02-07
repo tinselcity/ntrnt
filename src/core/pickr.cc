@@ -159,6 +159,7 @@ int32_t pickr::write(nbq& a_nbq, uint32_t a_idx, uint32_t a_off, uint32_t a_len)
                 l_read += l_read_size;
         }
         a_nbq.shrink();
+        UNUSED(l_read);
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------

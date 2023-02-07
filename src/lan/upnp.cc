@@ -60,7 +60,6 @@ upnp::upnp(void):
         m_stat_status(),
         m_stat_uptime(0),
         m_stat_last_conn_err(),
-        m_stat_conn_type(),
         m_stat_ext_ip(),
         m_stat_br_down(0),
         m_stat_br_up(0)

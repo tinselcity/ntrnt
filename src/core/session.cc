@@ -130,7 +130,13 @@ session::session(void):
         m_tracker_list(),
         m_nresolver(nullptr),
         m_client_ssl_ctx(nullptr),
-        m_evr_loop_type(EVR_LOOP_EPOLL),
+#if defined(__linux__)
+         m_evr_loop_type(EVR_LOOP_EPOLL),
+#elif defined(__FreeBSD__) || defined(__APPLE__)
+        m_evr_loop_type(EVR_LOOP_SELECT),
+#else
+        m_evr_loop_type(EVR_LOOP_SELECT),
+#endif
         m_evr_loop(nullptr),
         m_evr_udp_fd(),
         m_evr_udp6_fd(),
@@ -391,8 +397,6 @@ int32_t session::init_w_magnet(const std::string& a_path)
                         // only support for:
                         // BitTorrent info hash (BTIH) "btih"
 #define _URN_BTIH "urn:btih:"
-                        int l_m;
-                        l_m = strncmp(i_q.m_val, _URN_BTIH, sizeof(_URN_BTIH)-1);
                         if(strncmp(i_q.m_val, _URN_BTIH, sizeof(_URN_BTIH)-1) == 0)
                         {
                                 m_info_hash_str.assign(i_q.m_val + sizeof(_URN_BTIH)-1, i_q.m_val_len - sizeof(_URN_BTIH)+1);
@@ -797,15 +801,15 @@ void session::display_info(void)
         {
         NDBG_OUTPUT("|                %s\n", i_m.c_str());
         }
-        NDBG_OUTPUT("| creation_date: %ld\n", m_creation_date);
+        NDBG_OUTPUT("| creation_date: %u\n",  (unsigned int)m_creation_date);
         NDBG_OUTPUT("| created_by:    %s\n",  m_created_by.c_str());
         NDBG_OUTPUT("| encoding:      %s\n",  m_encoding.c_str());
         NDBG_OUTPUT("| comment:       %s\n",  m_comment.c_str());
         NDBG_OUTPUT("| info_hash:     %s\n",  m_info_hash_str.c_str());
         NDBG_OUTPUT("| name:          %s\n",  m_info_pickr.m_info_name.c_str());
-        NDBG_OUTPUT("| length:        %ld\n", m_info_pickr.m_info_length);
+        NDBG_OUTPUT("| length:        %u\n",  (unsigned int)m_info_pickr.m_info_length);
         NDBG_OUTPUT("| num_pieces:    %ld\n", m_info_pickr.m_info_pieces.size());
-        NDBG_OUTPUT("| piece_length:  %ld\n", m_info_pickr.m_info_piece_length);
+        NDBG_OUTPUT("| piece_length:  %u\n",  (unsigned int)m_info_pickr.m_info_piece_length);
 #if 0
         NDBG_OUTPUT("| pieces: [num: %lu] --------------->\n", m_info_pieces.size());
         uint32_t l_p = 0;

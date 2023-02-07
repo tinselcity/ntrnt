@@ -75,7 +75,7 @@ int32_t nbq_write_status(nbq &ao_q, http_status_t a_status)
         {
                 ao_q.write("HTTP/1.1 ", strlen("HTTP/1.1 "));
                 char l_status_code_str[10];
-                sprintf(l_status_code_str, "%u ", a_status);
+                snprintf(l_status_code_str, 10, "%u ", a_status);
                 ao_q.write(l_status_code_str, strnlen(l_status_code_str, 10));
                 ao_q.write(i_r->second.c_str(), i_r->second.length());
                 ao_q.write("\r\n", strlen("\r\n"));

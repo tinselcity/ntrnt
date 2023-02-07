@@ -953,6 +953,7 @@ void peer::btp_create_handshake(void)
         size_t l_len;
         uint8_t *l_buf = nullptr;
         l_s = l_btfield.export_raw(&l_buf, l_len);
+        UNUSED(l_s);
         memcpy(m_handshake+l_off, l_buf, l_len);
         l_off += l_len;
         // -------------------------------------------------
@@ -2414,10 +2415,6 @@ int32_t peer::ltep_read_cmd(void)
                            m_host.c_str(),
                            m_ltep_peer_id.c_str(),
                            m_btp_cmd);
-                NDBG_PRINT("ltep_msg_support_ut_pex:      %d\n",  m_ltep_msg_support_ut_pex);
-                NDBG_PRINT("ltep_ut_pex_id:               %ld\n", m_ltep_ut_pex_id);
-                NDBG_PRINT("ltep_msg_support_ut_metadata: %d\n",  m_ltep_msg_support_ut_metadata);
-                NDBG_PRINT("ltep_ut_metadata_id:          %ld\n", m_ltep_ut_metadata_id);
                 char* l_buf = nullptr;
                 l_buf = (char*)malloc(l_rem);
                 m_in_q.read(l_buf, l_rem);
@@ -2451,7 +2448,7 @@ int32_t peer::ltep_recv_handshake(size_t a_len)
         l_read = m_in_q.read((char*)l_buf, l_len);
         if (l_read != l_len)
         {
-                TRC_ERROR("read < required [read: %ld] [requested: %lu]", l_read, l_len);
+                TRC_ERROR("read < required [read: %d] [requested: %lu]", (int)l_read, l_len);
                 return NTRNT_STATUS_ERROR;
         }
         // discard anything left over
@@ -2879,6 +2876,7 @@ int32_t peer::ltep_recv_metadata(size_t a_len)
                                 return NTRNT_STATUS_ERROR;
                         }
                         l_size = (uint32_t)i_int;
+                        UNUSED(l_size);
                 }
         }
         // -------------------------------------------------

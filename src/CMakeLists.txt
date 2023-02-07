@@ -110,10 +110,7 @@ SET(SRCS
     # evr
     # ------------------------------------------------------
     evr/evr.cc
-    # TODO OS X support...
-    #evr/evr_kqueue.cc
     evr/evr_select.cc
-    evr/evr_epoll.cc
     # ------------------------------------------------------
     # nconn
     # ------------------------------------------------------
@@ -163,6 +160,14 @@ SET(SRCS
     core/session.cc
     core/api.cc
 )
+# ------------------------------------------------------------------------------
+# Linux Specific
+# ------------------------------------------------------------------------------
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    # Linux specific code
+    SET(OperatingSystem "Linux")
+    set (SRCS ${SRCS} ./evr/evr_epoll.cc)
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 # ------------------------------------------------------------------------------
 # c source
 # ------------------------------------------------------------------------------

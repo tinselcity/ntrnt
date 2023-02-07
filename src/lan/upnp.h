@@ -64,7 +64,6 @@ private:
         char m_stat_status[64];
         uint32_t m_stat_uptime;
         char m_stat_last_conn_err[64];
-        char m_stat_conn_type[64];
         char m_stat_ext_ip[64];
         uint32_t m_stat_br_down;
         uint32_t m_stat_br_up;

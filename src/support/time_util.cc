@@ -43,13 +43,19 @@ static __inline__ uint64_t get_rdtsc64()
         tm = ts.tv_sec;
         tm = tm * 1000000000ULL;
         tm += ts.tv_nsec;
-#else
+#elif defined(__linux__)
         uint32_t l_lo;
         uint32_t l_hi;
         // We cannot use "=A", since this would use %rax on x86_64
         __asm__ __volatile__ ("rdtsc" : "=a" (l_lo), "=d" (l_hi));
         // output registers
         tm = (uint64_t) l_hi << 32 | l_lo;
+#else
+        struct timespec ts;
+        clock_gettime(CLOCK_REALTIME, &ts);
+        tm = ts.tv_sec;
+        tm = tm * 1000000000ULL;
+        tm += ts.tv_nsec;
 #endif
         return tm;
 }

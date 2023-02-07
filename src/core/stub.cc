@@ -81,7 +81,7 @@ int32_t stub::init(const std::string& a_file, size_t a_len)
         l_s = posix_fallocate(m_fd, 0, m_len);
         if(l_s != 0) {
 
-                TRC_ERROR("performing fallocate of size: %Zu.  Reason: %s\n", m_len, strerror(errno));
+                TRC_ERROR("performing fallocate of size: %zu.  Reason: %s\n", m_len, strerror(errno));
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -91,7 +91,7 @@ int32_t stub::init(const std::string& a_file, size_t a_len)
         m_buf = mmap(NULL, m_len, PROT_READ | PROT_WRITE, MAP_SHARED, m_fd, 0);
         if(m_buf == ((void *)-1))
         {
-                TRC_ERROR("performing mmap of size: %Zu.  Reason: %s\n", m_len, strerror(errno));
+                TRC_ERROR("performing mmap of size: %zu.  Reason: %s\n", m_len, strerror(errno));
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------

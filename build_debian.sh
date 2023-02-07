@@ -22,11 +22,15 @@ mkdir -p build
 pushd build && \
     cmake ../ \
     -DBUILD_SYMBOLS=ON \
+    -DBUILD_TCMALLOC=ON \
     -DBUILD_TESTS=ON \
-    -DBUILD_APP=ON \
+    -DBUILD_APPS=ON \
+    -DBUILD_UTILS=ON \
+    -DBUILD_LINUX=ON \
     -DCMAKE_INSTALL_PREFIX=/usr && \
     make -j$(nproc) && \
     umask 0022 && chmod -R a+rX . && \
+    make package && \
     make test && \
     popd && \
 exit $?

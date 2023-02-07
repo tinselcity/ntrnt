@@ -149,7 +149,6 @@ int32_t session::api_get_peers(std::string& ao_body)
 int32_t peer_mgr::get_peers_api(std::string& ao_body)
 {
         pthread_mutex_lock(&m_mutex);
-        uint64_t l_now_s = get_time_s();
         // -------------------------------------------------
         // create body...
         // -------------------------------------------------
@@ -269,7 +268,6 @@ int32_t peer_mgr::get_peers_api(std::string& ao_body)
 int32_t peer_mgr::get_peers_str(std::string& ao_body)
 {
         pthread_mutex_lock(&m_mutex);
-        uint64_t l_now_s = get_time_s();
         for(auto && i_p : m_peer_vec)
         {
                 peer* l_p_ptr = i_p;

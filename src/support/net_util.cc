@@ -368,6 +368,29 @@ std::string sas_to_ip_str(const struct sockaddr_storage& a_ss)
         return l_ip;
 }
 //! ----------------------------------------------------------------------------
+//! \details TODO
+//! \return  TODO
+//! \param   TODO
+//! ----------------------------------------------------------------------------
+#if defined(__APPLE__) || defined(__darwin__)
+static void * memrchr(const void *s, int c, size_t n)
+{
+    const unsigned char *cp;
+    if (n != 0)
+    {
+            cp = (unsigned char *)s + n;
+            do
+            {
+                    if (*(--cp) == (unsigned char)c)
+                    {
+                            return (void *)cp;
+                    }
+            } while (--n != 0);
+    }
+    return (void *)0;
+}
+#endif
+//! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
 //! \param:   TODO

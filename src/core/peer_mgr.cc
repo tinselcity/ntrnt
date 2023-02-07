@@ -140,11 +140,11 @@ int32_t peer_mgr::connect_peers(void)
                 uint64_t l_exp = l_p.get_stat_expired_br();
                 if (l_exp > (uint64_t)l_p.get_ltep_reqq())
                 {
-                        TRC_WARN("[HOST: %s] [CLIENT: %s] [PEER: %s] seems down -removing from swarm [expired count: %lu]",
+                        TRC_WARN("[HOST: %s] [CLIENT: %s] [PEER: %s] seems down -removing from swarm [expired count: %u]",
                                  l_p.m_host.c_str(),
                                  l_p.m_btp_peer_str.c_str(),
                                  l_p.m_ltep_peer_id.c_str(),
-                                 l_exp);
+                                 (unsigned int)l_exp);
                         l_p.shutdown(peer::ERROR_EXPIRED_BR);
                         continue;
                 }
@@ -153,11 +153,11 @@ int32_t peer_mgr::connect_peers(void)
                 // -----------------------------------------
                 if (l_now_s > (l_p.m_stat_last_recvd_time_s + NTRNT_SESSION_PEER_MAX_IDLE_S))
                 {
-                        TRC_WARN("[HOST: %s] [CLIENT: %s] [PEER: %s] seems down -removing from swarm [last msg recvd: %lu s ago]",
+                        TRC_WARN("[HOST: %s] [CLIENT: %s] [PEER: %s] seems down -removing from swarm [last msg recvd: %u s ago]",
                                  l_p.m_host.c_str(),
                                  l_p.m_btp_peer_str.c_str(),
                                  l_p.m_ltep_peer_id.c_str(),
-                                 (l_now_s - l_p.m_stat_last_recvd_time_s));
+                                 (unsigned int)(l_now_s - l_p.m_stat_last_recvd_time_s));
                         l_p.shutdown(peer::ERROR_IDLE_TIMEOUT);
                         continue;
                 }
@@ -204,14 +204,6 @@ int32_t peer_mgr::connect_peers(void)
                 }
         }
         pthread_mutex_unlock(&m_mutex);
-        // -------------------------------------------------
-        // check num connecting
-        // -------------------------------------------------
-        uint32_t l_st_connecting = 0;
-        l_st_connecting += l_states[peer::STATE_UTP_CONNECTING];
-        l_st_connecting += l_states[peer::STATE_PHE_SETUP];
-        l_st_connecting += l_states[peer::STATE_PHE_CONNECTING];
-        l_st_connecting += l_states[peer::STATE_HANDSHAKING];
         // -------------------------------------------------
         // check num connected
         // -------------------------------------------------
@@ -643,7 +635,6 @@ uint64_t peer_mgr::utp_cb(utp_socket* a_utp_conn,
         }
         if (l_peer)
         {
-                peer::state_t l_ls = l_peer->get_state();
                 l_s = l_peer->utp_cb(a_utp_conn,
                                      a_type,
                                      a_state,
