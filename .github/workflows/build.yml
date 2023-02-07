@@ -12,8 +12,7 @@ jobs:
   build:
     strategy:
       matrix:
-        # TODO add back macos-latest
-        os: [ubuntu-18.04, ubuntu-22.04, ubuntu-20.04]
+        os: [ubuntu-22.04, ubuntu-20.04, ubuntu-18.04, macos-latest]
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -38,7 +37,7 @@ jobs:
     - name: Install macOS dependencies
       if: matrix.os == 'macos-latest'
       run: |
-        brew install cmake openssl gperftools dpkg rapidjson miniupnpc
+        brew install cmake dpkg openssl gperftools rapidjson miniupnpc
 
     - name: Run build script
       run: |
