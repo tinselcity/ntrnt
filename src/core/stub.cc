@@ -243,10 +243,8 @@ int32_t stub::write(const uint8_t* a_buf, size_t a_off, size_t a_len)
         // write up to end or no remainder
         // -------------------------------------------------
         size_t l_rem = a_len;
-#if 0
         const uint8_t* l_src = a_buf;
         size_t l_first_off = a_off - i_f->m_off;
-#endif
         while((i_f != m_sfile_list.end()) &&
                l_rem)
         {
@@ -260,7 +258,6 @@ int32_t stub::write(const uint8_t* a_buf, size_t a_off, size_t a_len)
                         TRC_ERROR("performing init_sfile");
                         return NTRNT_STATUS_ERROR;
                 }
-#if 0
                 // -----------------------------------------
                 // get buffer offset
                 // -----------------------------------------
@@ -282,13 +279,6 @@ int32_t stub::write(const uint8_t* a_buf, size_t a_off, size_t a_len)
                 // -----------------------------------------
                 l_src += l_f_write;
                 l_rem -= l_f_write;
-#else
-                // -----------------------------------------
-                // write
-                // -----------------------------------------
-                memcpy(((uint8_t*)(i_f->m_buf))+a_off, a_buf, a_len);
-                l_rem -= a_len;
-#endif
         }
         // -------------------------------------------------
         // TODO -check if hit end before could read all
@@ -419,9 +409,7 @@ int32_t stub::calc_sha1(id_t& ao_sha1, size_t a_off, size_t a_len)
         // -------------------------------------------------
         sha1 l_sha1;
         size_t l_rem = a_len;
-#if 0
         size_t l_first_off = a_off - i_f->m_off;
-#endif
         while((i_f != m_sfile_list.end()) &&
                l_rem)
         {
@@ -435,7 +423,6 @@ int32_t stub::calc_sha1(id_t& ao_sha1, size_t a_off, size_t a_len)
                         TRC_ERROR("performing init_sfile");
                         return NTRNT_STATUS_ERROR;
                 }
-#if 0
                 // -----------------------------------------
                 // get buffer offset
                 // -----------------------------------------
@@ -456,13 +443,6 @@ int32_t stub::calc_sha1(id_t& ao_sha1, size_t a_off, size_t a_len)
                 // counters
                 // -----------------------------------------
                 l_rem -= l_f_write;
-#else
-                // -----------------------------------------
-                // sha1 update
-                // -----------------------------------------
-                l_sha1.update(((uint8_t*)(i_f->m_buf))+a_off, a_len);
-                l_rem -= a_len;
-#endif
         }
         l_sha1.finish();
         memcpy(ao_sha1.m_data, l_sha1.get_hash(), sizeof(ao_sha1));
