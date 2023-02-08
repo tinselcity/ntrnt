@@ -184,7 +184,8 @@ int32_t ntrnt_fallocate(int a_fd, size_t a_len)
         // use fcntl+ftruncate
         // -------------------------------------------------
 #ifdef __MACH__
-        fstore_t l_store = {F_ALLOCATECONTIG, F_PEOFPOSMODE, 0, a_len};
+        off_t l_len = (off_t)a_len;
+        fstore_t l_store = {F_ALLOCATECONTIG, F_PEOFPOSMODE, 0, l_len};
         int l_s;
         // -------------------------------------------------
         // try reserve continous chunk of disk space
