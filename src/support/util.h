@@ -14,6 +14,8 @@ namespace ns_ntrnt
 {
 int32_t write_file(const char *a_file, const char *a_buf, size_t a_len);
 int32_t read_file(const char* a_file, char** a_buf, size_t* a_len);
+int32_t ensure_dir(const std::string& a_dir);
+int32_t ntrnt_fallocate(int a_fd, size_t a_len);
 int32_t b64_encode(char** ao_out, const unsigned char* a_in, size_t a_in_len);
 int32_t b64_encode(std::string& ao_out, const unsigned char* a_in, size_t a_in_len);
 int32_t bin2hex(char** ao_out, const uint8_t* a_bin, size_t a_len);

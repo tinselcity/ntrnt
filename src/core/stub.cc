@@ -13,6 +13,7 @@
 #include "support/trace.h"
 #include "support/sha1.h"
 #include "support/nbq.h"
+#include "support/util.h"
 // ---------------------------------------------------------
 // system
 // ---------------------------------------------------------
@@ -88,6 +89,9 @@ int32_t stub::init(const std::string& a_info_name,
                 l_sf.m_off = 0;
                 l_sf.m_path.push_back(a_info_name);
                 m_sfile_list.push_back(l_sf);
+                m_init = true;
+                // TODO REMOVE!!!
+                display();
                 return NTRNT_STATUS_OK;
         }
         // -------------------------------------------------
@@ -129,86 +133,20 @@ int32_t stub::init(const std::string& a_info_name,
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t stub::ensure_dir(const std::string& a_dir)
+void stub::display(void)
 {
-        // -------------------------------------------------
-        // check for exists
-        // -------------------------------------------------
-        struct stat l_dir_info;
-        int l_s;
-        errno = 0;
-        l_s = ::stat(a_dir.c_str(), &l_dir_info);
-        if (l_s == 0)
+        NDBG_OUTPUT("+++STUB+++\n");
+        for (auto && i_f : m_sfile_list)
         {
-                // -----------------------------------------
-                // check is dir
-                // -----------------------------------------
-                if (!(l_dir_info.st_mode & S_IFDIR))
+                NDBG_OUTPUT("+---------------------------------------+\n");
+                for (auto && i_p : i_f.m_path)
                 {
-                        TRC_ERROR("path is not directory [DIR: %s]", a_dir.c_str());
-                        return NTRNT_STATUS_ERROR;
+                        NDBG_OUTPUT(": path: %s\n", i_p.c_str());
                 }
-                return NTRNT_STATUS_OK;
+                NDBG_OUTPUT(": len: %lu\n", i_f.m_len);
+                NDBG_OUTPUT(": off: %lu\n", i_f.m_off);
         }
-        if (errno != ENOENT)
-        {
-                TRC_ERROR("performing stat [DIR: %s].  Reason[%d]: %s",
-                          a_dir.c_str(),
-                          errno,
-                          strerror(errno));
-                return NTRNT_STATUS_ERROR;
-        }
-        // -------------------------------------------------
-        // create directory
-        // TODO -better way to set attr
-        // -------------------------------------------------
-        errno = 0;
-        l_s = ::mkdir(a_dir.c_str(), 0755);
-        if (l_s != 0)
-        {
-                TRC_ERROR("performing mkdir [DIR: %s].  Reason[%d]: %s",
-                          a_dir.c_str(),
-                          errno,
-                          strerror(errno));
-                return NTRNT_STATUS_ERROR;
-        }
-        return NTRNT_STATUS_OK;
 }
-//! ----------------------------------------------------------------------------
-//! \details: TODO
-//! \return:  TODO
-//! \param:   TODO
-//! ----------------------------------------------------------------------------
-#if 0
-static int32_t _osx_fallocate(int a_fd, size_t a_len)
-{
-        fstore_t l_store = {F_ALLOCATECONTIG, F_PEOFPOSMODE, 0, a_len};
-        int l_s;
-        // -------------------------------------------------
-        // try reserve continous chunk of disk space
-        // -------------------------------------------------
-        l_s = fcntl(a_fd, F_PREALLOCATE, &l_store);
-        if(l_s == -1)
-        {
-                // -----------------------------------------
-                // allocated non-continuous if too
-                // fragmented
-                // -----------------------------------------
-                l_store.fst_flags = F_ALLOCATEALL;
-                l_s = fcntl(a_fd, F_PREALLOCATE, &l_store);
-                if(l_s == -1)
-                {
-                        return NTRNT_STATUS_ERROR;
-                }
-        }
-        l_s = ftruncate(a_fd, a_len);
-        if (l_s != 0)
-        {
-                return NTRNT_STATUS_ERROR;
-        }
-        return NTRNT_STATUS_OK;
-}
-#endif
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
@@ -257,12 +195,10 @@ int32_t stub::init_sfile(sfile_t& a_sfile)
         // -------------------------------------------------
         // alloc size
         // -------------------------------------------------
-        // TODO FIX FOR OS X!!!!
-        errno = 0;
-        l_s = posix_fallocate(a_sfile.m_fd, 0, a_sfile.m_len);
-        if(l_s != 0) {
-
-                TRC_ERROR("performing fallocate of size: %zu.  Reason: %s", a_sfile.m_len, strerror(errno));
+        l_s = ntrnt_fallocate(a_sfile.m_fd, a_sfile.m_len);
+        if (l_s != NTRNT_STATUS_OK)
+        {
+                TRC_ERROR("performing ntrnt_fallocate");
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -286,6 +222,7 @@ int32_t stub::write(const uint8_t* a_buf, size_t a_off, size_t a_len)
 {
         if (!m_init)
         {
+                TRC_ERROR("not initalized");
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -306,8 +243,10 @@ int32_t stub::write(const uint8_t* a_buf, size_t a_off, size_t a_len)
         // write up to end or no remainder
         // -------------------------------------------------
         size_t l_rem = a_len;
+#if 0
         const uint8_t* l_src = a_buf;
         size_t l_first_off = a_off - i_f->m_off;
+#endif
         while((i_f != m_sfile_list.end()) &&
                l_rem)
         {
@@ -321,6 +260,7 @@ int32_t stub::write(const uint8_t* a_buf, size_t a_off, size_t a_len)
                         TRC_ERROR("performing init_sfile");
                         return NTRNT_STATUS_ERROR;
                 }
+#if 0
                 // -----------------------------------------
                 // get buffer offset
                 // -----------------------------------------
@@ -342,6 +282,21 @@ int32_t stub::write(const uint8_t* a_buf, size_t a_off, size_t a_len)
                 // -----------------------------------------
                 l_src += l_f_write;
                 l_rem -= l_f_write;
+#else
+                // -----------------------------------------
+                // write
+                // -----------------------------------------
+                memcpy(((uint8_t*)(i_f->m_buf))+a_off, a_buf, a_len);
+                l_rem -= a_len;
+#endif
+        }
+        // -------------------------------------------------
+        // TODO -check if hit end before could read all
+        // -------------------------------------------------
+        if (l_rem)
+        {
+                TRC_ERROR("failed to write all requested: [remainder: %u]", (unsigned int)l_rem);
+                return NTRNT_STATUS_ERROR;
         }
         return NTRNT_STATUS_OK;
 }
@@ -354,6 +309,7 @@ int32_t stub::read(nbq* a_q, size_t a_off, size_t a_len)
 {
         if (!m_init)
         {
+                TRC_ERROR("not initalized");
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -441,6 +397,7 @@ int32_t stub::calc_sha1(id_t& ao_sha1, size_t a_off, size_t a_len)
 {
         if (!m_init)
         {
+                TRC_ERROR("not initalized");
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -462,7 +419,9 @@ int32_t stub::calc_sha1(id_t& ao_sha1, size_t a_off, size_t a_len)
         // -------------------------------------------------
         sha1 l_sha1;
         size_t l_rem = a_len;
+#if 0
         size_t l_first_off = a_off - i_f->m_off;
+#endif
         while((i_f != m_sfile_list.end()) &&
                l_rem)
         {
@@ -476,6 +435,7 @@ int32_t stub::calc_sha1(id_t& ao_sha1, size_t a_off, size_t a_len)
                         TRC_ERROR("performing init_sfile");
                         return NTRNT_STATUS_ERROR;
                 }
+#if 0
                 // -----------------------------------------
                 // get buffer offset
                 // -----------------------------------------
@@ -496,8 +456,16 @@ int32_t stub::calc_sha1(id_t& ao_sha1, size_t a_off, size_t a_len)
                 // counters
                 // -----------------------------------------
                 l_rem -= l_f_write;
+#else
+                // -----------------------------------------
+                // sha1 update
+                // -----------------------------------------
+                l_sha1.update(((uint8_t*)(i_f->m_buf))+a_off, a_len);
+                l_rem -= a_len;
+#endif
         }
         l_sha1.finish();
+        memcpy(ao_sha1.m_data, l_sha1.get_hash(), sizeof(ao_sha1));
         // -------------------------------------------------
         // TODO -check if hit end before could read all
         // -------------------------------------------------

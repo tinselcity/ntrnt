@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <math.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -119,6 +120,115 @@ int32_t read_file(const char *a_file, char **a_buf, size_t *a_len)
         }
         *a_buf = l_buf;
         *a_len = l_size;
+        return NTRNT_STATUS_OK;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int32_t ensure_dir(const std::string& a_dir)
+{
+        // -------------------------------------------------
+        // check for exists
+        // -------------------------------------------------
+        struct stat l_dir_info;
+        int l_s;
+        errno = 0;
+        l_s = ::stat(a_dir.c_str(), &l_dir_info);
+        if (l_s == 0)
+        {
+                // -----------------------------------------
+                // check is dir
+                // -----------------------------------------
+                if (!(l_dir_info.st_mode & S_IFDIR))
+                {
+                        TRC_ERROR("path is not directory [DIR: %s]", a_dir.c_str());
+                        return NTRNT_STATUS_ERROR;
+                }
+                return NTRNT_STATUS_OK;
+        }
+        if (errno != ENOENT)
+        {
+                TRC_ERROR("performing stat [DIR: %s].  Reason[%d]: %s",
+                          a_dir.c_str(),
+                          errno,
+                          strerror(errno));
+                return NTRNT_STATUS_ERROR;
+        }
+        // -------------------------------------------------
+        // create directory
+        // TODO -better way to set attr
+        // -------------------------------------------------
+        errno = 0;
+        l_s = ::mkdir(a_dir.c_str(), 0755);
+        if (l_s != 0)
+        {
+                TRC_ERROR("performing mkdir [DIR: %s].  Reason[%d]: %s",
+                          a_dir.c_str(),
+                          errno,
+                          strerror(errno));
+                return NTRNT_STATUS_ERROR;
+        }
+        return NTRNT_STATUS_OK;
+}
+//! ----------------------------------------------------------------------------
+//! \details: Encodes a string to base64
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int32_t ntrnt_fallocate(int a_fd, size_t a_len)
+{
+        // -------------------------------------------------
+        // OS X does not have posix_fallocate
+        // use fcntl+ftruncate
+        // -------------------------------------------------
+#ifdef __MACH__
+        fstore_t l_store = {F_ALLOCATECONTIG, F_PEOFPOSMODE, 0, a_len};
+        int l_s;
+        // -------------------------------------------------
+        // try reserve continous chunk of disk space
+        // -------------------------------------------------
+        errno = 0;
+        l_s = fcntl(a_fd, F_PREALLOCATE, &l_store);
+        if(l_s == -1)
+        {
+                // -----------------------------------------
+                // allocated non-continuous if too
+                // fragmented
+                // -----------------------------------------
+                l_store.fst_flags = F_ALLOCATEALL;
+                errno = 0;
+                l_s = fcntl(a_fd, F_PREALLOCATE, &l_store);
+                if(l_s == -1)
+                {
+                        TRC_ERROR("performing fallocate of size: %zu.  Reason: %s",
+                                  a_len,
+                                  strerror(errno));
+                        return NTRNT_STATUS_ERROR;
+                }
+        }
+        errno = 0;
+        l_s = ftruncate(a_fd, a_len);
+        if (l_s != 0)
+        {
+                TRC_ERROR("performing fallocate of size: %zu.  Reason: %s",
+                          a_len,
+                          strerror(errno));
+                return NTRNT_STATUS_ERROR;
+        }
+#else
+        int32_t l_s;
+        errno = 0;
+        l_s = posix_fallocate(a_fd, 0, a_len);
+        if(l_s != 0) {
+
+                TRC_ERROR("performing fallocate of size: %zu.  Reason: %s",
+                          a_len,
+                          strerror(errno));
+                return NTRNT_STATUS_ERROR;
+        }
+#endif
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------

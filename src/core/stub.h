@@ -56,6 +56,7 @@ public:
         int32_t write(const uint8_t* a_buf, size_t a_off, size_t a_len);
         int32_t read(nbq* a_q, size_t a_off, size_t a_len);
         int32_t calc_sha1(id_t& ao_sha1, size_t a_off, size_t a_len);
+        void display(void);
 private:
         // -------------------------------------------------
         // private methods
@@ -64,7 +65,6 @@ private:
         stub(const stub&);
         stub& operator=(const stub&);
         int32_t init_sfile(sfile_t& a_sfile);
-        int32_t ensure_dir(const std::string& a_dir);
         // -------------------------------------------------
         // private members
         // -------------------------------------------------
