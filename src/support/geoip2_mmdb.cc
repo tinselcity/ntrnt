@@ -143,7 +143,7 @@ int32_t geoip2_mmdb::get_geoip_data(const char **ao_cn_name,
                              NULL);
         if(l_s != MMDB_SUCCESS)
         {
-                TRC_ERROR("looking up the entry data: reason: %s", MMDB_strerror(l_s));
+                TRC_ERROR("looking up the entry for ip: %.*s: reason: %s", (int)a_ip_len, a_ip, MMDB_strerror(l_s));
                 goto lookup_city;
         }
         if(!l_e_dat.has_data)
@@ -212,7 +212,7 @@ lookup_lat:
                              NULL);
         if(l_s != MMDB_SUCCESS)
         {
-                TRC_ERROR("looking up the entry data: reason: %s", MMDB_strerror(l_s));
+                TRC_ERROR("looking up the entry for ip: %.*s: reason: %s", (int)a_ip_len, a_ip, MMDB_strerror(l_s));
                 goto lookup_lon;
         }
         if(!l_e_dat.has_data)
@@ -245,7 +245,7 @@ lookup_lon:
                              NULL);
         if(l_s != MMDB_SUCCESS)
         {
-                TRC_ERROR("looking up the entry data: reason: %s", MMDB_strerror(l_s));
+                TRC_ERROR("looking up the entry for ip: %.*s: reason: %s", (int)a_ip_len, a_ip, MMDB_strerror(l_s));
                 goto done;
         }
         if(!l_e_dat.has_data)

@@ -717,6 +717,11 @@ int32_t session::add_peer_raw(int a_family, const uint8_t* a_buf, size_t a_len, 
                         // ---------------------------------
                         uint16_t l_port;
                         memcpy(&l_port, l_buf+4, sizeof(l_port));
+                        if (!l_port)
+                        {
+                                TRC_WARN("skipping 0 port");
+                                continue;
+                        }
                         // ---------------------------------
                         // copy in
                         // ---------------------------------
@@ -755,6 +760,11 @@ int32_t session::add_peer_raw(int a_family, const uint8_t* a_buf, size_t a_len, 
                         // ---------------------------------
                         uint16_t l_port;
                         memcpy(&l_port, l_buf+16, sizeof(l_port));
+                        if (!l_port)
+                        {
+                                TRC_WARN("skipping 0 port");
+                                continue;
+                        }
                         // ---------------------------------
                         // copy in
                         // ---------------------------------

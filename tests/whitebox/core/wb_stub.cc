@@ -37,9 +37,9 @@ const uint8_t g_test_dat[64] = {
 //! ----------------------------------------------------------------------------
 TEST_CASE( "stub", "[stub]" ) {
         // -------------------------------------------------
-        // validate peer map works correctly (mostly)
+        // validate stub for single file
         // -------------------------------------------------
-        SECTION("stub basic") {
+        SECTION("stub single file") {
                 std::string l_file = "test.dat";
                 size_t l_file_len = 128;
                 ns_ntrnt::files_list_t l_fl;
@@ -90,5 +90,47 @@ TEST_CASE( "stub", "[stub]" ) {
                 l_rs = l_q.read((char*)l_buf, 64);
                 REQUIRE((l_rs == 64));
                 REQUIRE((memcmp(l_buf, g_test_dat, sizeof(g_test_dat)) == 0));
+        }
+        // -------------------------------------------------
+        // validate stub for single file
+        // -------------------------------------------------
+        SECTION("stub multi file") {
+                std::string l_file = "test";
+                size_t l_file_len = 128;
+                ns_ntrnt::files_list_t l_fl;
+                ns_ntrnt::files_t l_f;
+                // -----------------------------------------
+                // add file
+                // -----------------------------------------
+                l_f.m_len = 0; l_f.m_path.clear();
+                l_f.m_len = 64;
+                l_f.m_path.push_back("file1.dat");
+                l_fl.push_back(l_f);
+                // -----------------------------------------
+                // add file
+                // -----------------------------------------
+                l_f.m_len = 0; l_f.m_path.clear();
+                l_f.m_len = 64;
+                l_f.m_path.push_back("file2.dat");
+                l_fl.push_back(l_f);
+                // -----------------------------------------
+                // init
+                // -----------------------------------------
+                ns_ntrnt::stub l_stub;
+                int32_t l_s;
+                l_s = l_stub.init(l_file, l_file_len, l_fl);
+                REQUIRE((l_s == NTRNT_STATUS_OK));
+                // -----------------------------------------
+                // write
+                // -----------------------------------------
+                l_s = l_stub.write(g_zeros_dat, 0, sizeof(g_zeros_dat));
+                REQUIRE((l_s == NTRNT_STATUS_OK));
+                l_s = l_stub.write(g_zeros_dat, 64, sizeof(g_zeros_dat));
+                REQUIRE((l_s == NTRNT_STATUS_OK));
+                // -----------------------------------------
+                // write
+                // -----------------------------------------
+                l_s = l_stub.write(g_test_dat, 32, sizeof(g_test_dat));
+                REQUIRE((l_s == NTRNT_STATUS_OK));
         }
 }

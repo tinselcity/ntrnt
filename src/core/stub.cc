@@ -90,8 +90,6 @@ int32_t stub::init(const std::string& a_info_name,
                 l_sf.m_path.push_back(a_info_name);
                 m_sfile_list.push_back(l_sf);
                 m_init = true;
-                // TODO REMOVE!!!
-                display();
                 return NTRNT_STATUS_OK;
         }
         // -------------------------------------------------
@@ -117,6 +115,10 @@ int32_t stub::init(const std::string& a_info_name,
                 {
                         l_sf.m_path.push_back(i_p);
                 }
+                // -----------------------------------------
+                // push in
+                // -----------------------------------------
+                m_sfile_list.push_back(l_sf);
                 // -----------------------------------------
                 // bump offset by length
                 // -----------------------------------------
@@ -230,7 +232,7 @@ int32_t stub::write(const uint8_t* a_buf, size_t a_off, size_t a_len)
         // -------------------------------------------------
         auto i_f = m_sfile_list.begin();
         while((i_f != m_sfile_list.end()) &&
-              ((i_f->m_off+i_f->m_len) < a_off))
+              ((i_f->m_off+i_f->m_len) <= a_off))
         {
                 ++i_f;
         }
@@ -279,6 +281,7 @@ int32_t stub::write(const uint8_t* a_buf, size_t a_off, size_t a_len)
                 // -----------------------------------------
                 l_src += l_f_write;
                 l_rem -= l_f_write;
+                ++i_f;
         }
         // -------------------------------------------------
         // TODO -check if hit end before could read all
@@ -307,7 +310,7 @@ int32_t stub::read(nbq* a_q, size_t a_off, size_t a_len)
         // -------------------------------------------------
         auto i_f = m_sfile_list.begin();
         while((i_f != m_sfile_list.end()) &&
-              ((i_f->m_off+i_f->m_len) < a_off))
+              ((i_f->m_off+i_f->m_len) <= a_off))
         {
                 ++i_f;
         }
@@ -367,6 +370,7 @@ int32_t stub::read(nbq* a_q, size_t a_off, size_t a_len)
                 // counters
                 // -----------------------------------------
                 l_rem -= l_f_write;
+                ++i_f;
         }
         // -------------------------------------------------
         // TODO -check if hit end before could read all
@@ -395,7 +399,7 @@ int32_t stub::calc_sha1(id_t& ao_sha1, size_t a_off, size_t a_len)
         // -------------------------------------------------
         auto i_f = m_sfile_list.begin();
         while((i_f != m_sfile_list.end()) &&
-              ((i_f->m_off+i_f->m_len) < a_off))
+              ((i_f->m_off+i_f->m_len) <= a_off))
         {
                 ++i_f;
         }
@@ -443,6 +447,7 @@ int32_t stub::calc_sha1(id_t& ao_sha1, size_t a_off, size_t a_len)
                 // counters
                 // -----------------------------------------
                 l_rem -= l_f_write;
+                ++i_f;
         }
         l_sha1.finish();
         memcpy(ao_sha1.m_data, l_sha1.get_hash(), sizeof(ao_sha1));

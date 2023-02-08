@@ -114,9 +114,10 @@ void peer_mgr::display_peers(void)
         for (auto && i_p : m_peer_map)
         {
                 if (!i_p.second) { continue; }
-                NDBG_PRINT("HOST: %s STATE: %d\n",
+                NDBG_PRINT("HOST: %s STATE: %d FROM: %d\n",
                            i_p.second->get_host().c_str(),
-                           i_p.second->get_state());
+                           i_p.second->get_state(),
+                           i_p.second->get_from());
         }
 }
 //! ----------------------------------------------------------------------------
@@ -256,7 +257,7 @@ int32_t peer_mgr::connect_peers(void)
         for (auto && i_p : l_pv)
         {
                 if (!i_p) { continue; }
-                //NDBG_PRINT("connect to: %s\n", sas_to_str(i_p->get_sas()).c_str());
+                //NDBG_PRINT("connect to: %s\n", i_p->get_host().c_str());
                 int32_t l_s;
                 l_s = i_p->connect();
                 if (l_s != NTRNT_STATUS_OK)
@@ -456,6 +457,7 @@ bool peer_mgr::peer_exists(const sockaddr_storage& a_sas, peer** ao_peer)
 //! ----------------------------------------------------------------------------
 void peer_mgr::add_peer(peer* a_peer)
 {
+        //NDBG_PRINT("[HOST: %s] [FROM: %d]\n", a_peer->m_host.c_str(), a_peer->m_from);
         const sockaddr_storage& a_sas = a_peer->get_sas();
         pthread_mutex_lock(&m_mutex);
         m_peer_vec.push_back(a_peer);
@@ -684,7 +686,7 @@ uint64_t peer_mgr::utp_cb(utp_socket* a_utp_conn,
                 if (l_s != 0)
                 {
                         TRC_ERROR("performing utp_getpeername");
-                        return 0;
+                        return NTRNT_STATUS_ERROR;
                 }
                 // -------------------------------------------------
                 // get by family
@@ -703,14 +705,14 @@ uint64_t peer_mgr::utp_cb(utp_socket* a_utp_conn,
                 else
                 {
                         TRC_ERROR("unrecognized address family: %u", l_sa->sa_family);
-                        return 0;
+                        return NTRNT_STATUS_ERROR;
                 }
                 peer* l_peer;
                 l_s = accept_utp(l_psas, a_utp_conn, &l_peer);
                 if (l_s != NTRNT_STATUS_OK)
                 {
                         TRC_ERROR("performing accept_utp_peer");
-                        return 0;
+                        return NTRNT_STATUS_ERROR;
                 }
                 break;
         }
@@ -787,12 +789,11 @@ uint64_t peer_mgr::utp_cb(utp_socket* a_utp_conn,
                 else
                 {
                         TRC_ERROR("unknown family: %d", a_sa->sa_family);
-                        return 0;
+                        return NTRNT_STATUS_ERROR;
                 }
                 int l_s;
                 errno = 0;
                 l_s = sendto(l_fd, a_buf, a_len, 0, a_sa, a_sa_len);
-                //NDBG_PRINT("[%ssendto%s: %d] [buf: %p] [len: %lu]\n", ANSI_COLOR_FG_RED, ANSI_COLOR_OFF, l_s, a_buf, a_len);
                 if (l_s < 0)
                 {
                         // -----------------------------------------
@@ -804,12 +805,7 @@ uint64_t peer_mgr::utp_cb(utp_socket* a_utp_conn,
                                 return NTRNT_STATUS_AGAIN;
                         }
                         TRC_ERROR("error performing sendto. Reason: %s", strerror(errno));
-                        TRC_ERROR("fd:                  %d", l_fd);
-                        TRC_ERROR("a_args->buf:         %p", a_buf);
-                        TRC_ERROR("a_args->len:         %lu", a_len);
-                        TRC_ERROR("a_args->address:     %p", a_sa);
-                        TRC_ERROR("a_args->address_len: %u", a_sa_len);
-                        return 0;
+                        return NTRNT_STATUS_ERROR;
                 }
                 break;
         }

@@ -336,10 +336,8 @@ void peer::reset(void)
         // stats
         // -------------------------------------------------
         m_stat_expired_br = 0;
-        m_stat_bytes_sent = 0;
         m_stat_bytes_sent_last = 0;
         m_stat_bytes_sent_per_s = 0;
-        m_stat_bytes_recv = 0;
         m_stat_bytes_recv_last = 0;
         m_stat_bytes_recv_per_s = 0;
         m_stat_last_recvd_time_s = 0;
