@@ -50,10 +50,26 @@ include_directories(
     # ext
     # ------------------------------------------------------
     ${CMAKE_SOURCE_DIR}/ext
-    ${CMAKE_SOURCE_DIR}/ext/uri
     ${CMAKE_SOURCE_DIR}/ext/farmhash
     ${CMAKE_SOURCE_DIR}/ext/libmaxminddb/src
+    ${CMAKE_SOURCE_DIR}/ext/rc4-amd64
 )
+# ------------------------------------------------------------------------------
+# rc4 amd64 source files
+# ------------------------------------------------------------------------------
+if(BUILD_RC4_AMD64)
+SET(RC4_AMD64_SRCS
+    # ------------------------------------------------------
+    # rc4 amd64
+    # ------------------------------------------------------
+    ${CMAKE_SOURCE_DIR}/ext/rc4-amd64/rc4_skey.c
+    ${CMAKE_SOURCE_DIR}/ext/rc4-amd64/rc4-amd64.s
+)
+set_source_files_properties(${RC4_AMD64_SRCS} PROPERTIES COMPILE_FLAGS "-m64 -O3 -W -Wall -Werror")
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ext/rc4-amd64/rc4_skey.c PROPERTIES LANGUAGE C)
+set_property(SOURCE ${CMAKE_SOURCE_DIR}/ext/rc4-amd64/rc4-amd64.s APPEND PROPERTY COMPILE_OPTIONS "--64 -x" "assembler-with-cpp")
+add_definitions(-DBUILD_RC4_AMD64=1)
+endif()
 # ------------------------------------------------------------------------------
 # libutp source files
 # ------------------------------------------------------------------------------
@@ -204,7 +220,7 @@ SET(HDRS
 # ------------------------------------------------------------------------------
 # library
 # ------------------------------------------------------------------------------
-add_library(ntrnt_obj OBJECT ${LIBUTP_SRCS} ${LIBMAXMIND_SRCS} ${SRCS})
+add_library(ntrnt_obj OBJECT ${RC4_AMD64_SRCS} ${LIBUTP_SRCS} ${LIBMAXMIND_SRCS} ${SRCS})
 # ------------------------------------------------------------------------------
 # properties
 # ------------------------------------------------------------------------------

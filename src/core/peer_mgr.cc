@@ -652,7 +652,7 @@ int32_t peer_mgr::dequeue_out_v4(void)
                         // ---------------------------------
                         if (l_s == 0)
                         {
-                                NDBG_PRINT("NO LONGER WRITEABLE\n");
+                                //NDBG_PRINT("NO LONGER WRITEABLE\n");
                                 break;
                         }
                         // ---------------------------------
@@ -838,7 +838,6 @@ uint64_t peer_mgr::utp_cb(utp_socket* a_utp_conn,
         // -------------------------------------------------
         case UTP_ON_READ:
         {
-                utp_read_drained(a_utp_conn);
                 break;
         }
         // -------------------------------------------------

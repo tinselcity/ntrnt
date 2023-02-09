@@ -587,11 +587,14 @@ uint64_t peer::utp_cb(utp_socket* a_utp_conn,
                 //           a_len);
                 int32_t l_s;
                 l_s = utp_read(a_buf, a_len);
-                utp_read_drained(a_utp_conn);
-                if (l_s != NTRNT_STATUS_OK)
+                if (!m_in_q.read_avail())
                 {
-                        TRC_ERROR("performing utp_read");
-                        return NTRNT_STATUS_ERROR;
+                        utp_read_drained(a_utp_conn);
+                        if (l_s != NTRNT_STATUS_OK)
+                        {
+                                TRC_ERROR("performing utp_read");
+                                return NTRNT_STATUS_ERROR;
+                        }
                 }
                 break;
         }
@@ -1977,13 +1980,13 @@ void peer::ltep_create_handshake(void)
         l_bw.w_key("p");
         l_bw.w_int(m_session.get_ext_port());
         // -------------------------------------------------
-        // request queue size (512 is reasonable?)
+        // request queue size
         // http://bittorrent.org/beps/bep_0010.html
         // An integer, the number of outstanding request
         // messages this client supports without dropping.
         // -------------------------------------------------
         l_bw.w_key("reqq");
-        l_bw.w_int(512);
+        l_bw.w_int(NTRNT_SESSION_PEER_MAX_INFLIGHT);
         // -------------------------------------------------
         // upload only if seeding
         // http://bittorrent.org/beps/bep_0021.html

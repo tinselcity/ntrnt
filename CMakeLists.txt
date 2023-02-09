@@ -17,6 +17,7 @@ option(BUILD_TESTS          "Build the unit tests." ON)
 option(BUILD_APPS           "Build applications." ON)
 option(BUILD_UTILS          "Build utilities." OFF)
 option(BUILD_IS2            "Build w/ is2 (http api)." OFF)
+option(BUILD_RC4_AMD64      "Build w/ RC4-AMD64" OFF)
 # ------------------------------------------------------------------------------
 # Display the current settings
 # ------------------------------------------------------------------------------
@@ -36,6 +37,7 @@ message("    Build unit tests:                          " "BUILD_TESTS          
 message("    Build applications:                        " "BUILD_APPS              " ${BUILD_APPS})
 message("    Build utilities:                           " "BUILD_UTILS             " ${BUILD_UTILS})
 message("    Build w/ is2 (http api):                   " "BUILD_IS2               " ${BUILD_IS2})
+message("    Build w/ RC4-AMD64:                        " "BUILD_RC4_AMD64         " ${BUILD_RC4_AMD64})
 message("")
 # ------------------------------------------------------------------------------
 # fail if not found

@@ -13,6 +13,7 @@
 #include "support/ndebug.h"
 #include "support/trace.h"
 #include "support/sha1.h"
+#include "rc4.h"
 // ---------------------------------------------------------
 // openssl
 // ---------------------------------------------------------
@@ -114,9 +115,13 @@ public:
         // public methods
         // -------------------------------------------------
         arc4():
+#ifdef BUILD_RC4_AMD64
+                m_ctx()
+#else
                 m_i(0),
                 m_j(0),
                 m_s()
+#endif
         {}
         ~arc4() {}
         // -------------------------------------------------
@@ -124,6 +129,9 @@ public:
         // -------------------------------------------------
         void init(void const* a_key, size_t a_key_len)
         {
+#ifdef BUILD_RC4_AMD64
+                RC4_set_key(&m_ctx, (int)a_key_len, (const unsigned char *)a_key);
+#else
                 m_i = 0;
                 m_j = 0;
                 for (size_t i = 0; i < 256; ++i)
@@ -135,26 +143,40 @@ public:
                         j = (uint8_t)(j + m_s[i] + ((uint8_t const*)a_key)[i % a_key_len]);
                         swap(i, j);
                 }
+#endif
         }
         // -------------------------------------------------
         // process
         // -------------------------------------------------
         void process(void* a_dst, void const* a_src, size_t a_len)
         {
+#ifdef BUILD_RC4_AMD64
+                RC4(&m_ctx, a_len, (const unsigned char*)a_src, (unsigned char *)a_dst);
+#else
                 for (size_t i = 0; i < a_len; ++i)
                 {
                         ((uint8_t*)a_dst)[i] = ((uint8_t const*)a_src)[i] ^ next();
                 }
+#endif
         }
         // -------------------------------------------------
         // discard
         // -------------------------------------------------
         void discard(size_t a_len)
         {
+#ifdef BUILD_RC4_AMD64
+                // TODO -this isn't efficient at all
+                uint8_t l_c;
+                for (size_t i_c = 0; i_c < a_len; ++i_c)
+                {
+                        RC4(&m_ctx, sizeof(l_c), (const unsigned char*)&l_c, (unsigned char *)&l_c);
+                }
+#else
                 for (size_t i = 0; i < a_len; ++i)
                 {
                         next();
                 }
+#endif
         }
 private:
         // -------------------------------------------------
@@ -163,6 +185,8 @@ private:
         // disallow copy/assign
         arc4(const arc4&);
         arc4& operator=(const arc4&);
+#ifdef BUILD_RC4_AMD64
+#else
         // -------------------------------------------------
         // swap
         // -------------------------------------------------
@@ -182,12 +206,17 @@ private:
                 swap(m_i, m_j);
                 return m_s[(uint8_t)(m_s[m_i] + m_s[m_j])];
         }
+#endif
         // -------------------------------------------------
         // private members
         // -------------------------------------------------
+#ifdef BUILD_RC4_AMD64
+        RC4_KEY m_ctx;
+#else
         uint8_t m_i;
         uint8_t m_j;
         uint8_t m_s[256];
+#endif
 };
 //! ----------------------------------------------------------------------------
 //! select key callback

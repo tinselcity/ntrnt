@@ -697,6 +697,8 @@ int32_t session::add_peer(struct sockaddr_storage& a_sas, peer_from_t a_from)
 //! ----------------------------------------------------------------------------
 int32_t session::add_peer_raw(int a_family, const uint8_t* a_buf, size_t a_len, peer_from_t a_from)
 {
+        // TODO REMOVE!!!
+#if 0
         off_t l_off = 0;
         // -------------------------------------------------
         // get peer addresses (ipv4)
@@ -771,6 +773,7 @@ int32_t session::add_peer_raw(int a_family, const uint8_t* a_buf, size_t a_len, 
                         UNUSED(l_s);
                 }
         }
+#endif
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -925,13 +928,6 @@ int32_t session::udp_mux(struct sockaddr_storage& a_ss,
                 //NDBG_HEXDUMP(a_msg, a_msg_len);
                 // TODO
                 // add inactivity timer???
-#if 0
-                if (!ss->isClosing() && !ss->utp_timer)
-                {
-                    ss->utp_timer = ss->timerMaker().create(timer_callback, ss);
-                    reset_timer(ss);
-                }
-#endif
                 int32_t l_s;
                 l_s = utp_process_udp(m_utp_ctx, a_msg, a_msg_len, (const sockaddr*)(&a_ss), sas_size(a_ss));
                 // -----------------------------------------

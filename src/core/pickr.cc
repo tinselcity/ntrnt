@@ -935,6 +935,7 @@ int32_t pickr::recv_piece(peer* a_peer,
         // -------------------------------------------------
         // if inflight < low water -request more
         // -------------------------------------------------
+#if 0
         //NDBG_PRINT("inflight: %lu\n", a_peer->m_num_block_rqst_inflight);
         if (!m_complete &&
             (a_peer->m_num_block_rqst_inflight < NTRNT_SESSION_PEER_INFLIGHT_LOW_WATER))
@@ -946,6 +947,7 @@ int32_t pickr::recv_piece(peer* a_peer,
                         return NTRNT_STATUS_ERROR;
                 }
         }
+#endif
         return NTRNT_STATUS_OK;
 }
 }
