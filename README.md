@@ -24,15 +24,27 @@ BitTorrent client in C++
 - [Extension Negotiation Protocol](http://wiki.vuze.com/w/Extension_negotiation_protocol), including [Peer Exchange](https://www.bittorrent.org/beps/bep_0011.html) and [Metadata](https://www.bittorrent.org/beps/bep_0009.html)
 - [UDP](https://www.bittorrent.org/beps/bep_0015.html)/[HTTP(s)](https://www.bittorrent.org/beps/bep_0048.html) Tracker announce and scrape.
 
-### *Disclaimer*
-`ntrnt` isn't very performant or feature complete compared to the vastly superior open source offerings especially [libtorrent](https://github.com/arvidn/libtorrent) and [Transmission](https://github.com/transmission/transmission).  This was purely a _"Hey, I wonder how BitTorrent works?"_ exercise.
-
-#### An example
+#### Running
 ```bash
 >ntrnt sample.torrent
 TODO...
 ...
 ```
+
+#### *Disclaimer*
+`ntrnt` isn't very performant or feature complete compared to the vastly superior open source offerings especially [libtorrent](https://github.com/arvidn/libtorrent) and [Transmission](https://github.com/transmission/transmission).  This was purely a _"Hey, I wonder how BitTorrent works?"_ exercise.
+
+### Some Features I Liked
+
+#### `info hash` Torrenting
+This is probably an easy addition to the open source clients, but just not exposed.  The prerequisites are a healthy DHT locally, which might be untenable, but it seems like a great censorship resistant way to distribute data (ie for "[Trackerless Publishing](https://lwn.net/Articles/137523/)".
+
+TODO
+
+#### Visualizing Peers Geographically
+Apart from learning the protocols, the other thing I wanted to do with `ntrnt` was to be able to visualize where the peers were.  I wrote a basic [web-gui](https://github.com/tinselcity/ntrnt-ui) and interact with the `ntrnt` client application over a json API.
+
+TODO
 
 ## Install
 
