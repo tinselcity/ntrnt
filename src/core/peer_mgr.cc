@@ -272,6 +272,21 @@ int32_t peer_mgr::connect_peers(void)
         for (auto && i_p : l_pv)
         {
                 if (!i_p) { continue; }
+                // -----------------------------------------
+                // push into active
+                // -----------------------------------------
+                const sockaddr_storage& l_sas = i_p->get_sas();
+                if (l_sas.ss_family == AF_INET)
+                {
+                        m_peer_active_vec_v4.push_back(i_p);
+                }
+                else if(l_sas.ss_family == AF_INET6)
+                {
+                        m_peer_active_vec_v6.push_back(i_p);
+                }
+                // -----------------------------------------
+                // connect
+                // -----------------------------------------
                 //NDBG_PRINT("connect to: %s\n", i_p->get_host().c_str());
                 int32_t l_s;
                 l_s = i_p->connect();
@@ -756,6 +771,7 @@ uint64_t peer_mgr::utp_cb(utp_socket* a_utp_conn,
         }
         if (l_peer)
         {
+                peer::state_t l_ls = l_peer->get_state();
                 l_s = l_peer->utp_cb(a_utp_conn,
                                      a_type,
                                      a_state,
@@ -770,6 +786,14 @@ uint64_t peer_mgr::utp_cb(utp_socket* a_utp_conn,
                 else if (l_s == NTRNT_STATUS_ERROR)
                 {
                         l_peer->shutdown(peer::ERROR_UTP_CB_ERROR);
+                }
+                // -----------------------------------------
+                // add to connected vec
+                // -----------------------------------------
+                if ((l_ls != peer::STATE_CONNECTED) &&
+                    (l_peer->get_state() == peer::STATE_CONNECTED))
+                {
+                        m_peer_connected_vec.push_back(l_peer);
                 }
                 return NTRNT_STATUS_OK;
         }
