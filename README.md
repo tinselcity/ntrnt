@@ -25,7 +25,7 @@ BitTorrent client in C++
 - [UDP](https://www.bittorrent.org/beps/bep_0015.html)/[HTTP(s)](https://www.bittorrent.org/beps/bep_0048.html) Tracker announce and scrape.
 
 ### *Disclaimer*
-`ntrnt` isn't very performant or feature complete compared to the vastly superior open source offerings especially [libtorrent](https://github.com/arvidn/libtorrent) and [Transmission](https://github.com/transmission/transmission).  This was purely a _"Hey, I wonder how BitTorrent works?" exercise._
+`ntrnt` isn't very performant or feature complete compared to the vastly superior open source offerings especially [libtorrent](https://github.com/arvidn/libtorrent) and [Transmission](https://github.com/transmission/transmission).  This was purely a _"Hey, I wonder how BitTorrent works?"_ exercise.
 
 #### An example
 ```bash
