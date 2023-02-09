@@ -24,6 +24,9 @@ BitTorrent client in C++
 - [Extension Negotiation Protocol](http://wiki.vuze.com/w/Extension_negotiation_protocol), including [Peer Exchange](https://www.bittorrent.org/beps/bep_0011.html) and [Metadata](https://www.bittorrent.org/beps/bep_0009.html)
 - [UDP](https://www.bittorrent.org/beps/bep_0015.html)/[HTTP(s)](https://www.bittorrent.org/beps/bep_0048.html) Tracker announce and scrape.
 
+### *Disclaimer*
+`ntrnt` isn't very performant or feature complete compared to the vastly superior open source offerings especially [libtorrent](https://github.com/arvidn/libtorrent) and [Transmission](https://github.com/transmission/transmission).  This was purely a _"Hey, I wonder how BitTorrent works?" exercise._
+
 #### An example
 ```bash
 >ntrnt sample.torrent
