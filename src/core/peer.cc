@@ -1050,11 +1050,14 @@ int32_t peer::btp_parse_handshake_ia(const uint8_t* a_buf, size_t a_len)
         // -------------------------------------------------
         // send btfield
         // -------------------------------------------------
-        l_s = btp_send_bitfield();
-        if (l_s != NTRNT_STATUS_OK)
+        if (m_session.get_info_pickr().get_info_buf_len())
         {
-                TRC_ERROR("performing btp_send_bitfield");
-                return NTRNT_STATUS_ERROR;
+                l_s = btp_send_bitfield();
+                if (l_s != NTRNT_STATUS_OK)
+                {
+                        TRC_ERROR("performing btp_send_bitfield");
+                        return NTRNT_STATUS_ERROR;
+                }
         }
         return NTRNT_STATUS_OK;
 }
@@ -1159,11 +1162,14 @@ int32_t peer::btp_parse_handshake(void)
         // -------------------------------------------------
         // send btfield
         // -------------------------------------------------
-        l_s = btp_send_bitfield();
-        if (l_s != NTRNT_STATUS_OK)
+        if (m_session.get_info_pickr().get_info_buf_len())
         {
-                TRC_ERROR("performing btp_send_bitfield");
-                return NTRNT_STATUS_ERROR;
+                l_s = btp_send_bitfield();
+                if (l_s != NTRNT_STATUS_OK)
+                {
+                        TRC_ERROR("performing btp_send_bitfield");
+                        return NTRNT_STATUS_ERROR;
+                }
         }
         return NTRNT_STATUS_OK;
 }
@@ -1973,6 +1979,11 @@ void peer::ltep_create_handshake(void)
                 l_bw.w_key("metadata_size");
                 l_bw.w_int(m_session.get_info_pickr().get_info_buf_len());
         }
+        else
+        {
+                l_bw.w_key("metadata_size");
+                l_bw.w_int(0);
+        }
         // -------------------------------------------------
         // expternal port
         // -------------------------------------------------
@@ -2047,6 +2058,7 @@ void peer::ltep_create_handshake(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::ltep_send_handshake(void)
 {
+        //NDBG_PRINT("[BTP] [LTEP [SEND] HANDSHAKE\n");
         // -------------------------------------------------
         // recreate -changes if upload only
         // -------------------------------------------------

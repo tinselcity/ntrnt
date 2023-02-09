@@ -69,6 +69,7 @@ public:
                 ERROR_UTP_CB_ERROR,
                 ERROR_UTP_ON_ERROR,
                 ERROR_HANDSHAKE_SELF,
+                ERROR_UTP_ON_ERROR_PEER_MGR
         } error_t;
         typedef enum _state {
                 STATE_NONE,
@@ -337,7 +338,7 @@ private:
         double m_geoip2_lat;
         double m_geoip2_lon;
         // -------------------------------------------------
-        // sharing private fields with peer mgr
+        // friends
         // -------------------------------------------------
         friend peer_mgr;
         friend pickr;
