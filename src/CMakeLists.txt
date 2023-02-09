@@ -28,6 +28,15 @@ LIST(APPEND INST_HDRS ${HDRS})
 include_directories(
     ${CMAKE_CURRENT_BINARY_DIR}
     # ------------------------------------------------------
+    # brew support
+    # ------------------------------------------------------
+    /usr/local/opt/openssl/include
+    /usr/local/opt/miniupnpc/include
+    /usr/local/opt/rapidjson/include
+    /opt/homebrew/opt/openssl/include
+    /opt/homebrew/opt/miniupnpc/include
+    /opt/homebrew/opt/rapidjson/include
+    # ------------------------------------------------------
     # sub
     # ------------------------------------------------------
     ${CMAKE_SOURCE_DIR}/sub
@@ -41,10 +50,26 @@ include_directories(
     # ext
     # ------------------------------------------------------
     ${CMAKE_SOURCE_DIR}/ext
-    ${CMAKE_SOURCE_DIR}/ext/uri
     ${CMAKE_SOURCE_DIR}/ext/farmhash
     ${CMAKE_SOURCE_DIR}/ext/libmaxminddb/src
+    ${CMAKE_SOURCE_DIR}/ext/rc4-amd64
 )
+# ------------------------------------------------------------------------------
+# rc4 amd64 source files
+# ------------------------------------------------------------------------------
+if(BUILD_RC4_AMD64)
+SET(RC4_AMD64_SRCS
+    # ------------------------------------------------------
+    # rc4 amd64
+    # ------------------------------------------------------
+    ${CMAKE_SOURCE_DIR}/ext/rc4-amd64/rc4_skey.c
+    ${CMAKE_SOURCE_DIR}/ext/rc4-amd64/rc4-amd64.s
+)
+set_source_files_properties(${RC4_AMD64_SRCS} PROPERTIES COMPILE_FLAGS "-m64 -O3 -W -Wall -Werror")
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ext/rc4-amd64/rc4_skey.c PROPERTIES LANGUAGE C)
+set_property(SOURCE ${CMAKE_SOURCE_DIR}/ext/rc4-amd64/rc4-amd64.s APPEND PROPERTY COMPILE_OPTIONS "--64 -x" "assembler-with-cpp")
+add_definitions(-DBUILD_RC4_AMD64=1)
+endif()
 # ------------------------------------------------------------------------------
 # libutp source files
 # ------------------------------------------------------------------------------
@@ -110,10 +135,7 @@ SET(SRCS
     # evr
     # ------------------------------------------------------
     evr/evr.cc
-    # TODO OS X support...
-    #evr/evr_kqueue.cc
     evr/evr_select.cc
-    evr/evr_epoll.cc
     # ------------------------------------------------------
     # nconn
     # ------------------------------------------------------
@@ -163,6 +185,15 @@ SET(SRCS
     core/session.cc
     core/api.cc
 )
+set_source_files_properties(${SRCS} PROPERTIES COMPILE_FLAGS "-Wall -Werror -Weffc++ -std=c++11")
+# ------------------------------------------------------------------------------
+# Linux Specific
+# ------------------------------------------------------------------------------
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+    # Linux specific code
+    SET(OperatingSystem "Linux")
+    set (SRCS ${SRCS} ./evr/evr_epoll.cc)
+ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
 # ------------------------------------------------------------------------------
 # c source
 # ------------------------------------------------------------------------------
@@ -189,7 +220,7 @@ SET(HDRS
 # ------------------------------------------------------------------------------
 # library
 # ------------------------------------------------------------------------------
-add_library(ntrnt_obj OBJECT ${LIBUTP_SRCS} ${LIBMAXMIND_SRCS} ${SRCS})
+add_library(ntrnt_obj OBJECT ${RC4_AMD64_SRCS} ${LIBUTP_SRCS} ${LIBMAXMIND_SRCS} ${SRCS})
 # ------------------------------------------------------------------------------
 # properties
 # ------------------------------------------------------------------------------
@@ -204,10 +235,17 @@ target_include_directories(ntrnt PUBLIC
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_BINARY_DIR}
 )
+# brew hacking
+target_link_directories(ntrnt PUBLIC
+    /usr/local/opt/openssl/lib
+    /usr/local/opt/miniupnpc/lib
+    /opt/homebrew/opt/openssl/lib
+    /opt/homebrew/opt/miniupnpc/lib
+)
 target_link_libraries(ntrnt
-	pcre
     ssl
     crypto
+    miniupnpc
 )
 # ------------------------------------------------------------------------------
 # properties
@@ -237,4 +275,3 @@ install(FILES ${HDRS}
     DESTINATION include/ntrnt
     COMPONENT Headers
 )
-

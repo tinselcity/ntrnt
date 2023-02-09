@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <math.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -119,6 +120,56 @@ int32_t read_file(const char *a_file, char **a_buf, size_t *a_len)
         }
         *a_buf = l_buf;
         *a_len = l_size;
+        return NTRNT_STATUS_OK;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int32_t ensure_dir(const std::string& a_dir)
+{
+        // -------------------------------------------------
+        // check for exists
+        // -------------------------------------------------
+        struct stat l_dir_info;
+        int l_s;
+        errno = 0;
+        l_s = ::stat(a_dir.c_str(), &l_dir_info);
+        if (l_s == 0)
+        {
+                // -----------------------------------------
+                // check is dir
+                // -----------------------------------------
+                if (!(l_dir_info.st_mode & S_IFDIR))
+                {
+                        TRC_ERROR("path is not directory [DIR: %s]", a_dir.c_str());
+                        return NTRNT_STATUS_ERROR;
+                }
+                return NTRNT_STATUS_OK;
+        }
+        if (errno != ENOENT)
+        {
+                TRC_ERROR("performing stat [DIR: %s].  Reason[%d]: %s",
+                          a_dir.c_str(),
+                          errno,
+                          strerror(errno));
+                return NTRNT_STATUS_ERROR;
+        }
+        // -------------------------------------------------
+        // create directory
+        // TODO -better way to set attr
+        // -------------------------------------------------
+        errno = 0;
+        l_s = ::mkdir(a_dir.c_str(), 0755);
+        if (l_s != 0)
+        {
+                TRC_ERROR("performing mkdir [DIR: %s].  Reason[%d]: %s",
+                          a_dir.c_str(),
+                          errno,
+                          strerror(errno));
+                return NTRNT_STATUS_ERROR;
+        }
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------

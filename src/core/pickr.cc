@@ -67,10 +67,10 @@ int32_t pickr::init(info_pickr& a_info_pickr)
         // -------------------------------------------------
         // set blocks bitfields
         // -------------------------------------------------
-        m_info_pieces = &(a_info_pickr.m_info_pieces);
-        m_info_length = (size_t)a_info_pickr.m_info_length;
-        m_info_piece_length = (size_t)a_info_pickr.m_info_piece_length;
-        m_pieces.set_size(a_info_pickr.m_info_pieces.size());
+        m_info_pieces = &(a_info_pickr.get_info_pieces());
+        m_info_length = (size_t)a_info_pickr.get_info_length();
+        m_info_piece_length = (size_t)a_info_pickr.get_info_piece_length();
+        m_pieces.set_size(m_info_pieces->size());
         for (size_t i_idx = 0; i_idx < m_pieces.get_size(); ++i_idx)
         {
                 size_t l_len = m_info_piece_length;
@@ -86,10 +86,12 @@ int32_t pickr::init(info_pickr& a_info_pickr)
                 m_blocks_vec.push_back(l_bs);
         }
         // -------------------------------------------------
-        // init files
+        // init stub
         // -------------------------------------------------
         int32_t l_s;
-        l_s = m_stub.init(a_info_pickr.m_info_name, m_info_length);
+        l_s = m_stub.init(a_info_pickr.get_info_name(),
+                          m_info_length,
+                          a_info_pickr.get_info_files());
         if (l_s != NTRNT_STATUS_OK)
         {
                 TRC_ERROR("performing files init");
@@ -141,11 +143,11 @@ int32_t pickr::write(nbq& a_nbq, uint32_t a_idx, uint32_t a_off, uint32_t a_len)
         size_t l_off = (size_t)(a_idx)*(size_t)m_info_piece_length + a_off;
         size_t l_read = 0;
         size_t l_total_read_avail = a_nbq.read_avail();
-        size_t l_left = (a_len > l_total_read_avail)?l_total_read_avail:a_len;
+        size_t l_left = (a_len > l_total_read_avail) ? l_total_read_avail : a_len;
         while(l_left)
         {
                 size_t l_read_avail = a_nbq.b_read_avail();
-                size_t l_read_size = (l_left > l_read_avail)?l_read_avail:l_left;
+                size_t l_read_size = (l_left > l_read_avail) ? l_read_avail : l_left;
                 int32_t l_s;
                 l_s = m_stub.write((const uint8_t*)a_nbq.b_read_ptr(), l_off, l_read_size);
                 if (l_s != NTRNT_STATUS_OK)
@@ -159,6 +161,7 @@ int32_t pickr::write(nbq& a_nbq, uint32_t a_idx, uint32_t a_off, uint32_t a_len)
                 l_read += l_read_size;
         }
         a_nbq.shrink();
+        UNUSED(l_read);
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -166,10 +169,11 @@ int32_t pickr::write(nbq& a_nbq, uint32_t a_idx, uint32_t a_off, uint32_t a_len)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
+#if 0
 int32_t pickr::read(uint8_t* a_buf,
-                      uint32_t a_idx,
-                      uint32_t a_off,
-                      uint32_t a_len)
+                    uint32_t a_idx,
+                    uint32_t a_off,
+                    uint32_t a_len)
 {
         if (!m_init)
         {
@@ -185,6 +189,7 @@ int32_t pickr::read(uint8_t* a_buf,
         }
         return NTRNT_STATUS_OK;
 }
+#endif
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
@@ -480,6 +485,24 @@ int32_t pickr::request_blocks(void)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
+bool pickr::peer_is_interesting(peer& a_peer)
+{
+        btfield& l_ph = a_peer.get_btp_pieces_have();
+        for (size_t i_p = 0; i_p < m_pieces.get_size(); ++i_p)
+        {
+                if (!m_pieces.test(i_p) &&
+                    l_ph.test(i_p))
+                {
+                        return true;
+                }
+        }
+        return false;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
 int32_t pickr::peer_request_more(peer& a_peer)
 {
         int32_t l_s;
@@ -496,7 +519,25 @@ int32_t pickr::peer_request_more(peer& a_peer)
         if (a_peer.get_btp_peer_choking() ||
             !a_peer.get_btp_am_interested())
         {
-                // TODO remove from swarm???
+                // -----------------------------------------
+                // if is interesting and haven't already
+                // expressed interest -send interested
+                // -----------------------------------------
+                if (peer_is_interesting(a_peer) &&
+                    !a_peer.m_btp_am_interested)
+                {
+                        a_peer.m_btp_am_interested = true;
+                        l_s = a_peer.btp_send_interested();
+                        if (l_s != NTRNT_STATUS_OK)
+                        {
+                                TRC_ERROR("performing btp_send_interested");
+                                return NTRNT_STATUS_ERROR;
+                        }
+                        return NTRNT_STATUS_OK;
+                }
+                // -----------------------------------------
+                // send keep-alive if nothing else
+                // -----------------------------------------
                 a_peer.btp_send_keepalive();
                 return NTRNT_STATUS_OK;
         }
@@ -509,6 +550,22 @@ int32_t pickr::peer_request_more(peer& a_peer)
         {
                 TRC_ERROR("performing pickr get blocks");
                 return NTRNT_STATUS_ERROR;
+        }
+        //NDBG_PRINT("REQUEST: [NUM: %lu]\n", l_blk_rqst_vec.size());
+        // -------------------------------------------------
+        // if empty peer doesn't appear to have anything
+        // of interest so relay
+        // -------------------------------------------------
+        if (l_blk_rqst_vec.empty())
+        {
+                a_peer.m_btp_am_interested = false;
+                l_s = a_peer.btp_send_not_interested();
+                if (l_s != NTRNT_STATUS_OK)
+                {
+                        TRC_ERROR("performing btp_send_interested");
+                        return NTRNT_STATUS_ERROR;
+                }
+                return NTRNT_STATUS_OK;
         }
         // -------------------------------------------------
         // make requests
@@ -540,10 +597,10 @@ int32_t pickr::get_block_rqsts(block_rqst_vec_t& ao_vec,
         uint32_t l_max = l_max_reqq - a_peer.m_num_block_rqst_inflight;
         if (!l_max)
         {
-                //NDBG_PRINT("max == 0 [MAX_INFLIGHT: %d] [inflight: %u]\n",
+                //NDBG_PRINT("max == 0 [MAX_INFLIGHT: %d] [inflight: %lu]\n",
                 //           l_max_reqq,
-                //           l_inflight);
-                return NTRNT_STATUS_DONE;
+                //           a_peer.m_num_block_rqst_inflight);
+                return NTRNT_STATUS_OK;
         }
         // -------------------------------------------------
         // - find list of candidate pieces from intersection
@@ -570,7 +627,9 @@ int32_t pickr::get_block_rqsts(block_rqst_vec_t& ao_vec,
         } _pb_t;
         typedef std::vector<_pb_t> _piece_vec_t;
         _piece_vec_t l_pv;
-        // sanity chekc size
+        // -------------------------------------------------
+        // sanity check size
+        // -------------------------------------------------
         if (m_pieces.get_size() != a_btfield.get_size())
         {
                 TRC_ERROR("torrent peer bitfield size mismatch");
@@ -595,8 +654,7 @@ int32_t pickr::get_block_rqsts(block_rqst_vec_t& ao_vec,
         // -------------------------------------------------
         if (l_pv.empty())
         {
-                TRC_ERROR("torrent peer bitfield size mismatch");
-                return NTRNT_STATUS_ERROR;
+                return NTRNT_STATUS_OK;
         }
         // -------------------------------------------------
         // shuffle
@@ -698,15 +756,8 @@ int32_t pickr::get_piece(peer* a_peer,
                          uint32_t a_idx,
                          uint32_t a_off,
                          uint32_t a_len,
-                         const char** ao_buf)
+                         nbq* a_q)
 {
-        // -------------------------------------------------
-        // sanity check
-        // -------------------------------------------------
-        if (!ao_buf)
-        {
-                return NTRNT_STATUS_ERROR;
-        }
         // -------------------------------------------------
         // check if has
         // -------------------------------------------------
@@ -727,7 +778,16 @@ int32_t pickr::get_piece(peer* a_peer,
         // return ptr to data
         // TODO fix for multifile
         // -------------------------------------------------
-        *ao_buf = ((const char*)(m_stub.get_buf())) + l_off;
+        int32_t l_s;
+        l_s = m_stub.read(a_q, l_off, a_len);
+        if (l_s != NTRNT_STATUS_OK)
+        {
+                TRC_ERROR("performing stub read: [Q: %p] [OFF: %u] [LEN: %u]",
+                          a_q,
+                          (unsigned int)l_off,
+                          a_len);
+                return NTRNT_STATUS_ERROR;
+        }
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -875,6 +935,8 @@ int32_t pickr::recv_piece(peer* a_peer,
         // -------------------------------------------------
         // if inflight < low water -request more
         // -------------------------------------------------
+#if 0
+        //NDBG_PRINT("inflight: %lu\n", a_peer->m_num_block_rqst_inflight);
         if (!m_complete &&
             (a_peer->m_num_block_rqst_inflight < NTRNT_SESSION_PEER_INFLIGHT_LOW_WATER))
         {
@@ -885,6 +947,7 @@ int32_t pickr::recv_piece(peer* a_peer,
                         return NTRNT_STATUS_ERROR;
                 }
         }
+#endif
         return NTRNT_STATUS_OK;
 }
 }

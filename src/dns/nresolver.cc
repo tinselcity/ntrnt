@@ -237,15 +237,4 @@ int32_t nresolver::lookup_sync(const std::string &a_host,
         }
         return lookup_inline(a_host, a_port, ao_host_info);
 }
-//! ----------------------------------------------------------------------------
-//! \details: TODO
-//! \return:  TODO
-//! \param:   TODO
-//! ----------------------------------------------------------------------------
-const char *s_bytes_2_ip_str(const unsigned char *c)
-{
-        static char b[sizeof("255.255.255.255")];
-        sprintf(b, "%u.%u.%u.%u", c[0], c[1], c[2], c[3]);
-        return b;
-}
 }

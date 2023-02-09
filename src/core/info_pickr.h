@@ -16,18 +16,6 @@ class session;
 class pickr;
 class peer;
 //! ----------------------------------------------------------------------------
-//! types
-//! ----------------------------------------------------------------------------
-typedef struct _files {
-        std::list<std::string> m_path;
-        size_t m_len;
-        _files():
-                m_path(),
-                m_len(0)
-        {}
-} files_t;
-typedef std::list<files_t> files_list_t;
-//! ----------------------------------------------------------------------------
 //! \class pickr
 //! ----------------------------------------------------------------------------
 class info_pickr {
@@ -37,12 +25,29 @@ public:
         // -------------------------------------------------
         info_pickr(session& a_session);
         ~info_pickr(void);
+        // -------------------------------------------------
+        // parsing
+        // -------------------------------------------------
+        int32_t parse_info(const be_dict_t& a_dict);
         int32_t parse_info(const char* a_buf, size_t a_len);
+        // -------------------------------------------------
+        // request/recv pieces
+        // -------------------------------------------------
         int32_t request_info_pieces(void);
         int32_t recv_info_piece(peer* a_peer, uint32_t a_idx, const char* a_buf, size_t a_len);
         int32_t get_info_piece(peer* a_peer, uint32_t a_idx, const char** ao_buf, size_t& ao_len);
-        size_t get_info_buf_len(void) { return m_info_buf_len; }
+        // -------------------------------------------------
+        // getters
+        // -------------------------------------------------
         bool complete(void) { return m_complete; }
+        size_t get_info_buf_len(void) { return m_info_buf_len; }
+        const std::string& get_info_name(void) { return m_info_name; }
+        int64_t get_info_length(void) { return m_info_length; }
+        int64_t get_info_piece_length(void) { return m_info_piece_length; }
+        size_t get_info_pieces_size(void) { return m_info_pieces.size(); }
+        size_t get_info_files_size(void) { return m_info_files.size(); }
+        const id_vector_t& get_info_pieces(void) { return m_info_pieces; }
+        const files_list_t& get_info_files(void) { return m_info_files; }
 private:
         // -------------------------------------------------
         // private methods
@@ -53,7 +58,6 @@ private:
         info_pickr(const info_pickr&);
         info_pickr& operator=(const info_pickr&);
         int32_t peer_request_info(peer& a_peer);
-        int32_t parse_info(const be_dict_t& a_dict);
         int32_t validate_info(void);
         // -------------------------------------------------
         // private members
@@ -74,11 +78,6 @@ private:
         int64_t m_info_piece_length;
         id_vector_t m_info_pieces;
         files_list_t m_info_files;
-        // -------------------------------------------------
-        // sharing private fields with session
-        // -------------------------------------------------
-        friend session;
-        friend pickr;
 };
 }
 #endif

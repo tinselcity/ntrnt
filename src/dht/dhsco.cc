@@ -30,6 +30,9 @@
 //! ----------------------------------------------------------------------------
 //! constants
 //! ----------------------------------------------------------------------------
+#ifndef _DHSCO_MSG_CONFIRM
+#define _DHSCO_MSG_CONFIRM 0
+#endif
 #define _DHSCO_TOKEN_SIZE 8
 // max number of peers store for given hash.
 #define _DHSCO_MAX_PEERS 2048
@@ -1789,7 +1792,7 @@ int dhsco::send_find_node(const struct sockaddr* a_sa,
         ADD_V(l_buf, i, 512);
         l_s = snprintf(l_buf + i, 512 - i, "1:y1:qe");
         INC(i, l_s, 512);
-        return send_buf(l_buf, i, a_confirm ? MSG_CONFIRM : 0, a_sa, a_sa_len);
+        return send_buf(l_buf, i, a_confirm ? _DHSCO_MSG_CONFIRM : 0, a_sa, a_sa_len);
 fail:
         errno = ENOSPC;
         return NTRNT_STATUS_ERROR;
@@ -2181,7 +2184,7 @@ int dhsco::send_get_peers(const struct sockaddr* a_sa,
         ADD_V(l_buf, i, 512);
         l_s = snprintf(l_buf + i, 512 - i, "1:y1:qe");
         INC(i, l_s, 512);
-        return send_buf(l_buf, i, a_confirm ? MSG_CONFIRM : 0, a_sa, a_sa_len);
+        return send_buf(l_buf, i, a_confirm ? _DHSCO_MSG_CONFIRM : 0, a_sa, a_sa_len);
 fail:
         errno = ENOSPC;
         return NTRNT_STATUS_ERROR;
@@ -2633,7 +2636,7 @@ int dhsco::send_announce_peer(const struct sockaddr* a_sa,
         ADD_V(l_buf, i, 512);
         l_s = snprintf(l_buf + i, 512 - i, "1:y1:qe");
         INC(i, l_s, 512);
-        return send_buf(l_buf, i, a_confirm ? 0 : MSG_CONFIRM, a_sa, a_sa_len);
+        return send_buf(l_buf, i, a_confirm ? 0 : _DHSCO_MSG_CONFIRM, a_sa, a_sa_len);
 fail:
         errno = ENOSPC;
         return NTRNT_STATUS_ERROR;

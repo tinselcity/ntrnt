@@ -97,9 +97,10 @@ public:
         geoip2_mmdb* get_geoip2_mmdb(void) { return m_geoip2_mmdb; }
         const uint8_t* get_info_hash(void) const { return m_info_hash.m_data; }
         const std::string& get_info_hash_str(void) const { return m_info_hash_str; }
-        uint32_t get_info_num_pieces(void) { return (uint32_t)m_info_pickr.m_info_pieces.size(); }
+        uint32_t get_info_num_pieces(void) { return (uint32_t)m_info_pickr.get_info_pieces_size(); }
         const std::string& get_peer_id(void) { return m_peer_id; }
-        const std::string& get_ext_address(void) { return m_ext_address; }
+        const std::string& get_ext_address_v4(void) { return m_ext_address_v4; }
+        const std::string& get_ext_address_v6(void) { return m_ext_address_v6; }
         // -------------------------------------------------
         // set
         // -------------------------------------------------
@@ -108,7 +109,8 @@ public:
         void set_ext_ip(const char* a_addr) { m_ext_ip = a_addr; }
         void set_ext_port(uint16_t a_port) { m_ext_port = a_port; }
         void set_peer(const std::string& a_str) { m_peer = a_str; }
-        void set_ext_address(const std::string& a_str) { m_ext_address = a_str; }
+        void set_ext_address_v4(const std::string& a_str) { m_ext_address_v4 = a_str; }
+        void set_ext_address_v6(const std::string& a_str) { m_ext_address_v6 = a_str; }
         // -------------------------------------------------
         // geoip2 support
         // -------------------------------------------------
@@ -117,7 +119,7 @@ public:
         // timers
         // -------------------------------------------------
         int32_t t_trackers(void);
-        int32_t t_btp(void);
+        int32_t t_request_blocks(void);
         int32_t t_connect_peers(void);
         int32_t t_check_timeouts(void);
         // -------------------------------------------------
@@ -174,7 +176,8 @@ private:
         std::string m_peer_id;
         std::string m_ext_ip;
         uint16_t m_ext_port;
-        std::string m_ext_address;
+        std::string m_ext_address_v4;
+        std::string m_ext_address_v6;
         std::string m_peer;
         tracker_list_t m_tracker_list;
         nresolver *m_nresolver;

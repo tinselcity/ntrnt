@@ -340,27 +340,32 @@ const char *get_tls_info_protocol_str(int32_t a_version)
 //! ----------------------------------------------------------------------------
 int tls_cert_verify_callback_allow_self_signed(int ok, X509_STORE_CTX* store)
 {
-        if (!ok)
+        if (ok)
         {
-                if (store)
-                {
-                        // TODO Can add check for depth here.
-                        //int depth = X509_STORE_CTX_get_error_depth(store);
-                        int err = X509_STORE_CTX_get_error(store);
-                        if ((err == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) ||
-                            (err == X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN))
-                        {
-                                // Return success despite self-signed
-                                return 1;
-                        }
-                        else
-                        {
-                                sprintf(gts_last_tls_error, "tls_cert_verify_callback_allow_self_signed Error[%d].  Reason: %s",
-                                      err, X509_verify_cert_error_string(err));
-                                //NDBG_PRINT("tls_cert_verify_callback_allow_self_signed Error[%d].  Reason: %s\n",
-                                //      err, X509_verify_cert_error_string(err));
-                        }
-                }
+                return ok;
+        }
+        if (!store)
+        {
+                return ok;
+        }
+        // TODO Can add check for depth here.
+        //int depth = X509_STORE_CTX_get_error_depth(store);
+        int err = X509_STORE_CTX_get_error(store);
+        if ((err == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) ||
+            (err == X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN))
+        {
+                // Return success despite self-signed
+                return 1;
+        }
+        else
+        {
+                snprintf(gts_last_tls_error,
+                         sizeof(gts_last_tls_error),
+                         "tls_cert_verify_callback_allow_self_signed Error[%d].  Reason: %s",
+                         err,
+                         X509_verify_cert_error_string(err));
+                //NDBG_PRINT("tls_cert_verify_callback_allow_self_signed Error[%d].  Reason: %s\n",
+                //      err, X509_verify_cert_error_string(err));
         }
         return ok;
 }
@@ -381,7 +386,7 @@ int tls_cert_verify_callback(int ok, X509_STORE_CTX* store)
                 // TODO Can add check for depth here.
                 //int depth = X509_STORE_CTX_get_error_depth(store);
                 int err = X509_STORE_CTX_get_error(store);
-                sprintf(gts_last_tls_error, "Error[%d].  Reason: %s", err, X509_verify_cert_error_string(err));
+                snprintf(gts_last_tls_error, 256, "Error[%d].  Reason: %s", err, X509_verify_cert_error_string(err));
                 //NDBG_PRINT("Error[%d].  Reason: %s\n", err, X509_verify_cert_error_string(err));
         }
         return ok;
@@ -495,7 +500,9 @@ int32_t validate_server_certificate(SSL *a_tls, const char* a_host, bool a_disal
                 l_status = validate_server_certificate_hostname(l_cert, a_host);
                 if (0 != l_status)
                 {
-                        sprintf(gts_last_tls_error, "Error[%d].  Reason: %s", -1, "hostname check failed");
+                        snprintf(gts_last_tls_error,
+                                 sizeof(gts_last_tls_error),
+                                 "Error[%d].  Reason: %s", -1, "hostname check failed");
                         if (NULL != l_cert)
                         {
                                 X509_free(l_cert);
@@ -521,7 +528,9 @@ int32_t validate_server_certificate(SSL *a_tls, const char* a_host, bool a_disal
                         if ((l_tls_verify_result == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT) ||
                             (l_tls_verify_result == X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN))
                         {
-                                sprintf(gts_last_tls_error, "Error[%d].  Reason: %s", -1, "self-signed certificate");
+                                snprintf(gts_last_tls_error,
+                                         sizeof(gts_last_tls_error),
+                                         "Error[%d].  Reason: %s", -1, "self-signed certificate");
                                 // No errors return success(0)
                                 if (NULL != l_cert)
                                 {

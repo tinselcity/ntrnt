@@ -628,7 +628,7 @@ void bdecode::display_obj(const be_obj_t& a_obj, uint16_t a_indent)
         case BE_OBJ_INT:
         {
                 const be_int_t& l_obj = *((const be_int_t*)a_obj.m_obj);
-                NDBG_OUTPUT("%*c[INT]: %ld\n", a_indent, ' ', l_obj);
+                NDBG_OUTPUT("%*c[INT]: %d\n", a_indent, ' ', (int)l_obj);
                 break;
         }
         // -------------------------------------------------
@@ -1152,7 +1152,7 @@ void bencode_writer::s_obj(const be_obj_t& a_obj)
                 // -----------------------------------------
                 const be_int_t& l_obj = *((const be_int_t*)a_obj.m_obj);
                 char l_int_str[32];
-                snprintf(l_int_str, 32, "%lu", l_obj);
+                snprintf(l_int_str, 32, "%d", (int)l_obj);
                 // -----------------------------------------
                 // append
                 // -----------------------------------------

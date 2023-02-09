@@ -21,7 +21,7 @@ struct case_i_comp
 };
 typedef std::list <std::string> str_list_t;
 typedef std::map <std::string, str_list_t, case_i_comp> kv_map_list_t;
-typedef std::list <std::pair<std::string, std::string>> kv_list_t;
+typedef std::list <std::pair<std::string, std::string> > kv_list_t;
 //! ----------------------------------------------------------------------------
 //! insert
 //! ----------------------------------------------------------------------------

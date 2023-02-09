@@ -28,13 +28,12 @@ typedef struct nb_struct {
         // std constructor
         // -------------------------------------------------
         nb_struct(size_t a_len):
-                m_data(NULL),
+                m_data(nullptr),
                 m_len(a_len),
                 m_written(0),
                 m_read(0),
                 m_ref(false)
         {
-                m_data = (char* )malloc(a_len);
         }
         // -------------------------------------------------
         // std constructor
@@ -52,12 +51,19 @@ typedef struct nb_struct {
         ~nb_struct(void)
         {
                 if (m_data &&
-                  !m_ref)
+                    !m_ref)
                 {
                         free(m_data);
                 }
-                m_data = NULL;
+                m_data = nullptr;
                 m_len = 0;
+        }
+        void init(void)
+        {
+                if (!m_data)
+                {
+                        m_data = (char* )malloc(m_len);
+                }
         }
         size_t write_avail(void) { return m_len - m_written;}
         size_t read_avail(void) { return m_written - m_read;}
@@ -421,7 +427,7 @@ off_t nbq::discard(size_t a_len)
 size_t nbq::read_seek(size_t a_off)
 {
         reset_read();
-        return read(NULL, a_off);
+        return read(nullptr, a_off);
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO
@@ -471,7 +477,7 @@ void nbq::reset_write(void)
                 if ((*i_b)->ref())
                 {
                         delete (*i_b);
-                        (*i_b) = NULL;
+                        (*i_b) = nullptr;
                         m_q.erase(i_b++);
                 }
                 else
@@ -501,7 +507,7 @@ void nbq::reset(void)
                 if (*i_b)
                 {
                         delete *i_b;
-                        *i_b = NULL;
+                        *i_b = nullptr;
                 }
         }
         m_q.clear();
@@ -524,13 +530,13 @@ void nbq::shrink(void)
                 nb_t *l_nb = m_q.front();
                 if (!l_nb)
                 {
-                        TRC_ERROR("l_nb == NULL\n");
+                        TRC_ERROR("l_nb == nullptr\n");
                         return;
                 }
                 m_q.pop_front();
                 m_cur_write_offset -= l_nb->size();
                 delete l_nb;
-                l_nb = NULL;
+                l_nb = nullptr;
         }
         if ((m_cur_read_block != m_q.end()) &&
            (m_cur_write_block != m_q.end()) &&
@@ -541,7 +547,7 @@ void nbq::shrink(void)
                    (l_nb->write_avail() == 0))
                 {
                         delete l_nb;
-                        l_nb = NULL;
+                        l_nb = nullptr;
                         m_q.clear();
                         m_cur_write_block = m_q.end();
                         m_cur_read_block = m_q.end();
@@ -557,7 +563,7 @@ void nbq::shrink(void)
 //! ----------------------------------------------------------------------------
 int32_t nbq::split(nbq **ao_nbq_tail, size_t a_offset)
 {
-        *ao_nbq_tail = NULL;
+        *ao_nbq_tail = nullptr;
         if (!a_offset)
         {
                 return NTRNT_STATUS_OK;
@@ -578,7 +584,7 @@ int32_t nbq::split(nbq **ao_nbq_tail, size_t a_offset)
         {
                 if (!(*i_b))
                 {
-                        TRC_ERROR("block iter in nbq == NULL\n");
+                        TRC_ERROR("block iter in nbq == nullptr\n");
                         return NTRNT_STATUS_ERROR;
                 }
                 size_t l_w = (*i_b)->written();
@@ -598,7 +604,7 @@ int32_t nbq::split(nbq **ao_nbq_tail, size_t a_offset)
                 if (i_offset >= l_b.written())
                 {
                         TRC_ERROR("i_offset: %lu >= l_b.written(): %lu\n", i_offset, l_b.written());
-                        if (l_nbq) {delete l_nbq; l_nbq = NULL;}
+                        if (l_nbq) {delete l_nbq; l_nbq = nullptr;}
                         return NTRNT_STATUS_ERROR;
                 }
                 // write the remainder
@@ -615,7 +621,7 @@ int32_t nbq::split(nbq **ao_nbq_tail, size_t a_offset)
         {
                 if (!(*i_b))
                 {
-                        TRC_ERROR("block iter in nbq == NULL\n");
+                        TRC_ERROR("block iter in nbq == nullptr\n");
                         return NTRNT_STATUS_ERROR;
                 }
                 //NDBG_PRINT("adding tail block\n");
@@ -669,24 +675,17 @@ char*  nbq::b_write_ptr(void)
 {
         if (m_cur_write_block == m_q.end())
         {
-                return NULL;
+                return nullptr;
         }
+        // -------------------------------------------------
+        // lazy init
+        // -------------------------------------------------
+        (*m_cur_write_block)->init();
+        // -------------------------------------------------
+        // return write ptr
+        // -------------------------------------------------
         return (*m_cur_write_block)->write_ptr();
 }
-//! ----------------------------------------------------------------------------
-//! \details: TODO
-//! \return:  TODO
-//! \param:   TODO
-//! ----------------------------------------------------------------------------
-char*  nbq::b_write_data_ptr(void)
-{
-        if (m_cur_write_block == m_q.end())
-        {
-                return NULL;
-        }
-        return (*m_cur_write_block)->data();
-}
-
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
@@ -755,7 +754,7 @@ char* nbq::b_read_ptr(void) const
 {
         if (m_cur_read_block == m_q.end())
         {
-                return NULL;
+                return nullptr;
         }
         return (*m_cur_read_block)->read_ptr();
 }
@@ -856,11 +855,11 @@ void nbq::b_display_all(void)
 //! ----------------------------------------------------------------------------
 char* copy_part(nbq& a_nbq, size_t a_off, size_t a_len)
 {
-        char* l_buf = NULL;
+        char* l_buf = nullptr;
         l_buf = (char* )calloc(1, sizeof(char)*a_len + 1);
         if (!l_buf)
         {
-                return NULL;
+                return nullptr;
         }
         a_nbq.read_from(a_off, l_buf, a_len);
         l_buf[a_len] = '\0';
@@ -878,7 +877,7 @@ void print_part(nbq& a_nbq, size_t a_off, size_t a_len)
         if (l_buf)
         {
                 free(l_buf);
-                l_buf = NULL;
+                l_buf = nullptr;
         }
 }
 } // ns_ntrnt

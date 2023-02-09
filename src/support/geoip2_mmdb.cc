@@ -90,7 +90,7 @@ int32_t geoip2_mmdb::get_geoip_data(const char **ao_cn_name,
         if(!ao_cn_name ||
            !ao_city_name)
         {
-                TRC_ERROR("cn_name or city_name == NULL");
+                //TRC_ERROR("cn_name or city_name == NULL");
                 return NTRNT_STATUS_ERROR;
         }
         *ao_cn_name = NULL;
@@ -99,12 +99,13 @@ int32_t geoip2_mmdb::get_geoip_data(const char **ao_cn_name,
         ao_city_name_len = 0;
         if(!m_init)
         {
-                TRC_ERROR("not initialized");
-                return NTRNT_STATUS_OK;
+                //TRC_ERROR("not initialized");
+                return NTRNT_STATUS_ERROR;
         }
         if(!m_city_mmdb)
         {
-                return NTRNT_STATUS_OK;
+                //TRC_ERROR("city mmdb == null");
+                return NTRNT_STATUS_ERROR;
         }
         ::MMDB_lookup_result_s l_ls;
         int32_t l_gai_err = 0;
@@ -120,13 +121,13 @@ int32_t geoip2_mmdb::get_geoip_data(const char **ao_cn_name,
         }
         if(l_mmdb_err != MMDB_SUCCESS)
         {
-                TRC_ERROR("libmaxminddb: %s", MMDB_strerror(l_mmdb_err));
+                //TRC_ERROR("libmaxminddb: %s", MMDB_strerror(l_mmdb_err));
                 return NTRNT_STATUS_ERROR;
         }
         if(!l_ls.found_entry)
         {
-                TRC_ERROR("not found for ip: %.*s", (int)a_ip_len, a_ip);
-                return NTRNT_STATUS_OK;
+                //TRC_ERROR("not found for ip: %.*s", (int)a_ip_len, a_ip);
+                return NTRNT_STATUS_ERROR;
         }
         MMDB_entry_data_s l_e_dat;
         int32_t l_s;
@@ -143,7 +144,7 @@ int32_t geoip2_mmdb::get_geoip_data(const char **ao_cn_name,
                              NULL);
         if(l_s != MMDB_SUCCESS)
         {
-                TRC_ERROR("looking up the entry data: reason: %s", MMDB_strerror(l_s));
+                //TRC_ERROR("looking up the entry for ip: %.*s: reason: %s", (int)a_ip_len, a_ip, MMDB_strerror(l_s));
                 goto lookup_city;
         }
         if(!l_e_dat.has_data)
@@ -160,7 +161,7 @@ int32_t geoip2_mmdb::get_geoip_data(const char **ao_cn_name,
         }
         default:
         {
-                TRC_ERROR("wrong data type");
+                //TRC_ERROR("wrong data type");
                 goto lookup_city;
         }
         }
@@ -183,7 +184,7 @@ lookup_city:
         }
         if(!l_e_dat.has_data)
         {
-                TRC_ERROR("data missing");
+                //TRC_ERROR("data missing");
                 goto lookup_lat;
         }
         switch(l_e_dat.type) {
@@ -195,7 +196,7 @@ lookup_city:
         }
         default:
         {
-                TRC_ERROR("wrong data type");
+                //TRC_ERROR("wrong data type");
                 goto lookup_lat;
         }
         }
@@ -212,12 +213,12 @@ lookup_lat:
                              NULL);
         if(l_s != MMDB_SUCCESS)
         {
-                TRC_ERROR("looking up the entry data: reason: %s", MMDB_strerror(l_s));
+                //TRC_ERROR("looking up the entry for ip: %.*s: reason: %s", (int)a_ip_len, a_ip, MMDB_strerror(l_s));
                 goto lookup_lon;
         }
         if(!l_e_dat.has_data)
         {
-                TRC_ERROR("data missing");
+                //TRC_ERROR("data missing");
                 goto lookup_lon;
         }
         switch(l_e_dat.type) {
@@ -228,7 +229,7 @@ lookup_lat:
         }
         default:
         {
-                TRC_ERROR("wrong data type");
+                //TRC_ERROR("wrong data type");
                 goto lookup_lon;
         }
         }
@@ -245,12 +246,12 @@ lookup_lon:
                              NULL);
         if(l_s != MMDB_SUCCESS)
         {
-                TRC_ERROR("looking up the entry data: reason: %s", MMDB_strerror(l_s));
+                //TRC_ERROR("looking up the entry for ip: %.*s: reason: %s", (int)a_ip_len, a_ip, MMDB_strerror(l_s));
                 goto done;
         }
         if(!l_e_dat.has_data)
         {
-                TRC_ERROR("data missing");
+                //TRC_ERROR("data missing");
                 goto done;
         }
         switch(l_e_dat.type) {
@@ -261,7 +262,7 @@ lookup_lon:
         }
         default:
         {
-                TRC_ERROR("wrong data type");
+                //TRC_ERROR("wrong data type");
                 goto done;
         }
         }

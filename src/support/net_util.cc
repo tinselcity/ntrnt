@@ -317,23 +317,23 @@ get_ipv6:
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-std::string sas_to_str(const struct sockaddr_storage& a_ss)
+std::string sas_to_str(const struct sockaddr_storage& a_sas)
 {
         char l_addr_tmp[40];
         char l_addr_str[64];
         uint16_t l_port = 0;
         std::string l_ip;
-        if (a_ss.ss_family == AF_INET)
+        if (a_sas.ss_family == AF_INET)
         {
-                struct sockaddr_in* l_sin = (struct sockaddr_in*) &(a_ss);
+                struct sockaddr_in* l_sin = (struct sockaddr_in*) &(a_sas);
                 inet_ntop(AF_INET, &l_sin->sin_addr, l_addr_tmp, sizeof(l_addr_tmp));
                 l_port = ntohs(l_sin->sin_port);
                 snprintf(l_addr_str, 64, "%s:%u", l_addr_tmp, l_port);
                 l_ip = l_addr_str;
         }
-        else if(a_ss.ss_family == AF_INET6)
+        else if(a_sas.ss_family == AF_INET6)
         {
-                struct sockaddr_in6* l_sin6 = (struct sockaddr_in6*) &(a_ss);
+                struct sockaddr_in6* l_sin6 = (struct sockaddr_in6*) &(a_sas);
                 inet_ntop(AF_INET6, &l_sin6->sin6_addr, l_addr_tmp, sizeof(l_addr_tmp));
                 l_port = ntohs(l_sin6->sin6_port);
                 snprintf(l_addr_str, 64, "[%s]:%u", l_addr_tmp, l_port);
@@ -346,27 +346,50 @@ std::string sas_to_str(const struct sockaddr_storage& a_ss)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-std::string sas_to_ip_str(const struct sockaddr_storage& a_ss)
+std::string sas_to_ip_str(const struct sockaddr_storage& a_sas)
 {
         char l_addr_tmp[40];
         char l_addr_str[64];
         std::string l_ip;
-        if (a_ss.ss_family == AF_INET)
+        if (a_sas.ss_family == AF_INET)
         {
-                struct sockaddr_in* l_sin = (struct sockaddr_in*) &(a_ss);
+                struct sockaddr_in* l_sin = (struct sockaddr_in*) &(a_sas);
                 inet_ntop(AF_INET, &l_sin->sin_addr, l_addr_tmp, sizeof(l_addr_tmp));
                 snprintf(l_addr_str, 64, "%s", l_addr_tmp);
                 l_ip = l_addr_str;
         }
-        else if(a_ss.ss_family == AF_INET6)
+        else if(a_sas.ss_family == AF_INET6)
         {
-                struct sockaddr_in6* l_sin6 = (struct sockaddr_in6*) &(a_ss);
+                struct sockaddr_in6* l_sin6 = (struct sockaddr_in6*) &(a_sas);
                 inet_ntop(AF_INET6, &l_sin6->sin6_addr, l_addr_tmp, sizeof(l_addr_tmp));
                 snprintf(l_addr_str, 64, "%s", l_addr_tmp);
                 l_ip = l_addr_str;
         }
         return l_ip;
 }
+//! ----------------------------------------------------------------------------
+//! \details TODO
+//! \return  TODO
+//! \param   TODO
+//! ----------------------------------------------------------------------------
+#if defined(__APPLE__) || defined(__darwin__)
+static void * memrchr(const void *s, int c, size_t n)
+{
+    const unsigned char *cp;
+    if (n != 0)
+    {
+            cp = (unsigned char *)s + n;
+            do
+            {
+                    if (*(--cp) == (unsigned char)c)
+                    {
+                            return (void *)cp;
+                    }
+            } while (--n != 0);
+    }
+    return (void *)0;
+}
+#endif
 //! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO

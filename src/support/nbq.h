@@ -75,7 +75,6 @@ public:
         // block writing...
         // -------------------------------------------------
         char*  b_write_ptr(void);
-        char*  b_write_data_ptr(void);
         size_t b_write_avail(void);
         int32_t b_write_add_avail();
         void b_write_incr(size_t a_len);

@@ -16,6 +16,8 @@ include_directories(
 # sources
 # ------------------------------------------------------------------------------
 SET(SRCS
+    ${CMAKE_SOURCE_DIR}/src/support/time_util.cc
+    ${CMAKE_SOURCE_DIR}/src/support/trace.cc
     ${CMAKE_SOURCE_DIR}/src/lan/upnp.cc
     punch.cc
 )

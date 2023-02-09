@@ -44,13 +44,13 @@ int32_t session::api_get_info(std::string& ao_body)
         l_writer.Key("comment");
         l_writer.String(m_comment.c_str());
         l_writer.Key("info_name");
-        l_writer.String(m_info_pickr.m_info_name.c_str());
+        l_writer.String(m_info_pickr.get_info_name().c_str());
         l_writer.Key("length");
-        l_writer.Int64(m_info_pickr.m_info_length);
+        l_writer.Int64(m_info_pickr.get_info_length());
         l_writer.Key("num_pieces");
-        l_writer.Uint(m_info_pickr.m_info_pieces.size());
+        l_writer.Uint(m_info_pickr.get_info_pieces_size());
         l_writer.Key("pieces_length");
-        l_writer.Int64(m_info_pickr.m_info_piece_length);
+        l_writer.Int64(m_info_pickr.get_info_piece_length());
         // -------------------------------------------------
         // progress
         // -------------------------------------------------
@@ -149,7 +149,6 @@ int32_t session::api_get_peers(std::string& ao_body)
 int32_t peer_mgr::get_peers_api(std::string& ao_body)
 {
         pthread_mutex_lock(&m_mutex);
-        uint64_t l_now_s = get_time_s();
         // -------------------------------------------------
         // create body...
         // -------------------------------------------------
@@ -269,7 +268,6 @@ int32_t peer_mgr::get_peers_api(std::string& ao_body)
 int32_t peer_mgr::get_peers_str(std::string& ao_body)
 {
         pthread_mutex_lock(&m_mutex);
-        uint64_t l_now_s = get_time_s();
         for(auto && i_p : m_peer_vec)
         {
                 peer* l_p_ptr = i_p;

@@ -114,9 +114,10 @@ void peer_mgr::display_peers(void)
         for (auto && i_p : m_peer_map)
         {
                 if (!i_p.second) { continue; }
-                NDBG_PRINT("HOST: %s STATE: %d\n",
+                NDBG_PRINT("HOST: %s STATE: %d FROM: %d\n",
                            i_p.second->get_host().c_str(),
-                           i_p.second->get_state());
+                           i_p.second->get_state(),
+                           i_p.second->get_from());
         }
 }
 //! ----------------------------------------------------------------------------
@@ -140,11 +141,11 @@ int32_t peer_mgr::connect_peers(void)
                 uint64_t l_exp = l_p.get_stat_expired_br();
                 if (l_exp > (uint64_t)l_p.get_ltep_reqq())
                 {
-                        TRC_WARN("[HOST: %s] [CLIENT: %s] [PEER: %s] seems down -removing from swarm [expired count: %lu]",
+                        TRC_WARN("[HOST: %s] [CLIENT: %s] [PEER: %s] seems down -removing from swarm [expired count: %u]",
                                  l_p.m_host.c_str(),
                                  l_p.m_btp_peer_str.c_str(),
                                  l_p.m_ltep_peer_id.c_str(),
-                                 l_exp);
+                                 (unsigned int)l_exp);
                         l_p.shutdown(peer::ERROR_EXPIRED_BR);
                         continue;
                 }
@@ -153,11 +154,11 @@ int32_t peer_mgr::connect_peers(void)
                 // -----------------------------------------
                 if (l_now_s > (l_p.m_stat_last_recvd_time_s + NTRNT_SESSION_PEER_MAX_IDLE_S))
                 {
-                        TRC_WARN("[HOST: %s] [CLIENT: %s] [PEER: %s] seems down -removing from swarm [last msg recvd: %lu s ago]",
+                        TRC_WARN("[HOST: %s] [CLIENT: %s] [PEER: %s] seems down -removing from swarm [last msg recvd: %u s ago]",
                                  l_p.m_host.c_str(),
                                  l_p.m_btp_peer_str.c_str(),
                                  l_p.m_ltep_peer_id.c_str(),
-                                 (l_now_s - l_p.m_stat_last_recvd_time_s));
+                                 (unsigned int)(l_now_s - l_p.m_stat_last_recvd_time_s));
                         l_p.shutdown(peer::ERROR_IDLE_TIMEOUT);
                         continue;
                 }
@@ -169,6 +170,7 @@ int32_t peer_mgr::connect_peers(void)
         m_peer_active_vec_v4.clear();
         m_peer_active_vec_v6.clear();
         uint32_t l_states[16]  = { 0 };
+        size_t l_inflight = 0;
         pthread_mutex_lock(&m_mutex);
         for (auto && i_p : m_peer_vec)
         {
@@ -197,24 +199,21 @@ int32_t peer_mgr::connect_peers(void)
                         {
                                 m_peer_active_vec_v6.push_back(i_p);
                         }
-                }
-                if (l_ps == peer::STATE_CONNECTED)
-                {
-                        m_peer_connected_vec.push_back(i_p);
+                        if (l_ps == peer::STATE_CONNECTED)
+                        {
+                                m_peer_connected_vec.push_back(i_p);
+                        }
+                        else
+                        {
+                                ++l_inflight;
+                        }
                 }
         }
         pthread_mutex_unlock(&m_mutex);
         // -------------------------------------------------
-        // check num connecting
-        // -------------------------------------------------
-        uint32_t l_st_connecting = 0;
-        l_st_connecting += l_states[peer::STATE_UTP_CONNECTING];
-        l_st_connecting += l_states[peer::STATE_PHE_SETUP];
-        l_st_connecting += l_states[peer::STATE_PHE_CONNECTING];
-        l_st_connecting += l_states[peer::STATE_HANDSHAKING];
-        // -------------------------------------------------
         // check num connected
         // -------------------------------------------------
+        UNUSED(l_inflight);
         uint32_t l_st_connected = 0;
         l_st_connected += l_states[peer::STATE_CONNECTED];
         if (l_st_connected >= m_cfg_max_conn)
@@ -243,10 +242,19 @@ int32_t peer_mgr::connect_peers(void)
                 {
                         m_peer_vec_idx = 0;
                 }
+                if (!i_p) { continue; }
+                // -----------------------------------------
+                // check for self
+                // -----------------------------------------
+                const std::string& l_host = i_p->get_host();
+                if ((l_host == m_session.get_ext_address_v4()) ||
+                    (l_host == m_session.get_ext_address_v6()))
+                {
+                        continue;
+                }
                 // -----------------------------------------
                 // if state none add to candidate
                 // -----------------------------------------
-                if (!i_p) { continue; }
                 peer::state_t l_st = i_p->get_state();
                 if (l_st == peer::STATE_NONE)
                 {
@@ -264,7 +272,22 @@ int32_t peer_mgr::connect_peers(void)
         for (auto && i_p : l_pv)
         {
                 if (!i_p) { continue; }
-                //NDBG_PRINT("connect to: %s\n", sas_to_str(i_p->get_sas()).c_str());
+                // -----------------------------------------
+                // push into active
+                // -----------------------------------------
+                const sockaddr_storage& l_sas = i_p->get_sas();
+                if (l_sas.ss_family == AF_INET)
+                {
+                        m_peer_active_vec_v4.push_back(i_p);
+                }
+                else if(l_sas.ss_family == AF_INET6)
+                {
+                        m_peer_active_vec_v6.push_back(i_p);
+                }
+                // -----------------------------------------
+                // connect
+                // -----------------------------------------
+                //NDBG_PRINT("connect to: %s\n", i_p->get_host().c_str());
                 int32_t l_s;
                 l_s = i_p->connect();
                 if (l_s != NTRNT_STATUS_OK)
@@ -272,57 +295,6 @@ int32_t peer_mgr::connect_peers(void)
                         TRC_ERROR("performing peer connect");
                         i_p->shutdown(peer::ERROR_CONNECT);
                 }
-        }
-        return NTRNT_STATUS_OK;
-}
-//! ----------------------------------------------------------------------------
-//! \details: TODO
-//! \return:  TODO
-//! \param:   TODO
-//! ----------------------------------------------------------------------------
-int32_t peer_mgr::add_peer(const sockaddr_storage& a_sas, peer_from_t a_from, peer** ao_peer)
-{
-        //NDBG_PRINT("[HOST: %s] [FROM: %d]\n", sas_to_str(a_sas).c_str(), a_from);
-        // -------------------------------------------------
-        // check for self
-        // -------------------------------------------------
-        const std::string& l_self = m_session.get_ext_address();
-        if (!l_self.empty())
-        {
-                const std::string l_addr = sas_to_str(a_sas);
-                if (l_self == l_addr)
-                {
-                        TRC_WARN("dropping peer appears to be self: %s", l_addr.c_str());
-                        return NTRNT_STATUS_OK;
-                }
-        }
-        // -------------------------------------------------
-        // find
-        // -------------------------------------------------
-        if (peer_exists(a_sas, ao_peer))
-        {
-                return NTRNT_STATUS_OK;
-        }
-        // -------------------------------------------------
-        // make new
-        // -------------------------------------------------
-        peer* l_peer = new peer(a_from, m_session, *this, a_sas);
-        // -------------------------------------------------
-        // geoip
-        // -------------------------------------------------
-        int32_t l_s;
-        l_s = set_geoip(*l_peer, a_sas);
-        if (l_s != NTRNT_STATUS_OK)
-        {
-                TRC_ERROR("performing set_geoip");
-        }
-        // -------------------------------------------------
-        // add to map
-        // -------------------------------------------------
-        add_peer(l_peer);
-        if (ao_peer)
-        {
-                *ao_peer = l_peer;
         }
         return NTRNT_STATUS_OK;
 }
@@ -370,7 +342,7 @@ int32_t peer_mgr::set_geoip(peer& a_peer, const sockaddr_storage& a_sas)
         }
         else
         {
-                TRC_ERROR("performing lookup for ip: %s", l_ip_str.c_str());
+                //TRC_ERROR("performing lookup for ip: %s", l_ip_str.c_str());
                 return NTRNT_STATUS_ERROR;
         }
         return NTRNT_STATUS_OK;
@@ -380,15 +352,182 @@ int32_t peer_mgr::set_geoip(peer& a_peer, const sockaddr_storage& a_sas)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t peer_mgr::accept_utp(const sockaddr_storage& a_sas,
-                             void* a_ctx,
-                             peer** ao_peer)
-
+int32_t peer_mgr::validate_address(const sockaddr_storage& a_sas)
 {
+        uint16_t l_port = 0;
+        // -------------------------------------------------
+        // check blocklists
+        // -------------------------------------------------
+        // TODO
+        // -------------------------------------------------
+        // ipv4
+        // -------------------------------------------------
+        if (a_sas.ss_family == AF_INET)
+        {
+                struct sockaddr_in* l_sin = (struct sockaddr_in*) &(a_sas);
+                // -----------------------------------------
+                // extract port
+                // -----------------------------------------
+                l_port = ntohs(l_sin->sin_port);
+                // -----------------------------------------
+                // check for martian
+                // -----------------------------------------
+                const uint8_t* l_addr = (uint8_t*)(&(l_sin->sin_addr));
+                if ((l_addr[0] == 0) ||
+                    (l_addr[0] == 127) ||
+                    (l_addr[0] == 192) ||
+                    ((l_addr[0] & 0xE0) == 0xE0))
+                {
+                        TRC_ERROR("address appears to be local");
+                        return NTRNT_STATUS_ERROR;
+                }
+        }
+        // -------------------------------------------------
+        // ipv6
+        // -------------------------------------------------
+        else if(a_sas.ss_family == AF_INET6)
+        {
+                struct sockaddr_in6* l_sin6 = (struct sockaddr_in6*) &(a_sas);
+                // -----------------------------------------
+                // extract port
+                // -----------------------------------------
+                l_port = ntohs(l_sin6->sin6_port);
+                // -----------------------------------------
+                // check for v6 is linklocal
+                // -----------------------------------------
+                if (IN6_IS_ADDR_LINKLOCAL(&(l_sin6->sin6_addr)))
+                {
+                        TRC_ERROR("ipv6 is linklocal");
+                        return NTRNT_STATUS_ERROR;
+                }
+                // -----------------------------------------
+                // check for v4 mapped ipv6
+                // -----------------------------------------
+                if (IN6_IS_ADDR_V4MAPPED(&(l_sin6->sin6_addr)))
+                {
+                        TRC_ERROR("ipv6 is v4 mapped");
+                        return NTRNT_STATUS_ERROR;
+                }
+                // -----------------------------------------
+                // check for martian
+                // -----------------------------------------
+                static const uint16_t s_zeros[16] = {
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                };
+                const uint8_t* l_addr = (uint8_t*)(&(l_sin6->sin6_addr));
+                if ((l_addr[0] == 0xFF) ||
+                    ((memcmp(l_addr, s_zeros, 15) == 0) &&
+                     ((l_addr[15] == 0x00) ||
+                      (l_addr[15] == 0x01))))
+              {
+                        TRC_ERROR("ipv6 is default or unspecified");
+                        return NTRNT_STATUS_ERROR;
+              }
+        }
+        else
+        {
+                TRC_ERROR("unrecognized address family: %d", a_sas.ss_family);
+                return NTRNT_STATUS_ERROR;
+        }
+        // -------------------------------------------------
+        // check for zero port
+        // -------------------------------------------------
+        if (l_port == 0)
+        {
+                TRC_ERROR("bad address port is zero");
+                return NTRNT_STATUS_ERROR;
+        }
+        // -------------------------------------------------
+        // check for self
+        // -------------------------------------------------
+        const std::string* l_self = nullptr;
+        if (a_sas.ss_family == AF_INET)
+        {
+                l_self = &(m_session.get_ext_address_v4());
+        }
+        else if (a_sas.ss_family == AF_INET6)
+        {
+                l_self = &(m_session.get_ext_address_v6());
+        }
+        if (l_self &&
+            !l_self->empty())
+        {
+                const std::string& l_addr = sas_to_str(a_sas);
+                if (*l_self == l_addr)
+                {
+                        TRC_WARN("dropping peer appears to be self: %s", l_addr.c_str());
+                        return NTRNT_STATUS_OK;
+                }
+        }
+        return NTRNT_STATUS_OK;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int32_t peer_mgr::add_peer(const sockaddr_storage& a_sas,
+                           peer_from_t a_from)
+{
+        int32_t l_s;
+        // -------------------------------------------------
+        // validate address
+        // -------------------------------------------------
+#if 0
+        l_s = validate_address(a_sas);
+        if (l_s != NTRNT_STATUS_OK)
+        {
+                return NTRNT_STATUS_ERROR;
+        }
+#endif
         // -------------------------------------------------
         // find
         // -------------------------------------------------
-        if (peer_exists(a_sas, ao_peer))
+        if (peer_exists(a_sas))
+        {
+                return NTRNT_STATUS_OK;
+        }
+        // -------------------------------------------------
+        // make new
+        // -------------------------------------------------
+        peer* l_peer = new peer(a_from, m_session, *this, a_sas);
+        // -------------------------------------------------
+        // geoip
+        // -------------------------------------------------
+        l_s = set_geoip(*l_peer, a_sas);
+        UNUSED(l_s);
+        // -------------------------------------------------
+        // add to map
+        // -------------------------------------------------
+        add_peer(l_peer);
+        return NTRNT_STATUS_OK;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int32_t peer_mgr::accept_utp(const sockaddr_storage& a_sas,
+                             void* a_ctx)
+
+{
+        int32_t l_s;
+        // -------------------------------------------------
+        // validate address
+        // -------------------------------------------------
+        // disable to allow for localhost testing
+#if 0
+        l_s = validate_address(a_sas);
+        if (l_s != NTRNT_STATUS_OK)
+        {
+                return NTRNT_STATUS_ERROR;
+        }
+#endif
+        // -------------------------------------------------
+        // find
+        // -------------------------------------------------
+        if (peer_exists(a_sas))
         {
                 return NTRNT_STATUS_OK;
         }
@@ -396,7 +535,6 @@ int32_t peer_mgr::accept_utp(const sockaddr_storage& a_sas,
         // make new
         // -------------------------------------------------
         peer* l_peer = new peer(NTRNT_PEER_FROM_INBOUND, m_session, *this, a_sas);
-        int32_t l_s;
         l_s = l_peer->accept_utp(a_ctx);
         if (l_s != NTRNT_STATUS_OK)
         {
@@ -417,10 +555,6 @@ int32_t peer_mgr::accept_utp(const sockaddr_storage& a_sas,
         // add to map
         // -------------------------------------------------
         add_peer(l_peer);
-        if (ao_peer)
-        {
-                *ao_peer = l_peer;
-        }
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -428,20 +562,12 @@ int32_t peer_mgr::accept_utp(const sockaddr_storage& a_sas,
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-bool peer_mgr::peer_exists(const sockaddr_storage& a_sas, peer** ao_peer)
+bool peer_mgr::peer_exists(const sockaddr_storage& a_sas)
 {
-        if (!ao_peer)
-        {
-                return false;
-        }
         pthread_mutex_lock(&m_mutex);
         auto i_p = m_peer_map.find(a_sas);
         if (i_p != m_peer_map.end())
         {
-                if (ao_peer)
-                {
-                        *ao_peer = i_p->second;
-                }
                 pthread_mutex_unlock(&m_mutex);
                 return true;
         }
@@ -455,6 +581,7 @@ bool peer_mgr::peer_exists(const sockaddr_storage& a_sas, peer** ao_peer)
 //! ----------------------------------------------------------------------------
 void peer_mgr::add_peer(peer* a_peer)
 {
+        //NDBG_PRINT("[HOST: %s] [FROM: %d]\n", a_peer->m_host.c_str(), a_peer->m_from);
         const sockaddr_storage& a_sas = a_peer->get_sas();
         pthread_mutex_lock(&m_mutex);
         m_peer_vec.push_back(a_peer);
@@ -540,6 +667,7 @@ int32_t peer_mgr::dequeue_out_v4(void)
                         // ---------------------------------
                         if (l_s == 0)
                         {
+                                //NDBG_PRINT("NO LONGER WRITEABLE\n");
                                 break;
                         }
                         // ---------------------------------
@@ -659,6 +787,14 @@ uint64_t peer_mgr::utp_cb(utp_socket* a_utp_conn,
                 {
                         l_peer->shutdown(peer::ERROR_UTP_CB_ERROR);
                 }
+                // -----------------------------------------
+                // add to connected vec
+                // -----------------------------------------
+                if ((l_ls != peer::STATE_CONNECTED) &&
+                    (l_peer->get_state() == peer::STATE_CONNECTED))
+                {
+                        m_peer_connected_vec.push_back(l_peer);
+                }
                 return NTRNT_STATUS_OK;
         }
         // -------------------------------------------------
@@ -684,7 +820,7 @@ uint64_t peer_mgr::utp_cb(utp_socket* a_utp_conn,
                 if (l_s != 0)
                 {
                         TRC_ERROR("performing utp_getpeername");
-                        return 0;
+                        return NTRNT_STATUS_ERROR;
                 }
                 // -------------------------------------------------
                 // get by family
@@ -703,14 +839,13 @@ uint64_t peer_mgr::utp_cb(utp_socket* a_utp_conn,
                 else
                 {
                         TRC_ERROR("unrecognized address family: %u", l_sa->sa_family);
-                        return 0;
+                        return NTRNT_STATUS_ERROR;
                 }
-                peer* l_peer;
-                l_s = accept_utp(l_psas, a_utp_conn, &l_peer);
+                l_s = accept_utp(l_psas, a_utp_conn);
                 if (l_s != NTRNT_STATUS_OK)
                 {
                         TRC_ERROR("performing accept_utp_peer");
-                        return 0;
+                        return NTRNT_STATUS_ERROR;
                 }
                 break;
         }
@@ -720,7 +855,6 @@ uint64_t peer_mgr::utp_cb(utp_socket* a_utp_conn,
         case UTP_ON_ERROR:
         {
                 TRC_ERROR("utp[skt: %p] error[%d]: %s", a_utp_conn, a_state, utp_error_code_names[a_state]);
-                //l_peer->shutdown(peer::ERROR_UTP_ON_ERROR);
                 break;
         }
         // -------------------------------------------------
@@ -787,12 +921,12 @@ uint64_t peer_mgr::utp_cb(utp_socket* a_utp_conn,
                 else
                 {
                         TRC_ERROR("unknown family: %d", a_sa->sa_family);
-                        return 0;
+                        return NTRNT_STATUS_ERROR;
                 }
                 int l_s;
                 errno = 0;
+                //NDBG_PRINT("[SENDTO] [LEN: %lu]\n", a_len);
                 l_s = sendto(l_fd, a_buf, a_len, 0, a_sa, a_sa_len);
-                //NDBG_PRINT("[%ssendto%s: %d] [buf: %p] [len: %lu]\n", ANSI_COLOR_FG_RED, ANSI_COLOR_OFF, l_s, a_buf, a_len);
                 if (l_s < 0)
                 {
                         // -----------------------------------------
@@ -804,12 +938,7 @@ uint64_t peer_mgr::utp_cb(utp_socket* a_utp_conn,
                                 return NTRNT_STATUS_AGAIN;
                         }
                         TRC_ERROR("error performing sendto. Reason: %s", strerror(errno));
-                        TRC_ERROR("fd:                  %d", l_fd);
-                        TRC_ERROR("a_args->buf:         %p", a_buf);
-                        TRC_ERROR("a_args->len:         %lu", a_len);
-                        TRC_ERROR("a_args->address:     %p", a_sa);
-                        TRC_ERROR("a_args->address_len: %u", a_sa_len);
-                        return 0;
+                        return NTRNT_STATUS_ERROR;
                 }
                 break;
         }

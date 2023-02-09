@@ -44,7 +44,7 @@ endmacro()
 # ------------------------------------------------------------------------------
 # build catch
 # ------------------------------------------------------------------------------
-add_library(ntrnt_compiled_catch STATIC ${CMAKE_SOURCE_DIR}/ext/catch/catch.hpp _catch.cc)
+add_library(ntrnt_compiled_catch SHARED ${CMAKE_SOURCE_DIR}/ext/catch/catch.hpp _catch.cc)
 # ------------------------------------------------------------------------------
 # build tests
 # ------------------------------------------------------------------------------

@@ -26,6 +26,7 @@
 #include "core/dht_mgr.h"
 #include "core/session.h"
 #include "core/pickr.h"
+#include "core/phe.h"
 #include "core/peer.h"
 #include "core/peer_mgr.h"
 // ---------------------------------------------------------
@@ -125,12 +126,19 @@ session::session(void):
         m_peer_id(),
         m_ext_ip(),
         m_ext_port(NTRNT_DEFAULT_PORT),
-        m_ext_address(),
+        m_ext_address_v4(),
+        m_ext_address_v6(),
         m_peer(),
         m_tracker_list(),
         m_nresolver(nullptr),
         m_client_ssl_ctx(nullptr),
-        m_evr_loop_type(EVR_LOOP_EPOLL),
+#if defined(__linux__)
+         m_evr_loop_type(EVR_LOOP_EPOLL),
+#elif defined(__FreeBSD__) || defined(__APPLE__)
+        m_evr_loop_type(EVR_LOOP_SELECT),
+#else
+        m_evr_loop_type(EVR_LOOP_SELECT),
+#endif
         m_evr_loop(nullptr),
         m_evr_udp_fd(),
         m_evr_udp6_fd(),
@@ -145,6 +153,10 @@ session::session(void):
         m_geoip2_mmdb(nullptr),
         m_geoip2_db()
 {
+        // -------------------------------------------------
+        // set callback
+        // -------------------------------------------------
+        phe::s_phe_select_skey_cb = peer_phe_select_skey_cb;
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO
@@ -391,8 +403,6 @@ int32_t session::init_w_magnet(const std::string& a_path)
                         // only support for:
                         // BitTorrent info hash (BTIH) "btih"
 #define _URN_BTIH "urn:btih:"
-                        int l_m;
-                        l_m = strncmp(i_q.m_val, _URN_BTIH, sizeof(_URN_BTIH)-1);
                         if(strncmp(i_q.m_val, _URN_BTIH, sizeof(_URN_BTIH)-1) == 0)
                         {
                                 m_info_hash_str.assign(i_q.m_val + sizeof(_URN_BTIH)-1, i_q.m_val_len - sizeof(_URN_BTIH)+1);
@@ -662,8 +672,7 @@ int32_t session::add_peer(struct sockaddr_storage& a_sas, peer_from_t a_from)
         // -------------------------------------------------
         // add to peer mgr
         // -------------------------------------------------
-        peer* l_peer = nullptr;
-        l_s = m_peer_mgr.add_peer(a_sas, a_from, &l_peer);
+        l_s = m_peer_mgr.add_peer(a_sas, a_from);
         if (l_s != NTRNT_STATUS_OK)
         {
                 return NTRNT_STATUS_ERROR;
@@ -688,6 +697,8 @@ int32_t session::add_peer(struct sockaddr_storage& a_sas, peer_from_t a_from)
 //! ----------------------------------------------------------------------------
 int32_t session::add_peer_raw(int a_family, const uint8_t* a_buf, size_t a_len, peer_from_t a_from)
 {
+        // TODO REMOVE!!!
+#if 0
         off_t l_off = 0;
         // -------------------------------------------------
         // get peer addresses (ipv4)
@@ -762,6 +773,7 @@ int32_t session::add_peer_raw(int a_family, const uint8_t* a_buf, size_t a_len, 
                         UNUSED(l_s);
                 }
         }
+#endif
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -797,15 +809,15 @@ void session::display_info(void)
         {
         NDBG_OUTPUT("|                %s\n", i_m.c_str());
         }
-        NDBG_OUTPUT("| creation_date: %ld\n", m_creation_date);
+        NDBG_OUTPUT("| creation_date: %u\n",  (unsigned int)m_creation_date);
         NDBG_OUTPUT("| created_by:    %s\n",  m_created_by.c_str());
         NDBG_OUTPUT("| encoding:      %s\n",  m_encoding.c_str());
         NDBG_OUTPUT("| comment:       %s\n",  m_comment.c_str());
         NDBG_OUTPUT("| info_hash:     %s\n",  m_info_hash_str.c_str());
-        NDBG_OUTPUT("| name:          %s\n",  m_info_pickr.m_info_name.c_str());
-        NDBG_OUTPUT("| length:        %ld\n", m_info_pickr.m_info_length);
-        NDBG_OUTPUT("| num_pieces:    %ld\n", m_info_pickr.m_info_pieces.size());
-        NDBG_OUTPUT("| piece_length:  %ld\n", m_info_pickr.m_info_piece_length);
+        NDBG_OUTPUT("| name:          %s\n",  m_info_pickr.get_info_name().c_str());
+        NDBG_OUTPUT("| length:        %u\n",  (unsigned int)m_info_pickr.get_info_length());
+        NDBG_OUTPUT("| num_pieces:    %ld\n", m_info_pickr.get_info_pieces_size());
+        NDBG_OUTPUT("| piece_length:  %u\n",  (unsigned int)m_info_pickr.get_info_piece_length());
 #if 0
         NDBG_OUTPUT("| pieces: [num: %lu] --------------->\n", m_info_pieces.size());
         uint32_t l_p = 0;
@@ -818,10 +830,11 @@ void session::display_info(void)
                 ++l_p;
         }
 #endif
-        if (m_info_pickr.m_info_files.size())
+        const files_list_t& l_fl = m_info_pickr.get_info_files();
+        if (l_fl.size())
         {
-        NDBG_OUTPUT("| files: [num: %lu] --------------->\n", m_info_pickr.m_info_files.size());
-        for(auto && i_f : m_info_pickr.m_info_files)
+        NDBG_OUTPUT("| files: [num: %lu] --------------->\n", l_fl.size());
+        for(auto && i_f : l_fl)
         {
         NDBG_OUTPUT("| ");
         for(auto& i_p : i_f.m_path)
@@ -915,13 +928,6 @@ int32_t session::udp_mux(struct sockaddr_storage& a_ss,
                 //NDBG_HEXDUMP(a_msg, a_msg_len);
                 // TODO
                 // add inactivity timer???
-#if 0
-                if (!ss->isClosing() && !ss->utp_timer)
-                {
-                    ss->utp_timer = ss->timerMaker().create(timer_callback, ss);
-                    reset_timer(ss);
-                }
-#endif
                 int32_t l_s;
                 l_s = utp_process_udp(m_utp_ctx, a_msg, a_msg_len, (const sockaddr*)(&a_ss), sas_size(a_ss));
                 // -----------------------------------------
@@ -1083,19 +1089,8 @@ int32_t session::udp_fd_readable_cb(void *a_data)
                 {
                         if (errno == EAGAIN)
                         {
-                                l_s = l_ses->get_peer_mgr().dequeue_out_v4();
-                                if (l_s != NTRNT_STATUS_OK)
-                                {
-                                        if (l_s == NTRNT_STATUS_AGAIN)
-                                        {
-                                                return NTRNT_STATUS_OK;
-                                        }
-                                        TRC_ERROR("performing dequeue_out");
-                                        NDBG_PRINT("exit...\n");
-                                        return NTRNT_STATUS_ERROR;
-                                }
-                                //NDBG_PRINT("[%sREADABLE%s] exit ...\n", ANSI_COLOR_BG_RED, ANSI_COLOR_OFF);
-                                return NTRNT_STATUS_OK;
+                                // TODO -only if signaled data???
+                                return udp_fd_writeable_cb(a_data);
                         }
                         TRC_ERROR("error performing recvfrom. Reason: %s\n", strerror(errno));
                         return NTRNT_STATUS_ERROR;
@@ -1124,6 +1119,7 @@ int32_t session::udp_fd_readable_cb(void *a_data)
 //! ----------------------------------------------------------------------------
 int32_t session::udp_fd_writeable_cb(void *a_data)
 {
+        //NDBG_PRINT("[WRITEABLE]\n");
         if (!a_data)
         {
                 TRC_ERROR("data == null");
@@ -1299,17 +1295,8 @@ int32_t session::udp6_fd_readable_cb(void *a_data)
                 {
                         if (errno == EAGAIN)
                         {
-                                l_s = l_ses->get_peer_mgr().dequeue_out_v6();
-                                if (l_s != NTRNT_STATUS_OK)
-                                {
-                                        if (l_s == NTRNT_STATUS_AGAIN)
-                                        {
-                                                return NTRNT_STATUS_OK;
-                                        }
-                                        TRC_ERROR("performing dequeue_out");
-                                        return NTRNT_STATUS_ERROR;
-                                }
-                                return NTRNT_STATUS_OK;
+                                // TODO -only if signaled data???
+                                return udp6_fd_writeable_cb(a_data);
                         }
                         TRC_ERROR("error performing recvfrom. Reason: %s\n", strerror(errno));
                         return NTRNT_STATUS_ERROR;
@@ -1420,6 +1407,10 @@ int32_t session::cancel_timer(void* a_timer)
 //! ----------------------------------------------------------------------------
 int32_t session::set_geoip_db(const std::string& a_db)
 {
+        if (a_db.empty())
+        {
+                return NTRNT_STATUS_OK;
+        }
         int32_t l_s;
         m_geoip2_db = a_db;
         m_geoip2_mmdb = new geoip2_mmdb();
@@ -1520,7 +1511,7 @@ int32_t session::t_trackers(void)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-static int32_t _t_btp(void *a_data)
+static int32_t _t_request_blocks(void *a_data)
 {
         if(!a_data)
         {
@@ -1528,7 +1519,7 @@ static int32_t _t_btp(void *a_data)
         }
         session* l_ses = static_cast<session*>(a_data);
         int32_t l_s;
-        l_s = l_ses->t_btp();
+        l_s = l_ses->t_request_blocks();
         if (l_s != NTRNT_STATUS_OK)
         {
                 TRC_ERROR("performing btp");
@@ -1540,7 +1531,7 @@ static int32_t _t_btp(void *a_data)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t session::t_btp(void)
+int32_t session::t_request_blocks(void)
 {
         int32_t l_s;
         // -------------------------------------------------
@@ -1578,8 +1569,8 @@ int32_t session::t_btp(void)
         // fire again
         // -------------------------------------------------
         void *l_timer = NULL;
-        l_s = add_timer((uint32_t)(NTRNT_SESSION_T_BTP_MS),
-                         _t_btp,
+        l_s = add_timer((uint32_t)(NTRNT_SESSION_T_REQUEST_BLOCKS_MS),
+                         _t_request_blocks,
                          (void *)this,
                          &l_timer);
         UNUSED(l_s);
@@ -1734,8 +1725,7 @@ int32_t session::run(void)
                         TRC_ERROR("performing str_to_sas -not a valid ip address+port?");
                         return NTRNT_STATUS_ERROR;
                 }
-                peer* l_peer = nullptr;
-                m_peer_mgr.add_peer(l_sas, NTRNT_PEER_FROM_SELF, &l_peer);
+                m_peer_mgr.add_peer(l_sas, NTRNT_PEER_FROM_SELF);
         }
         // -------------------------------------------------
         // *************************************************
@@ -1756,8 +1746,8 @@ int32_t session::run(void)
         // -------------------------------------------------
         // kick off bittorrent protocol handling
         // -------------------------------------------------
-        l_s = add_timer(NTRNT_SESSION_T_BTP_MS,
-                        _t_btp,
+        l_s = add_timer(NTRNT_SESSION_T_REQUEST_BLOCKS_MS,
+                        _t_request_blocks,
                         (void *)this,
                         &l_timer);
         // -------------------------------------------------
@@ -1789,7 +1779,7 @@ int32_t session::run(void)
                         // TODO log error
                 }
         }
-        NDBG_PRINT(": stopped\n");
+        TRC_DEBUG(": stopped\n");
         m_stopped = true;
         return NTRNT_STATUS_OK;
 }

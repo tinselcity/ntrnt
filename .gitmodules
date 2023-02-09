@@ -1,3 +1,4 @@
 [submodule "sub/libutp"]
 	path = sub/libutp
-	url = https://github.com/bittorrent/libutp
+	url = https://github.com/tinselcity/libutp
+	branch = build_fixes

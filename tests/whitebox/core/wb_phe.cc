@@ -158,13 +158,10 @@ static int _select_skey_cb(void* a_data, void* a_cb_ctx, void* a_buf, size_t a_l
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
-//! phe cb
-//! ----------------------------------------------------------------------------
-phe_select_skey_cb_t g_phe_select_skey_cb = _select_skey_cb;
-//! ----------------------------------------------------------------------------
 //! phe tests
 //! ----------------------------------------------------------------------------
 TEST_CASE( "protocol header encryption", "[phe]" ) {
+        ns_ntrnt::phe::s_phe_select_skey_cb = _select_skey_cb;
         srand(time(NULL));
         // -------------------------------------------------
         // validate sha1 sum
