@@ -235,7 +235,7 @@ int32_t stub::write(const uint8_t* a_buf, size_t a_off, size_t a_len)
                 // -----------------------------------------
                 off64_t l_ls;
                 errno = 0;
-                l_ls = lseek64(i_f->m_fd, l_first_off, SEEK_SET);
+                l_ls = ::lseek(i_f->m_fd, l_first_off, SEEK_SET);
                 if (l_ls == -1)
                 {
                         TRC_ERROR("performing lseek64. Reason: %s", strerror(errno));
@@ -336,7 +336,7 @@ int32_t stub::read(nbq* a_q, size_t a_off, size_t a_len)
                 // -----------------------------------------
                 off64_t l_ls;
                 errno = 0;
-                l_ls = lseek64(i_f->m_fd, l_first_off, SEEK_SET);
+                l_ls = ::lseek(i_f->m_fd, l_first_off, SEEK_SET);
                 if (l_ls == -1)
                 {
                         TRC_ERROR("performing lseek64. Reason: %s", strerror(errno));
@@ -434,7 +434,7 @@ int32_t stub::calc_sha1(id_t& ao_sha1, size_t a_off, size_t a_len)
                 // -----------------------------------------
                 off64_t l_ls;
                 errno = 0;
-                l_ls = lseek64(i_f->m_fd, l_first_off, SEEK_SET);
+                l_ls = ::lseek(i_f->m_fd, l_first_off, SEEK_SET);
                 if (l_ls == -1)
                 {
                         TRC_ERROR("performing lseek64. Reason: %s", strerror(errno));
