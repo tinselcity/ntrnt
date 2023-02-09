@@ -177,66 +177,6 @@ int32_t ensure_dir(const std::string& a_dir)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t ntrnt_fallocate(int a_fd, size_t a_len)
-{
-        // -------------------------------------------------
-        // OS X does not have posix_fallocate
-        // use fcntl+ftruncate
-        // -------------------------------------------------
-#ifdef __MACH__
-        off_t l_len = (off_t)a_len;
-        fstore_t l_store = {F_ALLOCATECONTIG, F_PEOFPOSMODE, 0, l_len};
-        int l_s;
-        // -------------------------------------------------
-        // try reserve continous chunk of disk space
-        // -------------------------------------------------
-        errno = 0;
-        l_s = fcntl(a_fd, F_PREALLOCATE, &l_store);
-        if(l_s == -1)
-        {
-                // -----------------------------------------
-                // allocated non-continuous if too
-                // fragmented
-                // -----------------------------------------
-                l_store.fst_flags = F_ALLOCATEALL;
-                errno = 0;
-                l_s = fcntl(a_fd, F_PREALLOCATE, &l_store);
-                if(l_s == -1)
-                {
-                        TRC_ERROR("performing fallocate of size: %zu.  Reason: %s",
-                                  a_len,
-                                  strerror(errno));
-                        return NTRNT_STATUS_ERROR;
-                }
-        }
-        errno = 0;
-        l_s = ftruncate(a_fd, a_len);
-        if (l_s != 0)
-        {
-                TRC_ERROR("performing fallocate of size: %zu.  Reason: %s",
-                          a_len,
-                          strerror(errno));
-                return NTRNT_STATUS_ERROR;
-        }
-#else
-        int32_t l_s;
-        errno = 0;
-        l_s = posix_fallocate(a_fd, 0, a_len);
-        if(l_s != 0) {
-
-                TRC_ERROR("performing fallocate of size: %zu.  Reason: %s",
-                          a_len,
-                          strerror(errno));
-                return NTRNT_STATUS_ERROR;
-        }
-#endif
-        return NTRNT_STATUS_OK;
-}
-//! ----------------------------------------------------------------------------
-//! \details: Encodes a string to base64
-//! \return:  TODO
-//! \param:   TODO
-//! ----------------------------------------------------------------------------
 int32_t b64_encode(char** ao_out, const unsigned char* a_in, size_t a_in_len)
 {
         BIO *l_bio = nullptr;

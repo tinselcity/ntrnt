@@ -23,20 +23,17 @@ public:
                 size_t m_len;
                 size_t m_off;
                 int m_fd;
-                void* m_buf;
                 _sfile():
                         m_path(),
                         m_len(0),
                         m_off(0),
-                        m_fd(-1),
-                        m_buf(nullptr)
+                        m_fd(-1)
                 {}
                 _sfile(const _sfile& a_that):
                         m_path(a_that.m_path),
                         m_len(a_that.m_len),
                         m_off(a_that.m_off),
-                        m_fd(a_that.m_fd),
-                        m_buf(a_that.m_buf)
+                        m_fd(a_that.m_fd)
                 {}
         private:
                 _sfile& operator=(const _sfile&);

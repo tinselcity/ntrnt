@@ -48,17 +48,6 @@ stub::~stub(void)
         // -------------------------------------------------
         for (auto && i_f : m_sfile_list)
         {
-                if (i_f.m_buf)
-                {
-                        int32_t l_s;
-                        errno = 0;
-                        l_s = munmap(i_f.m_buf, i_f.m_len);
-                        if (l_s == -1)
-                        {
-                                TRC_ERROR("performing munmap.  Reason: %s", strerror(errno));
-                                // do nothing...
-                        }
-                }
                 if (i_f.m_fd >= 0)
                 {
                         close(i_f.m_fd);
@@ -194,25 +183,6 @@ int32_t stub::init_sfile(sfile_t& a_sfile)
                 TRC_ERROR("performing open(%s).  Reason: %s", l_path.c_str(), strerror(errno));
                 return NTRNT_STATUS_ERROR;
         }
-        // -------------------------------------------------
-        // alloc size
-        // -------------------------------------------------
-        l_s = ntrnt_fallocate(a_sfile.m_fd, a_sfile.m_len);
-        if (l_s != NTRNT_STATUS_OK)
-        {
-                TRC_ERROR("performing ntrnt_fallocate");
-                return NTRNT_STATUS_ERROR;
-        }
-        // -------------------------------------------------
-        // mmap
-        // -------------------------------------------------
-        errno = 0;
-        a_sfile.m_buf = mmap(NULL, a_sfile.m_len, PROT_READ | PROT_WRITE, MAP_SHARED, a_sfile.m_fd, 0);
-        if(a_sfile.m_buf == ((void *)-1))
-        {
-                TRC_ERROR("performing mmap of size: %zu.  Reason: %s", a_sfile.m_len, strerror(errno));
-                return NTRNT_STATUS_ERROR;
-        }
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -261,21 +231,37 @@ int32_t stub::write(const uint8_t* a_buf, size_t a_off, size_t a_len)
                         return NTRNT_STATUS_ERROR;
                 }
                 // -----------------------------------------
-                // get buffer offset
+                // seek to offset
+                // -----------------------------------------
+                off64_t l_ls;
+                errno = 0;
+                l_ls = lseek64(i_f->m_fd, l_first_off, SEEK_SET);
+                if (l_ls == -1)
+                {
+                        TRC_ERROR("performing lseek64. Reason: %s", strerror(errno));
+                        return NTRNT_STATUS_ERROR;
+                }
+                // -----------------------------------------
+                // calculate len and unset first offset
                 // -----------------------------------------
                 size_t l_f_rem = i_f->m_len;
-                uint8_t* l_dst = ((uint8_t*)i_f->m_buf);
                 if (l_first_off)
                 {
                         l_f_rem = i_f->m_len - l_first_off;
-                        l_dst = ((uint8_t*)i_f->m_buf) + l_first_off;
                         l_first_off = 0;
                 }
                 size_t l_f_write = (l_f_rem > l_rem) ? l_rem : l_f_rem;
                 // -----------------------------------------
-                // write
+                // write to dest
                 // -----------------------------------------
-                memcpy(l_dst, l_src, l_f_write);
+                ssize_t l_ws = 0;
+                errno = 0;
+                l_ws = ::write(i_f->m_fd, l_src, l_f_write);
+                if (l_ws == -1)
+                {
+                        TRC_ERROR("performing write. Reason: %s", strerror(errno));
+                        return NTRNT_STATUS_ERROR;
+                }
                 // -----------------------------------------
                 // counters
                 // -----------------------------------------
@@ -346,14 +332,23 @@ int32_t stub::read(nbq* a_q, size_t a_off, size_t a_len)
                         return NTRNT_STATUS_ERROR;
                 }
                 // -----------------------------------------
-                // get buffer offset
+                // seek to offset
+                // -----------------------------------------
+                off64_t l_ls;
+                errno = 0;
+                l_ls = lseek64(i_f->m_fd, l_first_off, SEEK_SET);
+                if (l_ls == -1)
+                {
+                        TRC_ERROR("performing lseek64. Reason: %s", strerror(errno));
+                        return NTRNT_STATUS_ERROR;
+                }
+                // -----------------------------------------
+                // calculate len and unset first offset
                 // -----------------------------------------
                 size_t l_f_rem = i_f->m_len;
-                uint8_t* l_src = ((uint8_t*)i_f->m_buf);
                 if (l_first_off)
                 {
                         l_f_rem = i_f->m_len - l_first_off;
-                        l_src = ((uint8_t*)i_f->m_buf) + l_first_off;
                         l_first_off = 0;
                 }
                 size_t l_f_write = (l_f_rem > l_rem) ? l_rem : l_f_rem;
@@ -362,9 +357,16 @@ int32_t stub::read(nbq* a_q, size_t a_off, size_t a_len)
                 // -----------------------------------------
                 if (a_q)
                 {
-                        off_t l_w;
-                        l_w = a_q->write((const char*)l_src, l_f_write);
+                        off_t l_w = 0;
+                        ssize_t l_ws = 0;
+                        errno = 0;
+                        l_w = a_q->write_fd(i_f->m_fd, l_f_write, l_ws);
                         UNUSED(l_w);
+                        if (l_ws == -1)
+                        {
+                                TRC_ERROR("performing write. Reason: %s", strerror(errno));
+                                return NTRNT_STATUS_ERROR;
+                        }
                 }
                 // -----------------------------------------
                 // counters
@@ -428,21 +430,46 @@ int32_t stub::calc_sha1(id_t& ao_sha1, size_t a_off, size_t a_len)
                         return NTRNT_STATUS_ERROR;
                 }
                 // -----------------------------------------
-                // get buffer offset
+                // seek to offset
+                // -----------------------------------------
+                off64_t l_ls;
+                errno = 0;
+                l_ls = lseek64(i_f->m_fd, l_first_off, SEEK_SET);
+                if (l_ls == -1)
+                {
+                        TRC_ERROR("performing lseek64. Reason: %s", strerror(errno));
+                        return NTRNT_STATUS_ERROR;
+                }
+                // -----------------------------------------
+                // calculate len and unset first offset
                 // -----------------------------------------
                 size_t l_f_rem = i_f->m_len;
-                uint8_t* l_src = ((uint8_t*)i_f->m_buf);
                 if (l_first_off)
                 {
                         l_f_rem = i_f->m_len - l_first_off;
-                        l_src = ((uint8_t*)i_f->m_buf) + l_first_off;
                         l_first_off = 0;
                 }
                 size_t l_f_write = (l_f_rem > l_rem) ? l_rem : l_f_rem;
                 // -----------------------------------------
                 // sha1 update
                 // -----------------------------------------
-                l_sha1.update(l_src, l_f_write);
+#define _SHA1_BUF_SIZE_PER 256
+                uint8_t l_buf[_SHA1_BUF_SIZE_PER];
+                size_t l_left = l_f_write;
+                while (l_left)
+                {
+                        size_t l_rd = l_left > sizeof(l_buf) ? sizeof(l_buf) : l_left;
+                        ssize_t l_rs;
+                        errno = 0;
+                        l_rs = ::read(i_f->m_fd, l_buf, l_rd);
+                        if (l_rs == -1)
+                        {
+                                TRC_ERROR("performing write. read: %s", strerror(errno));
+                                return NTRNT_STATUS_ERROR;
+                        }
+                        l_sha1.update(l_buf, l_rd);
+                        l_left -= l_rd;
+                }
                 // -----------------------------------------
                 // counters
                 // -----------------------------------------
