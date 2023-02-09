@@ -89,6 +89,7 @@ A list of critical missing features that'd be nice to have someday:
  - Better peer curation including connection/bandwidth caps, optimistic unchoking, and [peer priority](http://www.bittorrent.org/beps/bep_0040.html)
  - multiple session support.
  - build in http server support for web-gui (remove [is2](https://github.com/tinselcity/is2) dependency).
+- [BitTorrent v2](https://www.bittorrent.org/beps/bep_0052.html) support
 
 
 ## Contribute
