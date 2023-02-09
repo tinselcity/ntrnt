@@ -32,9 +32,6 @@ public:
         // raw http request offsets
         // -------------------------------------------------
         cr_t m_p_status;
-        // TODO REMOVE
-        const char *m_tls_info_protocol_str;
-        const char *m_tls_info_cipher_str;
 private:
         // -------------------------------------------------
         // private methods

@@ -37,27 +37,6 @@ static unsigned char x2c(const unsigned char *a_nbl)
         return l_c;
 }
 //! ----------------------------------------------------------------------------
-//! insert
-//! ----------------------------------------------------------------------------
-#if 0
-inline void kv_map_list_insert(kv_map_list_t &ao_kv_map_list,
-                               const std::string &a_key,
-                               const std::string &a_val)
-{
-        kv_map_list_t::iterator i_obj = ao_kv_map_list.find(a_key);
-        if (i_obj != ao_kv_map_list.end())
-        {
-                i_obj->second.push_back(a_val);
-        }
-        else
-        {
-                str_list_t l_list;
-                l_list.push_back(a_val);
-                ao_kv_map_list[a_key] = l_list;
-        }
-}
-#endif
-//! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
 //! \param:   TODO

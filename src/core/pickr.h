@@ -120,7 +120,6 @@ private:
         // writing/reading/validating
         // -------------------------------------------------
         int32_t write(nbq& a_nbq, uint32_t a_idx, uint32_t a_off, uint32_t a_len);
-        //int32_t read(uint8_t* a_buf, uint32_t a_idx, uint32_t a_off, uint32_t a_len);
         bool validate_piece(uint32_t a_piece);
         // -------------------------------------------------
         // private members
@@ -131,7 +130,6 @@ private:
         // -------------------------------------------------
         // rqst tracking
         // -------------------------------------------------
-        //inflight_map_t m_inflight_map;
         block_rqst_map_t m_block_rqst_map;
         // -------------------------------------------------
         // use list for endgame -to allow for multiple

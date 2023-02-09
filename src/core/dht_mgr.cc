@@ -422,22 +422,6 @@ void dht_mgr::dht_cb(void* a_ctx,
                 break;
         }
         }
-        //NDBG_HEXDUMP(a_info_hash, 20);
-#if 0
-        auto *const self = static_cast<tr_dht_impl*>(a_vself);
-        auto hash = tr_sha1_digest_t { };
-        std::copy_n(reinterpret_cast<std::byte const*>(a_info_hash), std::size(hash), std::data(hash));
-        if (event == DHT_EVENT_VALUES)
-        {
-                auto const pex = tr_pex::fromCompact4(data, data_len, nullptr, 0);
-                self->mediator_.addPex(hash, std::data(pex), std::size(pex));
-        }
-        else if (event == DHT_EVENT_VALUES6)
-        {
-                auto const pex = tr_pex::fromCompact6(data, data_len, nullptr, 0);
-                self->mediator_.addPex(hash, std::data(pex), std::size(pex));
-        }
-#endif
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO

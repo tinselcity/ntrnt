@@ -476,10 +476,6 @@ uint64_t peer::utp_cb(utp_socket* a_utp_conn,
                 //           a_args->send,
                 //           a_args->len);
                 // TODO
-#if 0
-                tr_logAddTraceIo(io, fmt::format("{:d} overhead bytes via utp", args->len));
-                io->bandwidth().notifyBandwidthConsumed(args->u1.send != 0 ? TR_UP : TR_DOWN, args->len, false, tr_time_msec());
-#endif
                 break;
         }
         // -------------------------------------------------

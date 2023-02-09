@@ -474,13 +474,12 @@ int32_t peer_mgr::add_peer(const sockaddr_storage& a_sas,
         // -------------------------------------------------
         // validate address
         // -------------------------------------------------
-#if 0
+        // disable to allow for localhost testing
         l_s = validate_address(a_sas);
         if (l_s != NTRNT_STATUS_OK)
         {
                 return NTRNT_STATUS_ERROR;
         }
-#endif
         // -------------------------------------------------
         // find
         // -------------------------------------------------
@@ -517,13 +516,11 @@ int32_t peer_mgr::accept_utp(const sockaddr_storage& a_sas,
         // validate address
         // -------------------------------------------------
         // disable to allow for localhost testing
-#if 0
         l_s = validate_address(a_sas);
         if (l_s != NTRNT_STATUS_OK)
         {
                 return NTRNT_STATUS_ERROR;
         }
-#endif
         // -------------------------------------------------
         // find
         // -------------------------------------------------

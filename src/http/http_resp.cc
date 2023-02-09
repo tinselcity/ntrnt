@@ -17,8 +17,6 @@ namespace ns_ntrnt {
 http_resp::http_resp(void):
         http_msg(),
         m_p_status(),
-        m_tls_info_protocol_str(NULL),
-        m_tls_info_cipher_str(NULL),
         m_status()
 {
         init();
@@ -50,8 +48,6 @@ void http_resp::init(void)
         http_msg::init();
         m_type = http_msg::TYPE_RESP;
         m_p_status.clear();
-        m_tls_info_protocol_str = NULL;
-        m_tls_info_cipher_str =  NULL;
         m_status = HTTP_STATUS_NONE;
         if (m_http_parser_settings)
         {

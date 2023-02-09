@@ -169,32 +169,6 @@ int32_t pickr::write(nbq& a_nbq, uint32_t a_idx, uint32_t a_off, uint32_t a_len)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-#if 0
-int32_t pickr::read(uint8_t* a_buf,
-                    uint32_t a_idx,
-                    uint32_t a_off,
-                    uint32_t a_len)
-{
-        if (!m_init)
-        {
-                return NTRNT_STATUS_ERROR;
-        }
-        size_t l_off = (size_t)(a_idx*m_info_piece_length);
-        size_t l_len = a_len;
-        int32_t l_s;
-        l_s = m_stub.read(a_buf, l_off, l_len);
-        if (l_s != NTRNT_STATUS_OK)
-        {
-                return NTRNT_STATUS_ERROR;
-        }
-        return NTRNT_STATUS_OK;
-}
-#endif
-//! ----------------------------------------------------------------------------
-//! \details: TODO
-//! \return:  TODO
-//! \param:   TODO
-//! ----------------------------------------------------------------------------
 bool pickr::validate_piece(uint32_t a_piece)
 {
         if (!m_init)
