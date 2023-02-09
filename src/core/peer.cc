@@ -1979,11 +1979,6 @@ void peer::ltep_create_handshake(void)
                 l_bw.w_key("metadata_size");
                 l_bw.w_int(m_session.get_info_pickr().get_info_buf_len());
         }
-        else
-        {
-                l_bw.w_key("metadata_size");
-                l_bw.w_int(0);
-        }
         // -------------------------------------------------
         // expternal port
         // -------------------------------------------------

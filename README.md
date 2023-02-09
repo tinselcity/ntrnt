@@ -21,7 +21,7 @@ BitTorrent client in C++
 - [Protocol Header Encryption (aka: Message Sender Encryption)](https://wiki.vuze.com/w/Message_Stream_Encryption)
 - [Kademlia DHT](https://xlattice.sourceforge.net/components/protocol/kademlia/specs.html) (for trackerless torrenting)
 - [Magnet Links](https://www.bittorrent.org/beps/bep_0053.html) and info hashes (sha1 BitTorrent v1)
-- [Extension Negotiation Protocol](http://wiki.vuze.com/w/Extension_negotiation_protocol), including [Peer Exchange](https://www.bittorrent.org/beps/bep_0011.html) and [Metadata](https://www.bittorrent.org/beps/bep_0009.html)
+- [Extension Negotiation Protocol](https://www.rasterbar.com/products/libtorrent/extension_protocol.html), including [Peer Exchange](https://www.bittorrent.org/beps/bep_0011.html) and [Metadata](https://www.bittorrent.org/beps/bep_0009.html)
 - [UDP](https://www.bittorrent.org/beps/bep_0015.html)/[HTTP(s)](https://www.bittorrent.org/beps/bep_0048.html) Tracker announce and scrape.
 
 #### Running
