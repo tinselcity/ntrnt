@@ -485,6 +485,24 @@ int32_t pickr::request_blocks(void)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
+bool pickr::peer_is_interesting(peer& a_peer)
+{
+        btfield& l_ph = a_peer.get_btp_pieces_have();
+        for (size_t i_p = 0; i_p < m_pieces.get_size(); ++i_p)
+        {
+                if (!m_pieces.test(i_p) &&
+                    l_ph.test(i_p))
+                {
+                        return true;
+                }
+        }
+        return false;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
 int32_t pickr::peer_request_more(peer& a_peer)
 {
         int32_t l_s;
@@ -501,7 +519,25 @@ int32_t pickr::peer_request_more(peer& a_peer)
         if (a_peer.get_btp_peer_choking() ||
             !a_peer.get_btp_am_interested())
         {
-                // TODO remove from swarm???
+                // -----------------------------------------
+                // if is interesting and haven't already
+                // expressed interest -send interested
+                // -----------------------------------------
+                if (peer_is_interesting(a_peer) &&
+                    !a_peer.m_btp_am_interested)
+                {
+                        a_peer.m_btp_am_interested = true;
+                        l_s = a_peer.btp_send_interested();
+                        if (l_s != NTRNT_STATUS_OK)
+                        {
+                                TRC_ERROR("performing btp_send_interested");
+                                return NTRNT_STATUS_ERROR;
+                        }
+                        return NTRNT_STATUS_OK;
+                }
+                // -----------------------------------------
+                // send keep-alive if nothing else
+                // -----------------------------------------
                 a_peer.btp_send_keepalive();
                 return NTRNT_STATUS_OK;
         }
@@ -514,6 +550,22 @@ int32_t pickr::peer_request_more(peer& a_peer)
         {
                 TRC_ERROR("performing pickr get blocks");
                 return NTRNT_STATUS_ERROR;
+        }
+        //NDBG_PRINT("REQUEST: [NUM: %lu]\n", l_blk_rqst_vec.size());
+        // -------------------------------------------------
+        // if empty peer doesn't appear to have anything
+        // of interest so relay
+        // -------------------------------------------------
+        if (l_blk_rqst_vec.empty())
+        {
+                a_peer.m_btp_am_interested = false;
+                l_s = a_peer.btp_send_not_interested();
+                if (l_s != NTRNT_STATUS_OK)
+                {
+                        TRC_ERROR("performing btp_send_interested");
+                        return NTRNT_STATUS_ERROR;
+                }
+                return NTRNT_STATUS_OK;
         }
         // -------------------------------------------------
         // make requests
@@ -545,10 +597,10 @@ int32_t pickr::get_block_rqsts(block_rqst_vec_t& ao_vec,
         uint32_t l_max = l_max_reqq - a_peer.m_num_block_rqst_inflight;
         if (!l_max)
         {
-                //NDBG_PRINT("max == 0 [MAX_INFLIGHT: %d] [inflight: %u]\n",
+                //NDBG_PRINT("max == 0 [MAX_INFLIGHT: %d] [inflight: %lu]\n",
                 //           l_max_reqq,
-                //           l_inflight);
-                return NTRNT_STATUS_DONE;
+                //           a_peer.m_num_block_rqst_inflight);
+                return NTRNT_STATUS_OK;
         }
         // -------------------------------------------------
         // - find list of candidate pieces from intersection
@@ -575,7 +627,9 @@ int32_t pickr::get_block_rqsts(block_rqst_vec_t& ao_vec,
         } _pb_t;
         typedef std::vector<_pb_t> _piece_vec_t;
         _piece_vec_t l_pv;
-        // sanity chekc size
+        // -------------------------------------------------
+        // sanity check size
+        // -------------------------------------------------
         if (m_pieces.get_size() != a_btfield.get_size())
         {
                 TRC_ERROR("torrent peer bitfield size mismatch");
@@ -600,8 +654,7 @@ int32_t pickr::get_block_rqsts(block_rqst_vec_t& ao_vec,
         // -------------------------------------------------
         if (l_pv.empty())
         {
-                TRC_ERROR("torrent peer bitfield size mismatch");
-                return NTRNT_STATUS_ERROR;
+                return NTRNT_STATUS_OK;
         }
         // -------------------------------------------------
         // shuffle
@@ -882,6 +935,7 @@ int32_t pickr::recv_piece(peer* a_peer,
         // -------------------------------------------------
         // if inflight < low water -request more
         // -------------------------------------------------
+        //NDBG_PRINT("inflight: %lu\n", a_peer->m_num_block_rqst_inflight);
         if (!m_complete &&
             (a_peer->m_num_block_rqst_inflight < NTRNT_SESSION_PEER_INFLIGHT_LOW_WATER))
         {

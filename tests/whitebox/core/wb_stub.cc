@@ -85,7 +85,7 @@ TEST_CASE( "stub", "[stub]" ) {
                 // -----------------------------------------
                 // read 2nd part
                 // -----------------------------------------
-                l_s = l_stub.read(&l_q, 64, 128);
+                l_s = l_stub.read(&l_q, 64, 64);
                 REQUIRE((l_s == NTRNT_STATUS_OK));
                 l_rs = l_q.read((char*)l_buf, 64);
                 REQUIRE((l_rs == 64));
@@ -132,5 +132,16 @@ TEST_CASE( "stub", "[stub]" ) {
                 // -----------------------------------------
                 l_s = l_stub.write(g_test_dat, 32, sizeof(g_test_dat));
                 REQUIRE((l_s == NTRNT_STATUS_OK));
+                // -----------------------------------------
+                // read 2nd part
+                // -----------------------------------------
+                off_t l_rs;
+                uint8_t l_buf[64];
+                ns_ntrnt::nbq l_q(1024);
+                l_s = l_stub.read(&l_q, 32, 64);
+                REQUIRE((l_s == NTRNT_STATUS_OK));
+                l_rs = l_q.read((char*)l_buf, 64);
+                REQUIRE((l_rs == 64));
+                REQUIRE((memcmp(l_buf, g_test_dat, sizeof(g_test_dat)) == 0));
         }
 }

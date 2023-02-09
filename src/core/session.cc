@@ -672,8 +672,7 @@ int32_t session::add_peer(struct sockaddr_storage& a_sas, peer_from_t a_from)
         // -------------------------------------------------
         // add to peer mgr
         // -------------------------------------------------
-        peer* l_peer = nullptr;
-        l_s = m_peer_mgr.add_peer(a_sas, a_from, &l_peer);
+        l_s = m_peer_mgr.add_peer(a_sas, a_from);
         if (l_s != NTRNT_STATUS_OK)
         {
                 return NTRNT_STATUS_ERROR;
@@ -717,11 +716,6 @@ int32_t session::add_peer_raw(int a_family, const uint8_t* a_buf, size_t a_len, 
                         // ---------------------------------
                         uint16_t l_port;
                         memcpy(&l_port, l_buf+4, sizeof(l_port));
-                        if (!l_port)
-                        {
-                                TRC_WARN("skipping 0 port");
-                                continue;
-                        }
                         // ---------------------------------
                         // copy in
                         // ---------------------------------
@@ -760,11 +754,6 @@ int32_t session::add_peer_raw(int a_family, const uint8_t* a_buf, size_t a_len, 
                         // ---------------------------------
                         uint16_t l_port;
                         memcpy(&l_port, l_buf+16, sizeof(l_port));
-                        if (!l_port)
-                        {
-                                TRC_WARN("skipping 0 port");
-                                continue;
-                        }
                         // ---------------------------------
                         // copy in
                         // ---------------------------------
@@ -1104,19 +1093,8 @@ int32_t session::udp_fd_readable_cb(void *a_data)
                 {
                         if (errno == EAGAIN)
                         {
-                                l_s = l_ses->get_peer_mgr().dequeue_out_v4();
-                                if (l_s != NTRNT_STATUS_OK)
-                                {
-                                        if (l_s == NTRNT_STATUS_AGAIN)
-                                        {
-                                                return NTRNT_STATUS_OK;
-                                        }
-                                        TRC_ERROR("performing dequeue_out");
-                                        NDBG_PRINT("exit...\n");
-                                        return NTRNT_STATUS_ERROR;
-                                }
-                                //NDBG_PRINT("[%sREADABLE%s] exit ...\n", ANSI_COLOR_BG_RED, ANSI_COLOR_OFF);
-                                return NTRNT_STATUS_OK;
+                                // TODO -only if signaled data???
+                                return udp_fd_writeable_cb(a_data);
                         }
                         TRC_ERROR("error performing recvfrom. Reason: %s\n", strerror(errno));
                         return NTRNT_STATUS_ERROR;
@@ -1145,6 +1123,7 @@ int32_t session::udp_fd_readable_cb(void *a_data)
 //! ----------------------------------------------------------------------------
 int32_t session::udp_fd_writeable_cb(void *a_data)
 {
+        //NDBG_PRINT("[WRITEABLE]\n");
         if (!a_data)
         {
                 TRC_ERROR("data == null");
@@ -1320,17 +1299,8 @@ int32_t session::udp6_fd_readable_cb(void *a_data)
                 {
                         if (errno == EAGAIN)
                         {
-                                l_s = l_ses->get_peer_mgr().dequeue_out_v6();
-                                if (l_s != NTRNT_STATUS_OK)
-                                {
-                                        if (l_s == NTRNT_STATUS_AGAIN)
-                                        {
-                                                return NTRNT_STATUS_OK;
-                                        }
-                                        TRC_ERROR("performing dequeue_out");
-                                        return NTRNT_STATUS_ERROR;
-                                }
-                                return NTRNT_STATUS_OK;
+                                // TODO -only if signaled data???
+                                return udp6_fd_writeable_cb(a_data);
                         }
                         TRC_ERROR("error performing recvfrom. Reason: %s\n", strerror(errno));
                         return NTRNT_STATUS_ERROR;
@@ -1441,6 +1411,10 @@ int32_t session::cancel_timer(void* a_timer)
 //! ----------------------------------------------------------------------------
 int32_t session::set_geoip_db(const std::string& a_db)
 {
+        if (a_db.empty())
+        {
+                return NTRNT_STATUS_OK;
+        }
         int32_t l_s;
         m_geoip2_db = a_db;
         m_geoip2_mmdb = new geoip2_mmdb();
@@ -1541,7 +1515,7 @@ int32_t session::t_trackers(void)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-static int32_t _t_btp(void *a_data)
+static int32_t _t_request_blocks(void *a_data)
 {
         if(!a_data)
         {
@@ -1549,7 +1523,7 @@ static int32_t _t_btp(void *a_data)
         }
         session* l_ses = static_cast<session*>(a_data);
         int32_t l_s;
-        l_s = l_ses->t_btp();
+        l_s = l_ses->t_request_blocks();
         if (l_s != NTRNT_STATUS_OK)
         {
                 TRC_ERROR("performing btp");
@@ -1561,7 +1535,7 @@ static int32_t _t_btp(void *a_data)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t session::t_btp(void)
+int32_t session::t_request_blocks(void)
 {
         int32_t l_s;
         // -------------------------------------------------
@@ -1599,8 +1573,8 @@ int32_t session::t_btp(void)
         // fire again
         // -------------------------------------------------
         void *l_timer = NULL;
-        l_s = add_timer((uint32_t)(NTRNT_SESSION_T_BTP_MS),
-                         _t_btp,
+        l_s = add_timer((uint32_t)(NTRNT_SESSION_T_REQUEST_BLOCKS_MS),
+                         _t_request_blocks,
                          (void *)this,
                          &l_timer);
         UNUSED(l_s);
@@ -1755,8 +1729,7 @@ int32_t session::run(void)
                         TRC_ERROR("performing str_to_sas -not a valid ip address+port?");
                         return NTRNT_STATUS_ERROR;
                 }
-                peer* l_peer = nullptr;
-                m_peer_mgr.add_peer(l_sas, NTRNT_PEER_FROM_SELF, &l_peer);
+                m_peer_mgr.add_peer(l_sas, NTRNT_PEER_FROM_SELF);
         }
         // -------------------------------------------------
         // *************************************************
@@ -1777,8 +1750,8 @@ int32_t session::run(void)
         // -------------------------------------------------
         // kick off bittorrent protocol handling
         // -------------------------------------------------
-        l_s = add_timer(NTRNT_SESSION_T_BTP_MS,
-                        _t_btp,
+        l_s = add_timer(NTRNT_SESSION_T_REQUEST_BLOCKS_MS,
+                        _t_request_blocks,
                         (void *)this,
                         &l_timer);
         // -------------------------------------------------

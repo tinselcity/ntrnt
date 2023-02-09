@@ -48,8 +48,8 @@
 // ---------------------------------------------------------
 // periodic tasks
 // ---------------------------------------------------------
-#define NTRNT_SESSION_T_BTP_MS 500
-#define NTRNT_SESSION_T_CONNECT_PEERS_MS 500
+#define NTRNT_SESSION_T_REQUEST_BLOCKS_MS 100
+#define NTRNT_SESSION_T_CONNECT_PEERS_MS 1000
 #define NTRNT_SESSION_T_CHECK_TIMEOUTS_MS 500
 #define NTRNT_SESSION_T_TRACKERS_MS 30000
 //! ----------------------------------------------------------------------------

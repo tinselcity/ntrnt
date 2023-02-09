@@ -228,7 +228,7 @@ static void print_usage(FILE* a_stream, int a_exit_code)
         fprintf(a_stream, "  -r, --no-trackers    disable tracker announce/scrape\n");
         fprintf(a_stream, "  -g, --geoip-db       geoip-db\n");
 #ifdef ENABLE_IS2
-        fprintf(a_stream, "  -p, --port           port (default: 12345)\n");
+        fprintf(a_stream, "  -p, --port           listen on api port\n");
 #endif
         fprintf(a_stream, "  \n");
         fprintf(a_stream, "Debug Options:\n");
@@ -264,7 +264,7 @@ int main(int argc, char** argv)
         ns_ntrnt::trc_log_level_set(ns_ntrnt::TRC_LOG_LEVEL_NONE);
         uint16_t l_ext_port = NTRNT_DEFAULT_PORT;
 #ifdef ENABLE_IS2
-        uint16_t l_port = 12345;
+        uint16_t l_port = 0;
 #endif
 #ifdef ENABLE_PROFILER
         std::string l_gprof_file;
@@ -621,12 +621,15 @@ int main(int argc, char** argv)
         // -------------------------------------------------
         // set dht
         // -------------------------------------------------
-        l_s = l_ses.set_geoip_db(l_geoip_db);
-        if (l_s != NTRNT_STATUS_OK)
+        if (!l_geoip_db.empty())
         {
-                NDBG_ERROR_AT("error performing session::set_geoip_db\n");
-                l_ret = STATUS_ERROR;
-                goto cleanup;
+                l_s = l_ses.set_geoip_db(l_geoip_db);
+                if (l_s != NTRNT_STATUS_OK)
+                {
+                        NDBG_ERROR_AT("error performing session::set_geoip_db\n");
+                        l_ret = STATUS_ERROR;
+                        goto cleanup;
+                }
         }
         // -------------------------------------------------
         // peer
@@ -681,16 +684,22 @@ int main(int argc, char** argv)
         }
 #ifdef ENABLE_IS2
 #define _API_ROUTE "/api/v0.1/*"
-        ns_is2::srvr *l_srvr = new ns_is2::srvr();
-        g_srvr = l_srvr;
-        ns_is2::lsnr *l_lsnr = new ns_is2::lsnr(l_port, ns_is2::SCHEME_TCP);
-        ntrnt_api_handler *l_api_h = new ntrnt_api_handler(l_ses);
-        l_api_h->set_route(_API_ROUTE);
-        l_lsnr->add_route("/api/v0.1/*", l_api_h);
-        l_srvr->register_lsnr(l_lsnr);
-        // Run in bg w/ threads == 1
-        l_srvr->set_num_threads(1);
-        l_srvr->run();
+        ns_is2::srvr *l_srvr = nullptr;
+        ns_is2::lsnr *l_lsnr = nullptr;
+        ntrnt_api_handler *l_api_h = nullptr;
+        if (l_port)
+        {
+                l_srvr = new ns_is2::srvr();
+                g_srvr = l_srvr;
+                l_lsnr = new ns_is2::lsnr(l_port, ns_is2::SCHEME_TCP);
+                l_api_h = new ntrnt_api_handler(l_ses);
+                l_api_h->set_route(_API_ROUTE);
+                l_lsnr->add_route("/api/v0.1/*", l_api_h);
+                l_srvr->register_lsnr(l_lsnr);
+                // Run in bg w/ threads == 1
+                l_srvr->set_num_threads(1);
+                l_srvr->run();
+        }
 #endif
 #ifdef ENABLE_PROFILER
         // -------------------------------------------------
@@ -742,7 +751,11 @@ cleanup:
                 }
         }
 #ifdef ENABLE_IS2
-        l_srvr->wait_till_stopped();
+        if (l_port &&
+            l_srvr)
+        {
+                l_srvr->wait_till_stopped();
+        }
         if(l_srvr) {delete l_srvr; l_srvr = NULL;}
         if(l_api_h) {delete l_api_h; l_api_h = NULL;}
 #endif

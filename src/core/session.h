@@ -119,7 +119,7 @@ public:
         // timers
         // -------------------------------------------------
         int32_t t_trackers(void);
-        int32_t t_btp(void);
+        int32_t t_request_blocks(void);
         int32_t t_connect_peers(void);
         int32_t t_check_timeouts(void);
         // -------------------------------------------------

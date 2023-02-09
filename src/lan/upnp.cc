@@ -114,29 +114,29 @@ int32_t upnp::init(void)
                              nullptr,
                              0);
 #endif
-        TRC_DEBUG(": upnpDiscover: dev: %p\n", l_dev);
-        TRC_DEBUG(": upnpDiscover: err: %d\n", l_err);
+        TRC_DEBUG(": upnpDiscover: dev: %p", l_dev);
+        TRC_DEBUG(": upnpDiscover: err: %d", l_err);
         if (l_dev == nullptr)
         {
-                TRC_ERROR("performing upnpDiscover. Reason[%d]: %s\n", errno, strerror(errno));
+                TRC_ERROR("performing upnpDiscover. Reason[%d]: %s", errno, strerror(errno));
                 return NTRNT_STATUS_ERROR;
         }
-        TRC_DEBUG(": upnpDiscover: done...\n");
+        TRC_DEBUG(": upnpDiscover: done...");
         // -------------------------------------------------
         // find internet gateway device
         // -------------------------------------------------
         int32_t l_s;
-        TRC_DEBUG(": UPNP_GetValidIGD: ...\n");
+        TRC_DEBUG(": UPNP_GetValidIGD: ...");
         l_s = UPNP_GetValidIGD(l_dev, &m_urls, &m_datas, m_lan_addr, sizeof(m_lan_addr));
         if (l_s != UPNP_IGD_VALID_CONNECTED)
         {
-                TRC_ERROR("performing UPNP_GetValidIGD. Reason[%d]: %s\n", errno, strerror(errno));
-                TRC_ERROR("If your router supports UPnP, please make sure UPnP is enabled.\n");
+                TRC_ERROR("performing UPNP_GetValidIGD. Reason[%d]: %s", errno, strerror(errno));
+                TRC_ERROR("If your router supports UPnP, please make sure UPnP is enabled.");
                 freeUPNPDevlist(l_dev);
         }
-        TRC_DEBUG(": UPNP_GetValidIGD: done...\n");
-        TRC_DEBUG(": Found Internet Gateway Device: %s\n", m_urls.controlURL);
-        TRC_DEBUG(": Local Address:                 %s\n", m_lan_addr);
+        TRC_DEBUG(": UPNP_GetValidIGD: done...");
+        TRC_DEBUG(": Found Internet Gateway Device: %s", m_urls.controlURL);
+        TRC_DEBUG(": Local Address:                 %s", m_lan_addr);
         freeUPNPDevlist(l_dev);
         // -------------------------------------------------
         // status info
@@ -152,9 +152,9 @@ int32_t upnp::init(void)
         }
         else
         {
-                TRC_DEBUG(": UPNP_STAT: status:             %s\n", m_stat_status);
-                TRC_DEBUG(": UPNP_STAT: uptime:             %u\n", m_stat_uptime);
-                TRC_DEBUG(": UPNP_STAT: last_conn_err:      %s\n", m_stat_last_conn_err);
+                TRC_DEBUG(": UPNP_STAT: status:             %s", m_stat_status);
+                TRC_DEBUG(": UPNP_STAT: uptime:             %u", m_stat_uptime);
+                TRC_DEBUG(": UPNP_STAT: last_conn_err:      %s", m_stat_last_conn_err);
         }
         // -------------------------------------------------
         // connection type
@@ -169,7 +169,7 @@ int32_t upnp::init(void)
         }
         else
         {
-                TRC_DEBUG(": UPNP_STAT: conn_type_info:     %s\n", m_stat_status);
+                TRC_DEBUG(": UPNP_STAT: conn_type_info:     %s", m_stat_status);
         }
         // -------------------------------------------------
         // external IP address
@@ -183,7 +183,7 @@ int32_t upnp::init(void)
         }
         else
         {
-                TRC_DEBUG(": UPNP_STAT: ext_ip_address:     %s\n", m_stat_ext_ip);
+                TRC_DEBUG(": UPNP_STAT: ext_ip_address:     %s", m_stat_ext_ip);
         }
         // -------------------------------------------------
         // link layer max bitrates
@@ -198,8 +198,8 @@ int32_t upnp::init(void)
         }
         else
         {
-                TRC_DEBUG(": UPNP_STAT: bitrate_down:       %u\n", m_stat_br_down);
-                TRC_DEBUG(": UPNP_STAT: bitrate_up:         %u\n", m_stat_br_up);
+                TRC_DEBUG(": UPNP_STAT: bitrate_down:       %u", m_stat_br_down);
+                TRC_DEBUG(": UPNP_STAT: bitrate_up:         %u", m_stat_br_up);
         }
         return NTRNT_STATUS_OK;
 }
@@ -235,7 +235,7 @@ int32_t upnp::add_port_mapping(uint16_t a_port)
         // add port mapping (TCP)
         // -------------------------------------------------
         errno = 0;
-        TRC_DEBUG(": UPNP_AddPortMapping(TCP): port[%u]\n", a_port);
+        TRC_DEBUG(": UPNP_AddPortMapping(TCP): port[%u]", a_port);
         l_s = UPNP_AddPortMapping(m_urls.controlURL,
                                   m_datas.first.servicetype,
                                   l_port_str,
@@ -247,14 +247,14 @@ int32_t upnp::add_port_mapping(uint16_t a_port)
                                   nullptr);
         if (l_s != 0)
         {
-                TRC_ERROR("performing UPNP_AddPortMapping (TCP). Reason[%d]: %s\n", errno, strerror(errno));
+                TRC_ERROR("performing UPNP_AddPortMapping (TCP). Reason[%d]: %s", errno, strerror(errno));
         }
-        TRC_DEBUG(": UPNP_AddPortMapping(TCP): port[%u]: done...\n", a_port);
+        TRC_DEBUG(": UPNP_AddPortMapping(TCP): port[%u]: done...", a_port);
         // -------------------------------------------------
         // add port mapping (UDP)
         // -------------------------------------------------
         errno = 0;
-        TRC_DEBUG(": UPNP_AddPortMapping(UDP): port[%u]\n", a_port);
+        TRC_DEBUG(": UPNP_AddPortMapping(UDP): port[%u]", a_port);
         l_s = UPNP_AddPortMapping(m_urls.controlURL,
                                   m_datas.first.servicetype,
                                   l_port_str,
@@ -266,9 +266,9 @@ int32_t upnp::add_port_mapping(uint16_t a_port)
                                   nullptr);
         if (l_s != 0)
         {
-                TRC_ERROR("performing UPNP_AddPortMapping (UDP). Reason[%d]: %s\n", errno, strerror(errno));
+                TRC_ERROR("performing UPNP_AddPortMapping (UDP). Reason[%d]: %s", errno, strerror(errno));
         }
-        TRC_DEBUG(": UPNP_AddPortMapping(UDP): port[%u]: done...\n", a_port);
+        TRC_DEBUG(": UPNP_AddPortMapping(UDP): port[%u]: done...", a_port);
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -292,7 +292,7 @@ int32_t upnp::delete_port_mapping(uint16_t a_port)
         // -----------------------------------------
         // remove port mapping (TCP)
         // -----------------------------------------
-        TRC_DEBUG(": UPNP_DeletePortMapping(TCP): port[%u]\n", a_port);
+        TRC_DEBUG(": UPNP_DeletePortMapping(TCP): port[%u]", a_port);
         errno = 0;
         l_s = UPNP_DeletePortMapping(m_urls.controlURL,
                                      m_datas.first.servicetype,
@@ -301,13 +301,13 @@ int32_t upnp::delete_port_mapping(uint16_t a_port)
                                      nullptr);
         if (l_s != 0)
         {
-                TRC_ERROR("performing UPNP_DeletePortMapping (TCP). Reason[%d]: %s\n", errno, strerror(errno));
+                TRC_ERROR("performing UPNP_DeletePortMapping (TCP). Reason[%d]: %s", errno, strerror(errno));
         }
-        TRC_DEBUG(": UPNP_DeletePortMapping(TCP): port[%u]: done...\n", a_port);
+        TRC_DEBUG(": UPNP_DeletePortMapping(TCP): port[%u]: done...", a_port);
         // -----------------------------------------
         // remove port mapping (UDP)
         // -----------------------------------------
-        TRC_DEBUG(": UPNP_DeletePortMapping(UDP): port[%u]\n", a_port);
+        TRC_DEBUG(": UPNP_DeletePortMapping(UDP): port[%u]", a_port);
         errno = 0;
         l_s = UPNP_DeletePortMapping(m_urls.controlURL,
                                      m_datas.first.servicetype,
@@ -316,9 +316,9 @@ int32_t upnp::delete_port_mapping(uint16_t a_port)
                                      nullptr);
         if (l_s != 0)
         {
-                TRC_ERROR("performing UPNP_DeletePortMapping (UDP). Reason[%d]: %s\n", errno, strerror(errno));
+                TRC_ERROR("performing UPNP_DeletePortMapping (UDP). Reason[%d]: %s", errno, strerror(errno));
         }
-        TRC_ERROR(": UPNP_DeletePortMapping(UDP): port[%u]: done...\n", a_port);
+        TRC_DEBUG(": UPNP_DeletePortMapping(UDP): port[%u]: done...", a_port);
         return NTRNT_STATUS_OK;
 }
 }

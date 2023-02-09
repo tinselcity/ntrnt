@@ -371,6 +371,7 @@ int32_t peer::connect(void)
         // -------------------------------------------------
         // TODO wrap in "if utp" or in separate utp connect
         m_utp_conn = utp_create_socket(m_session.get_utp_ctx());
+        //NDBG_PRINT("[HOST: %s] [UTP_CON: %p]\n", m_host.c_str(), m_utp_conn);
         if (!m_utp_conn)
         {
                 TRC_ERROR("performing utp_create_socket");
@@ -403,17 +404,6 @@ int32_t peer::connect(void)
         // tcp conn...
         // -------------------------------------------------
         // TODO wrap in "if tcp" or in separate tcp connect
-#if 0
-        auto peer_io = tr_peerIo::create(session, parent, &info_hash, false, is_seed);
-        if (!peer_io->socket_.is_valid())
-        {
-                if (auto sock = tr_netOpenPeerSocket(session, addr, port, is_seed); sock.is_valid())
-                {
-                        peer_io->set_socket(std::move(sock));
-                        return peer_io;
-                }
-        }
-#endif
         m_state = STATE_UTP_CONNECTING;
         return NTRNT_STATUS_OK;
 }
@@ -597,6 +587,7 @@ uint64_t peer::utp_cb(utp_socket* a_utp_conn,
                 //           a_len);
                 int32_t l_s;
                 l_s = utp_read(a_buf, a_len);
+                utp_read_drained(a_utp_conn);
                 if (l_s != NTRNT_STATUS_OK)
                 {
                         TRC_ERROR("performing utp_read");
@@ -741,7 +732,7 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
                                         NDBG_PRINT("NEED MORE DATA\n");
                                         return NTRNT_STATUS_OK;
                                 }
-                                TRC_ERROR("performing _parse_handshake");
+                                TRC_ERROR("performing btp_parse_handshake_ia");
                                 return NTRNT_STATUS_ERROR;
                         }
                         // ---------------------------------
@@ -783,7 +774,7 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
                                 //NDBG_PRINT("NEED MORE DATA\n");
                                 return NTRNT_STATUS_OK;
                         }
-                        //TRC_ERROR("performing _parse_handshake");
+                        TRC_ERROR("performing btp_parse_handshake");
                         return NTRNT_STATUS_ERROR;
                 }
                 // -----------------------------------------
@@ -997,9 +988,6 @@ int32_t peer::btp_parse_handshake_ia(const uint8_t* a_buf, size_t a_len)
         m_btp_ltep = l_btfield.test(_BT_RSVD_BITS_LTEP);
         m_btp_fext = l_btfield.test(_BT_RSVD_BITS_FEXT);
         m_btp_dht = l_btfield.test(_BT_RSVD_BITS_DHT);
-        //NDBG_PRINT("HANDSHAKE: flags: ltep: %s\n", m_btp_ltep?"true":"false");
-        //NDBG_PRINT("HANDSHAKE: flags: fext: %s\n", m_btp_ltep?"true":"false");
-        //NDBG_PRINT("HANDSHAKE: flags: dht:  %s\n", m_btp_dht?"true":"false");
         // -------------------------------------------------
         // read info hash
         // -------------------------------------------------
@@ -1036,13 +1024,12 @@ int32_t peer::btp_parse_handshake_ia(const uint8_t* a_buf, size_t a_len)
                                 m_session.set_ext_address_v6(sas_to_str(m_sas));
                         }
                 }
+                TRC_ERROR("[HOST: %s] received handshake from self", m_host.c_str());
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
         // send ltep handshake if supported
         // -------------------------------------------------
-        // TODO FIX!!!
-#if 0
         if (m_btp_ltep)
         {
                 l_s = ltep_send_handshake();
@@ -1058,7 +1045,6 @@ int32_t peer::btp_parse_handshake_ia(const uint8_t* a_buf, size_t a_len)
                         return NTRNT_STATUS_ERROR;
                 }
         }
-#endif
         // -------------------------------------------------
         // send btfield
         // -------------------------------------------------
@@ -1111,9 +1097,6 @@ int32_t peer::btp_parse_handshake(void)
         m_btp_ltep = l_btfield.test(_BT_RSVD_BITS_LTEP);
         m_btp_fext = l_btfield.test(_BT_RSVD_BITS_FEXT);
         m_btp_dht = l_btfield.test(_BT_RSVD_BITS_DHT);
-        //NDBG_PRINT("HANDSHAKE: flags: ltep: %s\n", m_btp_ltep?"true":"false");
-        //NDBG_PRINT("HANDSHAKE: flags: fext: %s\n", m_btp_ltep?"true":"false");
-        //NDBG_PRINT("HANDSHAKE: flags: dht:  %s\n", m_btp_dht?"true":"false");
         // -------------------------------------------------
         // read info hash
         // -------------------------------------------------
@@ -1150,12 +1133,12 @@ int32_t peer::btp_parse_handshake(void)
                                 m_session.set_ext_address_v6(sas_to_str(m_sas));
                         }
                 }
+                TRC_ERROR("[HOST: %s] received handshake from self", m_host.c_str());
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
         // send ltep handshake if supported
         // -------------------------------------------------
-#if 0
         if (m_btp_ltep)
         {
                 l_s = ltep_send_handshake();
@@ -1171,7 +1154,6 @@ int32_t peer::btp_parse_handshake(void)
                         return NTRNT_STATUS_ERROR;
                 }
         }
-#endif
         // -------------------------------------------------
         // send btfield
         // -------------------------------------------------
@@ -1805,21 +1787,6 @@ int32_t peer::btp_recv_bitfield(void)
                 return NTRNT_STATUS_ERROR;
         }
         if (l_btfield) { free(l_btfield); l_btfield = nullptr; }
-        // -------------------------------------------------
-        // TODO check bitfield if really interested
-        //      send NOT INTERESTED if not match???
-        // -------------------------------------------------
-        // for now just sending interested for all
-        // -------------------------------------------------
-        // send interested
-        // -------------------------------------------------
-        m_btp_am_interested = true;
-        l_s = btp_send_interested();
-        if (l_s != NTRNT_STATUS_OK)
-        {
-                TRC_ERROR("performing btp_send_interested");
-                return NTRNT_STATUS_ERROR;
-        }
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -2122,6 +2089,13 @@ int32_t peer::ltep_send_pex(void)
         {
                 if (!i_p) { continue; }
                 peer& l_p = *i_p;
+                // -----------------------------------------
+                // don't send peer to itself
+                // -----------------------------------------
+                if (l_p.get_host() == m_host)
+                {
+                        continue;
+                }
                 const sockaddr_storage& l_sas = l_p.get_sas();
                 // -----------------------------------------
                 // add ipv4 peer
@@ -2194,7 +2168,7 @@ int32_t peer::ltep_send_pex(void)
         // -------------------------------------------------
         // if all empty skip
         // -------------------------------------------------
-        if (l_has_one)
+        if (!l_has_one)
         {
                 return NTRNT_STATUS_OK;
         }

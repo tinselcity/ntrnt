@@ -113,6 +113,7 @@ private:
         // -------------------------------------------------
         pickr(const pickr&);
         pickr& operator=(const pickr&);
+        bool peer_is_interesting(peer& a_peer);
         int32_t peer_request_more(peer& a_peer);
         int32_t get_block_rqsts(block_rqst_vec_t& ao_vec, peer& a_peer, const btfield& a_btfield);
         // -------------------------------------------------

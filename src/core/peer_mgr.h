@@ -61,7 +61,7 @@ public:
         // operations
         // -------------------------------------------------
         int32_t connect_peers(void);
-        int32_t add_peer(const sockaddr_storage& a_sas, peer_from_t a_from, peer** ao_peer);
+        int32_t add_peer(const sockaddr_storage& a_sas, peer_from_t a_from);
         int32_t dequeue_out(void);
         int32_t dequeue_out_v4(void);
         int32_t dequeue_out_v6(void);
@@ -98,9 +98,10 @@ private:
         peer_mgr(const peer_mgr&);
         peer_mgr& operator=(const peer_mgr&);
         int32_t set_geoip(peer& a_peer, const sockaddr_storage& a_sas);
-        bool peer_exists(const sockaddr_storage& a_sas, peer** ao_peer);
-        int32_t accept_utp(const sockaddr_storage& a_sas, void* a_ctx, peer** ao_peer);
+        bool peer_exists(const sockaddr_storage& a_sas);
+        int32_t accept_utp(const sockaddr_storage& a_sas, void* a_ctx);
         void add_peer(peer* a_peer);
+        int32_t validate_address(const sockaddr_storage& a_sas);
         // -------------------------------------------------
         // private members
         // -------------------------------------------------
