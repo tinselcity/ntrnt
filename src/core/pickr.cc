@@ -488,6 +488,26 @@ int32_t pickr::peer_request_more(peer& a_peer)
                 return NTRNT_STATUS_OK;
         }
         // -------------------------------------------------
+        // get is interesting
+        // -------------------------------------------------
+        bool l_is_interesting = peer_is_interesting(a_peer);
+        // -------------------------------------------------
+        // if empty peer doesn't appear to have anything
+        // of interest so relay
+        // -------------------------------------------------
+        if (!l_is_interesting &&
+            a_peer.get_btp_am_interested())
+        {
+                a_peer.m_btp_am_interested = false;
+                l_s = a_peer.btp_send_not_interested();
+                if (l_s != NTRNT_STATUS_OK)
+                {
+                        TRC_ERROR("performing btp_send_interested");
+                        return NTRNT_STATUS_ERROR;
+                }
+                return NTRNT_STATUS_OK;
+        }
+        // -------------------------------------------------
         // skip if choking
         // -------------------------------------------------
         if (a_peer.get_btp_peer_choking() ||
@@ -497,8 +517,8 @@ int32_t pickr::peer_request_more(peer& a_peer)
                 // if is interesting and haven't already
                 // expressed interest -send interested
                 // -----------------------------------------
-                if (peer_is_interesting(a_peer) &&
-                    !a_peer.m_btp_am_interested)
+                if (l_is_interesting &&
+                    !a_peer.get_btp_am_interested())
                 {
                         a_peer.m_btp_am_interested = true;
                         l_s = a_peer.btp_send_interested();
@@ -526,21 +546,6 @@ int32_t pickr::peer_request_more(peer& a_peer)
                 return NTRNT_STATUS_ERROR;
         }
         //NDBG_PRINT("REQUEST: [NUM: %lu]\n", l_blk_rqst_vec.size());
-        // -------------------------------------------------
-        // if empty peer doesn't appear to have anything
-        // of interest so relay
-        // -------------------------------------------------
-        if (l_blk_rqst_vec.empty())
-        {
-                a_peer.m_btp_am_interested = false;
-                l_s = a_peer.btp_send_not_interested();
-                if (l_s != NTRNT_STATUS_OK)
-                {
-                        TRC_ERROR("performing btp_send_interested");
-                        return NTRNT_STATUS_ERROR;
-                }
-                return NTRNT_STATUS_OK;
-        }
         // -------------------------------------------------
         // make requests
         // -------------------------------------------------
@@ -909,7 +914,6 @@ int32_t pickr::recv_piece(peer* a_peer,
         // -------------------------------------------------
         // if inflight < low water -request more
         // -------------------------------------------------
-#if 0
         //NDBG_PRINT("inflight: %lu\n", a_peer->m_num_block_rqst_inflight);
         if (!m_complete &&
             (a_peer->m_num_block_rqst_inflight < NTRNT_SESSION_PEER_INFLIGHT_LOW_WATER))
@@ -921,7 +925,6 @@ int32_t pickr::recv_piece(peer* a_peer,
                         return NTRNT_STATUS_ERROR;
                 }
         }
-#endif
         return NTRNT_STATUS_OK;
 }
 }

@@ -586,11 +586,11 @@ uint64_t peer::utp_cb(utp_socket* a_utp_conn,
                 if (!m_in_q.read_avail())
                 {
                         utp_read_drained(a_utp_conn);
-                        if (l_s != NTRNT_STATUS_OK)
-                        {
-                                TRC_ERROR("performing utp_read");
-                                return NTRNT_STATUS_ERROR;
-                        }
+                }
+                if (l_s != NTRNT_STATUS_OK)
+                {
+                        TRC_ERROR("performing utp_read");
+                        return NTRNT_STATUS_ERROR;
                 }
                 break;
         }
@@ -836,6 +836,9 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
 //! ----------------------------------------------------------------------------
 void peer::shutdown(error_t a_reason)
 {
+        TRC_DEBUG("[HOST %s] SHUTDOWN [REASON: %d]",
+                  m_host.c_str(),
+                  a_reason);
         if (m_state == STATE_NONE)
         {
                 return;
@@ -2676,6 +2679,17 @@ int32_t peer::ltep_recv_pex(size_t a_len)
         char* l_buf = nullptr;
         l_buf = (char*)malloc(a_len);
         m_in_q.read(l_buf, a_len);
+        // -------------------------------------------------
+        // if peer-mgr not accepting -don't add
+        // -------------------------------------------------
+        if (m_peer_mgr.get_no_accept())
+        {
+                if (l_buf) { free(l_buf); l_buf = nullptr; }
+                return NTRNT_STATUS_OK;
+        }
+        // -------------------------------------------------
+        // parse response
+        // -------------------------------------------------
         int32_t l_s;
         bdecode l_bd;
         l_s = l_bd.init(l_buf, a_len);

@@ -233,7 +233,8 @@ static void print_usage(FILE* a_stream, int a_exit_code)
         fprintf(a_stream, "  \n");
         fprintf(a_stream, "Debug Options:\n");
         fprintf(a_stream, "  -D, --display        display torrent+meta-info and exit\n");
-        fprintf(a_stream, "  -M, --noportmap      disable portmapping\n");
+        fprintf(a_stream, "  -M, --no-port-map    disable portmapping\n");
+        fprintf(a_stream, "  -A, --no-accept      disable accepting inbound connections\n");
         fprintf(a_stream, "  -P, --peer           connect to single peer (disable tracker announce)\n");
         fprintf(a_stream, "  -T, --trace          tracing (none/error/warn/debug/verbose/all) (default: none)\n");
         fprintf(a_stream, "  -E, --error-log      log errors to file <file>\n");
@@ -256,6 +257,7 @@ int main(int argc, char** argv)
         // -------------------------------------------------
         // vars
         // -------------------------------------------------
+        bool l_no_accept = false;
         bool l_display = false;
         bool l_portmap = true;
         bool l_dht = true;
@@ -295,7 +297,8 @@ int main(int argc, char** argv)
                 { "port",        required_argument, 0, 'p' },
 #endif
                 { "display",     no_argument,       0, 'D' },
-                { "noportmap",   no_argument,       0, 'M' },
+                { "no-port-map", no_argument,       0, 'M' },
+                { "no-accept",   no_argument,       0, 'A' },
                 { "peer",        required_argument, 0, 'P' },
                 { "trace",       required_argument, 0, 'T' },
                 { "error-log",   required_argument, 0, 'E' },
@@ -314,7 +317,7 @@ int main(int argc, char** argv)
 #ifdef ENABLE_IS2
         l_short_arg_list += "p:";
 #endif
-        l_short_arg_list += "DMP:T:E:";
+        l_short_arg_list += "DMAP:T:E:";
 #ifdef ENABLE_PROFILER
         l_short_arg_list += "G:H:";
 #endif
@@ -422,6 +425,14 @@ int main(int argc, char** argv)
                 case 'M':
                 {
                         l_portmap = false;
+                        break;
+                }
+                // -----------------------------------------
+                // disable accept
+                // -----------------------------------------
+                case 'A':
+                {
+                        l_no_accept = true;
                         break;
                 }
                 // -----------------------------------------
@@ -607,17 +618,12 @@ int main(int argc, char** argv)
                 }
         }
         // -------------------------------------------------
-        // set dht
+        // settings
         // -------------------------------------------------
         l_ses.set_dht(l_dht);
-        // -------------------------------------------------
-        // set trackers
-        // -------------------------------------------------
         l_ses.set_trackers(l_trackers);
-        // -------------------------------------------------
-        // set external port
-        // -------------------------------------------------
         l_ses.set_ext_port(l_ext_port);
+        l_ses.set_no_accept(l_no_accept);
         // -------------------------------------------------
         // set dht
         // -------------------------------------------------

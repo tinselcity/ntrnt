@@ -44,6 +44,7 @@ peer_mgr::peer_mgr(session& a_session):
         m_peer_active_vec_v4(),
         m_peer_active_vec_v6(),
         m_cfg_max_conn(20),
+        m_no_accept(false),
         m_peer_vec_idx(0)
 {
         pthread_mutex_init(&m_mutex, NULL);
@@ -287,7 +288,7 @@ int32_t peer_mgr::connect_peers(void)
                 // -----------------------------------------
                 // connect
                 // -----------------------------------------
-                //NDBG_PRINT("connect to: %s\n", i_p->get_host().c_str());
+                TRC_DEBUG("[HOST %s] CONNECT", i_p->get_host().c_str());
                 int32_t l_s;
                 l_s = i_p->connect();
                 if (l_s != NTRNT_STATUS_OK)
@@ -375,10 +376,9 @@ int32_t peer_mgr::validate_address(const sockaddr_storage& a_sas)
                 const uint8_t* l_addr = (uint8_t*)(&(l_sin->sin_addr));
                 if ((l_addr[0] == 0) ||
                     (l_addr[0] == 127) ||
-                    (l_addr[0] == 192) ||
                     ((l_addr[0] & 0xE0) == 0xE0))
                 {
-                        TRC_ERROR("address appears to be local");
+                        TRC_ERROR("address[%s] appears to be local", sas_to_str(a_sas).c_str());
                         return NTRNT_STATUS_ERROR;
                 }
         }
@@ -397,7 +397,7 @@ int32_t peer_mgr::validate_address(const sockaddr_storage& a_sas)
                 // -----------------------------------------
                 if (IN6_IS_ADDR_LINKLOCAL(&(l_sin6->sin6_addr)))
                 {
-                        TRC_ERROR("ipv6 is linklocal");
+                        TRC_ERROR("address[%s] ipv6 is linklocal", sas_to_str(a_sas).c_str());
                         return NTRNT_STATUS_ERROR;
                 }
                 // -----------------------------------------
@@ -405,7 +405,7 @@ int32_t peer_mgr::validate_address(const sockaddr_storage& a_sas)
                 // -----------------------------------------
                 if (IN6_IS_ADDR_V4MAPPED(&(l_sin6->sin6_addr)))
                 {
-                        TRC_ERROR("ipv6 is v4 mapped");
+                        TRC_ERROR("address[%s] ipv6 is v4 mapped", sas_to_str(a_sas).c_str());
                         return NTRNT_STATUS_ERROR;
                 }
                 // -----------------------------------------
@@ -421,13 +421,13 @@ int32_t peer_mgr::validate_address(const sockaddr_storage& a_sas)
                      ((l_addr[15] == 0x00) ||
                       (l_addr[15] == 0x01))))
               {
-                        TRC_ERROR("ipv6 is default or unspecified");
+                        TRC_ERROR("address[%s] ipv6 is default or unspecified", sas_to_str(a_sas).c_str());
                         return NTRNT_STATUS_ERROR;
               }
         }
         else
         {
-                TRC_ERROR("unrecognized address family: %d", a_sas.ss_family);
+                TRC_ERROR("address[%s] unrecognized address family: %d", sas_to_str(a_sas).c_str(), a_sas.ss_family);
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -435,7 +435,7 @@ int32_t peer_mgr::validate_address(const sockaddr_storage& a_sas)
         // -------------------------------------------------
         if (l_port == 0)
         {
-                TRC_ERROR("bad address port is zero");
+                TRC_ERROR("address[%s] bad address port is zero", sas_to_str(a_sas).c_str());
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -808,6 +808,14 @@ uint64_t peer_mgr::utp_cb(utp_socket* a_utp_conn,
                 {
                         TRC_ERROR("a_args->socket == null");
                         return 0;
+                }
+                // -------------------------------------------------
+                // skip accept if not handling
+                // -------------------------------------------------
+                if (m_no_accept)
+                {
+                        utp_close(a_utp_conn);
+                        break;
                 }
                 struct sockaddr_storage l_sas;
                 struct sockaddr* l_sa = (struct sockaddr*)(&l_sas);

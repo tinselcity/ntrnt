@@ -126,6 +126,7 @@ session::session(void):
         m_peer_id(),
         m_ext_ip(),
         m_ext_port(NTRNT_DEFAULT_PORT),
+        m_no_accept(false),
         m_ext_address_v4(),
         m_ext_address_v6(),
         m_peer(),
@@ -627,6 +628,7 @@ int32_t session::init(void)
         // configure peer manager
         // -------------------------------------------------
         m_peer_mgr.set_cfg_max_conn(NTRNT_SESSION_MAX_CONNS);
+        m_peer_mgr.set_no_accept(m_no_accept);
         // -------------------------------------------------
         // done
         // -------------------------------------------------

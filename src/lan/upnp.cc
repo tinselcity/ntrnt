@@ -83,7 +83,7 @@ upnp::~upnp(void)
 //! ----------------------------------------------------------------------------
 int32_t upnp::init(void)
 {
-        TRC_DEBUG(": MINIUPNPC_API_VERSION: %d\n", MINIUPNPC_API_VERSION);
+        TRC_DEBUG(": MINIUPNPC_API_VERSION: %d", MINIUPNPC_API_VERSION);
         // -------------------------------------------------
         // discover
         // -------------------------------------------------
@@ -91,7 +91,7 @@ int32_t upnp::init(void)
 #if (MINIUPNPC_API_VERSION >= 8)
         int l_err = UPNPDISCOVER_SUCCESS;
         errno = 0;
-        TRC_DEBUG(": upnpDiscover: ...\n");
+        TRC_DEBUG(": upnpDiscover: ...");
 #if (MINIUPNPC_API_VERSION >= 14)
         l_dev = upnpDiscover(2000, // delay ms
                              nullptr,

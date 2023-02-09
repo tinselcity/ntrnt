@@ -69,10 +69,12 @@ public:
         // set
         // -------------------------------------------------
         void set_cfg_max_conn(size_t a_num) { m_cfg_max_conn = a_num; }
+        void set_no_accept(bool a_flag) { m_no_accept = a_flag; }
         // -------------------------------------------------
         // get
         // -------------------------------------------------
         peer_vec_t& get_peer_connected_vec(void) { return m_peer_connected_vec; }
+        bool get_no_accept(void) {return m_no_accept; }
         // -------------------------------------------------
         // utp
         // -------------------------------------------------
@@ -118,6 +120,7 @@ private:
         // settings
         // -------------------------------------------------
         size_t m_cfg_max_conn;
+        bool m_no_accept;
         size_t m_peer_vec_idx;
 };
 //! ----------------------------------------------------------------------------

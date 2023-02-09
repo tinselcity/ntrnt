@@ -115,6 +115,7 @@ public:
         // public methods
         // -------------------------------------------------
         arc4():
+                m_encrypted(true),
 #ifdef BUILD_RC4_AMD64
                 m_ctx()
 #else
@@ -150,6 +151,17 @@ public:
         // -------------------------------------------------
         void process(void* a_dst, void const* a_src, size_t a_len)
         {
+                // -----------------------------------------
+                // test unencrypted
+                // -----------------------------------------
+                if (!m_encrypted)
+                {
+                        for (size_t i = 0; i < a_len; ++i)
+                        {
+                                ((uint8_t*)a_dst)[i] = ((uint8_t const*)a_src)[i];
+                        }
+                        return;
+                }
 #ifdef BUILD_RC4_AMD64
                 RC4(&m_ctx, a_len, (const unsigned char*)a_src, (unsigned char *)a_dst);
 #else
@@ -164,6 +176,13 @@ public:
         // -------------------------------------------------
         void discard(size_t a_len)
         {
+                // -----------------------------------------
+                // test unencrypted
+                // -----------------------------------------
+                if (!m_encrypted)
+                {
+                        return;
+                }
 #ifdef BUILD_RC4_AMD64
                 // TODO -this isn't efficient at all
                 uint8_t l_c;
@@ -178,6 +197,10 @@ public:
                 }
 #endif
         }
+        // -------------------------------------------------
+        // test unencrypted
+        // -------------------------------------------------
+        void set_encrypted(bool a_flag) { m_encrypted = a_flag; }
 private:
         // -------------------------------------------------
         // private methods
@@ -210,6 +233,7 @@ private:
         // -------------------------------------------------
         // private members
         // -------------------------------------------------
+        bool m_encrypted;
 #ifdef BUILD_RC4_AMD64
         RC4_KEY m_ctx;
 #else
@@ -1145,7 +1169,20 @@ int32_t phe::recv_ba_crypto_select(nbq& a_in_q)
         m_decrypt->process(&l_tmp32, &l_tmp32, sizeof(l_tmp32));
         m_crypto_select = ntohl(l_tmp32);
         //NDBG_PRINT("CRYPTO_SELECT: 0x%x\n", m_crypto_select);
-        if (m_crypto_select != 0x2)
+        // -------------------------------------------------
+        // test unencrypted
+        // -------------------------------------------------
+        if (m_crypto_select == 0x1)
+        {
+                TRC_WARN("selected unencrypted");
+                m_encrypt->set_encrypted(false);
+                m_decrypt->set_encrypted(false);
+        }
+        else if (m_crypto_select == 0x2)
+        {
+                // is encrypted...
+        }
+        else
         {
                 TRC_ERROR("crypto_select: 0x%x -unsupported", m_crypto_select);
                 return NTRNT_STATUS_ERROR;
