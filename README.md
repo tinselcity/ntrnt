@@ -97,7 +97,6 @@ Debug Options:
 ## Todo
 A list of critical missing features that'd be nice to have someday:
 
-- Queue'ing issue causing slow downloads.  Rethink how commands are sent and queue'd.  Maybe sending requests or protocol messages (not piece data immediately), to prevent blocking on receipt for leechers.
 - [Fast Extension](https://www.bittorrent.org/beps/bep_0006.html) support.
 - TCP connection support for peers (encrypted only)
 - Endgame support: when bytes/blocks outstanding >= bytes/blocks remaining, send to all peers (support for cancelling outstanding requests)
