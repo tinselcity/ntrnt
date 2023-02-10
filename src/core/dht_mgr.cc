@@ -131,6 +131,28 @@ namespace ns_ntrnt {
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
+static int32_t _periodic(void *a_data)
+{
+        //NDBG_PRINT("[%sDHT_PERIODIC%s]: ...\n", ANSI_COLOR_BG_MAGENTA, ANSI_COLOR_OFF);
+        if(!a_data)
+        {
+                return NTRNT_STATUS_ERROR;
+        }
+        dht_mgr* l_dhm = static_cast<dht_mgr*>(a_data);
+        int32_t l_s;
+        l_s = l_dhm->periodic();
+        if (l_s != NTRNT_STATUS_OK)
+        {
+                TRC_ERROR("performing dht_periodic");
+        }
+        // TODO check status???
+        return l_s;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
 static int32_t _bootstrap(void *a_data)
 {
         //NDBG_PRINT("[%sDHT_BOOTSTRAP%s]: ...\n", ANSI_COLOR_BG_MAGENTA, ANSI_COLOR_OFF);
@@ -166,28 +188,6 @@ static int32_t _announce(void *a_data)
         if (l_s != NTRNT_STATUS_OK)
         {
                 TRC_ERROR("performing dht_announce");
-        }
-        // TODO check status???
-        return l_s;
-}
-//! ----------------------------------------------------------------------------
-//! \details: TODO
-//! \return:  TODO
-//! \param:   TODO
-//! ----------------------------------------------------------------------------
-static int32_t _periodic(void *a_data)
-{
-        //NDBG_PRINT("[%sDHT_PERIODIC%s]: ...\n", ANSI_COLOR_BG_MAGENTA, ANSI_COLOR_OFF);
-        if(!a_data)
-        {
-                return NTRNT_STATUS_ERROR;
-        }
-        dht_mgr* l_dhm = static_cast<dht_mgr*>(a_data);
-        int32_t l_s;
-        l_s = l_dhm->periodic();
-        if (l_s != NTRNT_STATUS_OK)
-        {
-                TRC_ERROR("performing dht_periodic");
         }
         // TODO check status???
         return l_s;
@@ -280,6 +280,8 @@ int32_t dht_mgr::init(void)
                                   _bootstrap,
                                   (void *)this,
                                   &l_timer);
+        UNUSED(l_s);
+        UNUSED(l_timer);
         // -------------------------------------------------
         // kick off announce
         // -------------------------------------------------
@@ -287,6 +289,8 @@ int32_t dht_mgr::init(void)
                                   _announce,
                                   (void *)this,
                                   &l_timer);
+        UNUSED(l_s);
+        UNUSED(l_timer);
         // -------------------------------------------------
         // kick off periodic
         // -------------------------------------------------
@@ -294,6 +298,8 @@ int32_t dht_mgr::init(void)
                                   _periodic,
                                   (void *)this,
                                   &l_timer);
+        UNUSED(l_s);
+        UNUSED(l_timer);
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -313,14 +319,20 @@ int32_t dht_mgr::recv_msg(struct sockaddr_storage& a_ss,
                 return NTRNT_STATUS_ERROR;
         }
         // dht requires zero-terminated messages
+#if 0
         if (a_msg[a_msg_len] != '\0')
         {
                 TRC_ERROR("bad message length msg: %p msg_len: %u -missing null terminator", a_msg, a_msg_len);
+                NDBG_PRINT("DHT msg: from: %s\n", sas_to_str(a_ss).c_str());
+                NDBG_HEXDUMP(a_msg, a_msg_len);
                 return NTRNT_STATUS_ERROR;
         }
-        //NDBG_PRINT("DHT msg\n");
-        //NDBG_HEXDUMP(a_msg, a_msg_len);
+#else
+        a_msg[a_msg_len] = '\0';
+#endif
+        // -------------------------------------------------
         // run periodic
+        // -------------------------------------------------
         time_t l_to_sleep;
         int32_t l_s;
         l_s = m_dhsco->periodic((const void*)a_msg,
@@ -422,22 +434,6 @@ void dht_mgr::dht_cb(void* a_ctx,
                 break;
         }
         }
-        //NDBG_HEXDUMP(a_info_hash, 20);
-#if 0
-        auto *const self = static_cast<tr_dht_impl*>(a_vself);
-        auto hash = tr_sha1_digest_t { };
-        std::copy_n(reinterpret_cast<std::byte const*>(a_info_hash), std::size(hash), std::data(hash));
-        if (event == DHT_EVENT_VALUES)
-        {
-                auto const pex = tr_pex::fromCompact4(data, data_len, nullptr, 0);
-                self->mediator_.addPex(hash, std::data(pex), std::size(pex));
-        }
-        else if (event == DHT_EVENT_VALUES6)
-        {
-                auto const pex = tr_pex::fromCompact6(data, data_len, nullptr, 0);
-                self->mediator_.addPex(hash, std::data(pex), std::size(pex));
-        }
-#endif
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO

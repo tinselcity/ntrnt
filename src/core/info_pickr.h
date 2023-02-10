@@ -28,7 +28,6 @@ public:
         // -------------------------------------------------
         // parsing
         // -------------------------------------------------
-        int32_t parse_info(const be_dict_t& a_dict);
         int32_t parse_info(const char* a_buf, size_t a_len);
         // -------------------------------------------------
         // request/recv pieces
@@ -59,6 +58,7 @@ private:
         info_pickr& operator=(const info_pickr&);
         int32_t peer_request_info(peer& a_peer);
         int32_t validate_info(void);
+        int32_t parse_info(const be_dict_t& a_dict);
         // -------------------------------------------------
         // private members
         // -------------------------------------------------

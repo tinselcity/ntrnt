@@ -97,11 +97,14 @@ static uint64 _utp_cb(utp_callback_arguments* a_args)
         if (l_peer)
         {
                 ns_ntrnt::peer::state_t l_ls = l_peer->get_state();
+                // TODO FIX!!!
+#if 0
                 l_s = l_peer->utp_cb(a_args->socket,
                                      a_args->callback_type,
                                      a_args->state,
                                      a_args->buf,
                                      a_args->len);
+#endif
                 // EOF
                 if (l_s == NTRNT_STATUS_DONE)
                 {
@@ -487,7 +490,7 @@ int main(int argc, char** argv)
         // -------------------------------------------------
         // TODO HACK UTP CB
         // -------------------------------------------------
-        utp_context* l_utp_ctx = l_ses.get_utp_ctx();
+        utp_context* l_utp_ctx = l_ses.get_peer_mgr().get_utp_ctx();
         // set callbacks
         utp_set_callback(l_utp_ctx, UTP_ON_ACCEPT, _utp_cb);
         utp_set_callback(l_utp_ctx, UTP_SENDTO, _utp_cb);

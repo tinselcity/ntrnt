@@ -73,43 +73,6 @@ namespace ns_ntrnt {
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-static uint64 _utp_cb(utp_callback_arguments* a_args)
-{
-        //NDBG_PRINT("[%sUTP%s]: cb type: %d ctx: %p conn: %p\n",
-        //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
-        //           a_args->callback_type,
-        //           a_args->context,
-        //           a_args->socket);
-        // -------------------------------------------------
-        // get session
-        // -------------------------------------------------
-        session* l_ses = static_cast<session*>(utp_context_get_userdata(a_args->context));
-        if (!l_ses)
-        {
-                TRC_ERROR("session == null");
-                return 0;
-        }
-        int32_t l_s;
-        peer_mgr& l_peer_mgr = l_ses->get_peer_mgr();
-        l_s = l_peer_mgr.utp_cb(a_args->socket,
-                                a_args->address,
-                                a_args->address_len,
-                                a_args->callback_type,
-                                a_args->state,
-                                a_args->buf,
-                                a_args->len);
-        if (l_s != NTRNT_STATUS_OK)
-        {
-                TRC_ERROR("performing session utp_cb");
-                return 0;
-        }
-        return 0;
-}
-//! ----------------------------------------------------------------------------
-//! \details: TODO
-//! \return:  TODO
-//! \param:   TODO
-//! ----------------------------------------------------------------------------
 session::session(void):
         m_tid_tracker_udp_map(),
         m_is_initd(false),
@@ -126,6 +89,7 @@ session::session(void):
         m_peer_id(),
         m_ext_ip(),
         m_ext_port(NTRNT_DEFAULT_PORT),
+        m_no_accept(false),
         m_ext_address_v4(),
         m_ext_address_v6(),
         m_peer(),
@@ -146,7 +110,6 @@ session::session(void):
         m_udp6_fd(-1),
         m_dht_enable(true),
         m_dht_mgr(nullptr),
-        m_utp_ctx(nullptr),
         m_peer_mgr(*this),
         m_info_pickr(*this),
         m_pickr(*this),
@@ -165,14 +128,6 @@ session::session(void):
 //! ----------------------------------------------------------------------------
 session::~session(void)
 {
-        // -------------------------------------------------
-        // utp ctx
-        // -------------------------------------------------
-        if (m_utp_ctx)
-        {
-                utp_destroy(m_utp_ctx);
-                m_utp_ctx = nullptr;
-        }
         // -------------------------------------------------
         // dht
         // -------------------------------------------------
@@ -273,16 +228,12 @@ int32_t session::init_w_metainfo(const std::string& a_path)
         // -------------------------------------------------
         // parse info
         // -------------------------------------------------
-        if (l_info.m_type == BE_OBJ_DICT)
+        l_s = m_info_pickr.parse_info(l_info.m_ptr, l_info.m_len);
+        if (l_s != NTRNT_STATUS_OK)
         {
-                const be_dict_t& l_info_dict = *((const be_dict_t*)l_info.m_obj);
-                l_s = m_info_pickr.parse_info(l_info_dict);
-                if (l_s != NTRNT_STATUS_OK)
-                {
-                        NTRNT_PERROR("performing parse_info");
-                        if (l_buf) { free(l_buf); l_buf = nullptr; }
-                        return NTRNT_STATUS_ERROR;
-                }
+                NTRNT_PERROR("performing parse_info");
+                if (l_buf) { free(l_buf); l_buf = nullptr; }
+                return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
         // helper
@@ -573,45 +524,6 @@ int32_t session::init(void)
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
-        // utp initialization
-        // -------------------------------------------------
-        // always version 2 ???
-        m_utp_ctx = utp_init(2);
-        if (!m_utp_ctx)
-        {
-                TRC_ERROR("performing utp_init");
-                return NTRNT_STATUS_ERROR;
-        }
-        void* l_ptr = nullptr;
-        l_ptr = utp_context_set_userdata(m_utp_ctx, this);
-        UNUSED(l_ptr);
-        // set callbacks
-        utp_set_callback(m_utp_ctx, UTP_ON_ACCEPT, _utp_cb);
-        utp_set_callback(m_utp_ctx, UTP_SENDTO, _utp_cb);
-        utp_set_callback(m_utp_ctx, UTP_ON_READ, _utp_cb);
-        // TODO -don't implement for now...
-#if 0
-        utp_set_callback(m_utp_ctx, UTP_GET_READ_BUFFER_SIZE, _utp_cb);
-#endif
-        utp_set_callback(m_utp_ctx, UTP_ON_ERROR, _utp_cb);
-        utp_set_callback(m_utp_ctx, UTP_ON_OVERHEAD_STATISTICS, _utp_cb);
-        utp_set_callback(m_utp_ctx, UTP_ON_STATE_CHANGE, _utp_cb);
-        // tracing
-//#ifdef UTP_DEBUG_LOGGING
-#if 0
-        utp_set_callback(m_utp_ctx, UTP_LOG, &_utp_cb);
-        utp_context_set_option(m_utp_ctx, UTP_LOG_NORMAL, 1);
-        utp_context_set_option(m_utp_ctx, UTP_LOG_MTU, 1);
-        utp_context_set_option(m_utp_ctx, UTP_LOG_DEBUG, 1);
-#endif
-        // set recv buffer size?
-        l_s = utp_context_set_option(m_utp_ctx, UTP_RCVBUF, NTRNT_SESSION_UTP_RECV_BUF_SIZE);
-        if (l_s != 0)
-        {
-                TRC_ERROR("performing utp_context_set_option");
-                return NTRNT_STATUS_ERROR;
-        }
-        // -------------------------------------------------
         // dht
         // -------------------------------------------------
         if (m_dht_enable)
@@ -627,6 +539,12 @@ int32_t session::init(void)
         // configure peer manager
         // -------------------------------------------------
         m_peer_mgr.set_cfg_max_conn(NTRNT_SESSION_MAX_CONNS);
+        m_peer_mgr.set_no_accept(m_no_accept);
+        l_s = m_peer_mgr.init();
+        if (l_s != NTRNT_STATUS_OK)
+        {
+                return NTRNT_STATUS_ERROR;
+        }
         // -------------------------------------------------
         // done
         // -------------------------------------------------
@@ -697,8 +615,6 @@ int32_t session::add_peer(struct sockaddr_storage& a_sas, peer_from_t a_from)
 //! ----------------------------------------------------------------------------
 int32_t session::add_peer_raw(int a_family, const uint8_t* a_buf, size_t a_len, peer_from_t a_from)
 {
-        // TODO REMOVE!!!
-#if 0
         off_t l_off = 0;
         // -------------------------------------------------
         // get peer addresses (ipv4)
@@ -773,7 +689,6 @@ int32_t session::add_peer_raw(int a_family, const uint8_t* a_buf, size_t a_len, 
                         UNUSED(l_s);
                 }
         }
-#endif
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -928,14 +843,17 @@ int32_t session::udp_mux(struct sockaddr_storage& a_ss,
                 //NDBG_HEXDUMP(a_msg, a_msg_len);
                 // TODO
                 // add inactivity timer???
+                utp_context* l_ctx = m_peer_mgr.get_utp_ctx();
                 int32_t l_s;
-                l_s = utp_process_udp(m_utp_ctx, a_msg, a_msg_len, (const sockaddr*)(&a_ss), sas_size(a_ss));
                 // -----------------------------------------
-                // ref: utp_internal.cpp
-                // - "Should be called each time the UDP
-                //  socket is drained" ???
+                // process
                 // -----------------------------------------
-                utp_issue_deferred_acks(m_utp_ctx);
+                l_s = utp_process_udp(l_ctx, a_msg, a_msg_len, (const sockaddr*)(&a_ss), sas_size(a_ss));
+                // -----------------------------------------
+                // issue deferred acks
+                // -----------------------------------------
+                //NDBG_PRINT("utp_issue_deferred_acks: a_msg_len: %u\n", a_msg_len);
+                utp_issue_deferred_acks(l_ctx);
                 if (l_s != 1)
                 {
                         // TODO noisy due to versioning mismatch with libutp???
@@ -1029,7 +947,7 @@ int32_t session::setup_udp(void)
         // -------------------------------------------------
         l_s = m_evr_loop->add_fd(m_udp_fd,
                                  EVR_FILE_ATTR_MASK_READ |
-                                 EVR_FILE_ATTR_MASK_WRITE |
+                                 EVR_FILE_ATTR_MASK_STATUS_ERROR |
                                  EVR_FILE_ATTR_MASK_RD_HUP|
                                  EVR_FILE_ATTR_MASK_ET,
                                  &m_evr_udp_fd);
@@ -1070,7 +988,7 @@ int32_t session::udp_fd_readable_cb(void *a_data)
                 // -----------------------------------------
                 // clear buffer
                 // -----------------------------------------
-                memset(s_msg, 0, _MSG_SIZE_MAX);
+                //memset(s_msg, 0, _MSG_SIZE_MAX);
                 struct sockaddr_storage l_from;
                 socklen_t l_from_len = sizeof(l_from);
                 int32_t l_s;
@@ -1087,9 +1005,25 @@ int32_t session::udp_fd_readable_cb(void *a_data)
                 //           errno, strerror(errno));
                 if (l_s < 0)
                 {
+                        // ---------------------------------
+                        // EAGAIN
+                        // ---------------------------------
                         if (errno == EAGAIN)
                         {
+                                // -------------------------
+                                // rearm
+                                // -------------------------
+                                evr_loop* l_evr = l_ses->get_evr_loop();
+                                l_s = l_evr->mod_fd(l_fd,
+                                                    EVR_FILE_ATTR_MASK_READ |
+                                                    EVR_FILE_ATTR_MASK_WRITE |
+                                                    EVR_FILE_ATTR_MASK_STATUS_ERROR |
+                                                    EVR_FILE_ATTR_MASK_HUP |
+                                                    EVR_FILE_ATTR_MASK_ET,
+                                                    &(l_ses->get_evr_udp_fd()));
+                                // -------------------------
                                 // TODO -only if signaled data???
+                                // -------------------------
                                 return udp_fd_writeable_cb(a_data);
                         }
                         TRC_ERROR("error performing recvfrom. Reason: %s\n", strerror(errno));
@@ -1232,7 +1166,7 @@ int32_t session::setup_udp6(void)
         // -------------------------------------------------
         l_s = m_evr_loop->add_fd(m_udp6_fd,
                                  EVR_FILE_ATTR_MASK_READ |
-                                 EVR_FILE_ATTR_MASK_WRITE |
+                                 EVR_FILE_ATTR_MASK_STATUS_ERROR |
                                  EVR_FILE_ATTR_MASK_RD_HUP|
                                  EVR_FILE_ATTR_MASK_ET,
                                  &m_evr_udp6_fd);
@@ -1293,9 +1227,25 @@ int32_t session::udp6_fd_readable_cb(void *a_data)
                 //           errno, strerror(errno));
                 if (l_s < 0)
                 {
+                        // ---------------------------------
+                        // EAGAIN
+                        // ---------------------------------
                         if (errno == EAGAIN)
                         {
+                                // -------------------------
+                                // rearm
+                                // -------------------------
+                                evr_loop* l_evr = l_ses->get_evr_loop();
+                                l_s = l_evr->mod_fd(l_fd,
+                                                    EVR_FILE_ATTR_MASK_READ |
+                                                    EVR_FILE_ATTR_MASK_WRITE |
+                                                    EVR_FILE_ATTR_MASK_STATUS_ERROR |
+                                                    EVR_FILE_ATTR_MASK_HUP |
+                                                    EVR_FILE_ATTR_MASK_ET,
+                                                    &(l_ses->get_evr_udp6_fd()));
+                                // -------------------------
                                 // TODO -only if signaled data???
+                                // -------------------------
                                 return udp6_fd_writeable_cb(a_data);
                         }
                         TRC_ERROR("error performing recvfrom. Reason: %s\n", strerror(errno));
@@ -1626,56 +1576,6 @@ int32_t session::t_connect_peers(void)
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
-//! \details: TODO
-//! \return:  TODO
-//! \param:   TODO
-//! ----------------------------------------------------------------------------
-static int32_t _t_check_timeouts(void *a_data)
-{
-        if(!a_data)
-        {
-                return NTRNT_STATUS_ERROR;
-        }
-        // -------------------------------------------------
-        // perform utp maintenance
-        // -------------------------------------------------
-        session* l_ses = static_cast<session*>(a_data);
-        int32_t l_s;
-        l_s = l_ses->t_check_timeouts();
-        if (l_s != NTRNT_STATUS_OK)
-        {
-                TRC_ERROR("performing check_utp_timeouts");
-        }
-        return NTRNT_STATUS_OK;
-}
-//! ----------------------------------------------------------------------------
-//! \details: TODO
-//! \return:  TODO
-//! \param:   TODO
-//! ----------------------------------------------------------------------------
-int32_t session::t_check_timeouts(void)
-{
-        // -------------------------------------------------
-        // utp maintenance
-        // -------------------------------------------------
-        // TODO -issue defer-d acks???
-        utp_issue_deferred_acks(m_utp_ctx);
-        // check timeouts
-        utp_check_timeouts(m_utp_ctx);
-        // -------------------------------------------------
-        // fire again
-        // -------------------------------------------------
-        void *l_timer = NULL;
-        int32_t l_s;
-        l_s = add_timer((uint32_t)(NTRNT_SESSION_T_CHECK_TIMEOUTS_MS),
-                         _t_check_timeouts,
-                         (void *)this,
-                         &l_timer);
-        UNUSED(l_s);
-        // TODO check status
-        return NTRNT_STATUS_OK;
-}
-//! ----------------------------------------------------------------------------
 //! ****************************************************************************
 //!                                 R  U N
 //! ****************************************************************************
@@ -1755,13 +1655,6 @@ int32_t session::run(void)
         // -------------------------------------------------
         l_s = add_timer(NTRNT_SESSION_T_CONNECT_PEERS_MS,
                         _t_connect_peers,
-                        (void *)this,
-                        &l_timer);
-        // -------------------------------------------------
-        // kick off utp timeouts checking
-        // -------------------------------------------------
-        l_s = add_timer(NTRNT_SESSION_T_CHECK_TIMEOUTS_MS,
-                        _t_check_timeouts,
                         (void *)this,
                         &l_timer);
         // -------------------------------------------------

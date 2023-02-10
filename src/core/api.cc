@@ -172,7 +172,14 @@ int32_t peer_mgr::get_peers_api(std::string& ao_body)
                 l_writer.Key("host");
                 l_writer.String(l_p.get_host().c_str());
                 l_writer.Key("client");
-                l_writer.String(l_p.get_btp_peer_str().c_str());
+                if (!l_p.m_ltep_peer_id.empty())
+                {
+                        l_writer.String(l_p.m_ltep_peer_id.c_str());
+                }
+                else
+                {
+                        l_writer.String(l_p.get_btp_peer_str().c_str());
+                }
                 l_writer.Key("from");
                 switch(l_p.get_from())
                 {

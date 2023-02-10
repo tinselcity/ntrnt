@@ -69,6 +69,7 @@ public:
                 ERROR_UTP_CB_ERROR,
                 ERROR_UTP_ON_ERROR,
                 ERROR_HANDSHAKE_SELF,
+                ERROR_UTP_ON_ERROR_PEER_MGR
         } error_t;
         typedef enum _state {
                 STATE_NONE,
@@ -155,6 +156,7 @@ public:
              peer_mgr& a_peer_mgr,
              const sockaddr_storage& a_sas);
         ~peer(void);
+        void display(void);
         void reset(void);
         int32_t connect(void);
         int32_t accept_utp(void *a_ctx);
@@ -192,6 +194,14 @@ public:
         {
                 return (memcmp(&m_sas, &(a_that.get_sas()), sizeof(sockaddr_storage)) == 0);
         }
+        // -------------------------------------------------
+        // utp callbacks
+        // -------------------------------------------------
+        void pr_utp_on_read(const uint8_t* a_buf, size_t a_len);
+        size_t pr_utp_get_read_buffer_size(void);
+        void pr_utp_on_error(int a_error_code);
+        void pr_utp_on_overhead_statistics(int a_direction, size_t a_len);
+        void pr_utp_on_state_change(int a_state);
         // -------------------------------------------------
         // bittorrent protocol
         // -------------------------------------------------
@@ -337,7 +347,7 @@ private:
         double m_geoip2_lat;
         double m_geoip2_lon;
         // -------------------------------------------------
-        // sharing private fields with peer mgr
+        // friends
         // -------------------------------------------------
         friend peer_mgr;
         friend pickr;

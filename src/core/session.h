@@ -17,8 +17,6 @@
 //! ext fwd decl's
 //! ----------------------------------------------------------------------------
 typedef struct ssl_ctx_st SSL_CTX;
-typedef struct struct_utp_context utp_context;
-typedef struct UTPSocket utp_socket;
 namespace ns_ntrnt {
 //! ----------------------------------------------------------------------------
 //! fwd decl's
@@ -85,12 +83,13 @@ public:
         bool get_stopped(void) { return (bool)m_stopped; }
         nresolver& get_resolver(void) { return *m_nresolver; }
         SSL_CTX* get_client_ssl_ctx(void) { return m_client_ssl_ctx; }
-        evr_loop *get_evr_loop(void) { return m_evr_loop; }
+        evr_loop* get_evr_loop(void) { return m_evr_loop; }
+        evr_fd_t& get_evr_udp_fd(void) { return m_evr_udp_fd; }
+        evr_fd_t& get_evr_udp6_fd(void) { return m_evr_udp6_fd; }
         std::string& get_ext_ip(void) { return m_ext_ip; }
         uint16_t get_ext_port(void) { return m_ext_port; }
         int get_udp_fd(void) { return m_udp_fd; }
         int get_udp6_fd(void) { return m_udp6_fd; }
-        utp_context* get_utp_ctx(void) { return m_utp_ctx; }
         peer_mgr& get_peer_mgr(void) { return m_peer_mgr; }
         pickr& get_pickr(void) { return m_pickr; }
         info_pickr& get_info_pickr(void) { return m_info_pickr; }
@@ -108,6 +107,7 @@ public:
         void set_trackers(bool a_flag) { m_trackers_enable = a_flag; }
         void set_ext_ip(const char* a_addr) { m_ext_ip = a_addr; }
         void set_ext_port(uint16_t a_port) { m_ext_port = a_port; }
+        void set_no_accept(bool a_flag) { m_no_accept = a_flag; }
         void set_peer(const std::string& a_str) { m_peer = a_str; }
         void set_ext_address_v4(const std::string& a_str) { m_ext_address_v4 = a_str; }
         void set_ext_address_v6(const std::string& a_str) { m_ext_address_v6 = a_str; }
@@ -121,7 +121,6 @@ public:
         int32_t t_trackers(void);
         int32_t t_request_blocks(void);
         int32_t t_connect_peers(void);
-        int32_t t_check_timeouts(void);
         // -------------------------------------------------
         // apis
         // -------------------------------------------------
@@ -176,6 +175,7 @@ private:
         std::string m_peer_id;
         std::string m_ext_ip;
         uint16_t m_ext_port;
+        bool m_no_accept;
         std::string m_ext_address_v4;
         std::string m_ext_address_v6;
         std::string m_peer;
@@ -202,10 +202,6 @@ private:
         // -------------------------------------------------
         bool m_dht_enable;
         dht_mgr* m_dht_mgr;
-        // -------------------------------------------------
-        // utp
-        // -------------------------------------------------
-        utp_context* m_utp_ctx;
         // -------------------------------------------------
         // peer mgr
         // -------------------------------------------------

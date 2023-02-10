@@ -550,6 +550,7 @@ static int _parse_message(const uint8_t* a_buf,
         {
                 return MSG_TYPE_ANNOUNCE_PEER;
         }
+        TRC_ERROR("unrecognized message");
         return NTRNT_STATUS_ERROR;
 overflow:
         TRC_ERROR("Truncated message.");
@@ -3051,7 +3052,7 @@ int32_t dhsco::periodic(const void* a_buf,
             (_id_cmp(l_msg.m_id, s_zeroes) == 0))
         {
                 //TRC_DEBUG("Unparseable l_msg_type: %.*s", (int)a_buf_len, (char*)a_buf);
-                TRC_DEBUG("Unparseable msg");
+                TRC_DEBUG("Unparseable msg: msg_type: %d", l_msg_type);
                 goto dont_read;
         }
         // -------------------------------------------------
