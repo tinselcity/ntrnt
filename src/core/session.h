@@ -17,8 +17,6 @@
 //! ext fwd decl's
 //! ----------------------------------------------------------------------------
 typedef struct ssl_ctx_st SSL_CTX;
-typedef struct struct_utp_context utp_context;
-typedef struct UTPSocket utp_socket;
 namespace ns_ntrnt {
 //! ----------------------------------------------------------------------------
 //! fwd decl's
@@ -90,7 +88,6 @@ public:
         uint16_t get_ext_port(void) { return m_ext_port; }
         int get_udp_fd(void) { return m_udp_fd; }
         int get_udp6_fd(void) { return m_udp6_fd; }
-        utp_context* get_utp_ctx(void) { return m_utp_ctx; }
         peer_mgr& get_peer_mgr(void) { return m_peer_mgr; }
         pickr& get_pickr(void) { return m_pickr; }
         info_pickr& get_info_pickr(void) { return m_info_pickr; }
@@ -122,7 +119,6 @@ public:
         int32_t t_trackers(void);
         int32_t t_request_blocks(void);
         int32_t t_connect_peers(void);
-        int32_t t_check_timeouts(void);
         // -------------------------------------------------
         // apis
         // -------------------------------------------------
@@ -204,10 +200,6 @@ private:
         // -------------------------------------------------
         bool m_dht_enable;
         dht_mgr* m_dht_mgr;
-        // -------------------------------------------------
-        // utp
-        // -------------------------------------------------
-        utp_context* m_utp_ctx;
         // -------------------------------------------------
         // peer mgr
         // -------------------------------------------------

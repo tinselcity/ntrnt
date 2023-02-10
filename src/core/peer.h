@@ -194,6 +194,14 @@ public:
                 return (memcmp(&m_sas, &(a_that.get_sas()), sizeof(sockaddr_storage)) == 0);
         }
         // -------------------------------------------------
+        // utp callbacks
+        // -------------------------------------------------
+        void pr_utp_on_read(const uint8_t* a_buf, size_t a_len);
+        size_t pr_utp_get_read_buffer_size(void);
+        void pr_utp_on_error(int a_error_code);
+        void pr_utp_on_overhead_statistics(int a_direction, size_t a_len);
+        void pr_utp_on_state_change(int a_state);
+        // -------------------------------------------------
         // bittorrent protocol
         // -------------------------------------------------
         int32_t btp_send_keepalive(void);

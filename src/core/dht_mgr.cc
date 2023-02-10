@@ -131,6 +131,28 @@ namespace ns_ntrnt {
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
+static int32_t _periodic(void *a_data)
+{
+        //NDBG_PRINT("[%sDHT_PERIODIC%s]: ...\n", ANSI_COLOR_BG_MAGENTA, ANSI_COLOR_OFF);
+        if(!a_data)
+        {
+                return NTRNT_STATUS_ERROR;
+        }
+        dht_mgr* l_dhm = static_cast<dht_mgr*>(a_data);
+        int32_t l_s;
+        l_s = l_dhm->periodic();
+        if (l_s != NTRNT_STATUS_OK)
+        {
+                TRC_ERROR("performing dht_periodic");
+        }
+        // TODO check status???
+        return l_s;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
 static int32_t _bootstrap(void *a_data)
 {
         //NDBG_PRINT("[%sDHT_BOOTSTRAP%s]: ...\n", ANSI_COLOR_BG_MAGENTA, ANSI_COLOR_OFF);
@@ -166,28 +188,6 @@ static int32_t _announce(void *a_data)
         if (l_s != NTRNT_STATUS_OK)
         {
                 TRC_ERROR("performing dht_announce");
-        }
-        // TODO check status???
-        return l_s;
-}
-//! ----------------------------------------------------------------------------
-//! \details: TODO
-//! \return:  TODO
-//! \param:   TODO
-//! ----------------------------------------------------------------------------
-static int32_t _periodic(void *a_data)
-{
-        //NDBG_PRINT("[%sDHT_PERIODIC%s]: ...\n", ANSI_COLOR_BG_MAGENTA, ANSI_COLOR_OFF);
-        if(!a_data)
-        {
-                return NTRNT_STATUS_ERROR;
-        }
-        dht_mgr* l_dhm = static_cast<dht_mgr*>(a_data);
-        int32_t l_s;
-        l_s = l_dhm->periodic();
-        if (l_s != NTRNT_STATUS_OK)
-        {
-                TRC_ERROR("performing dht_periodic");
         }
         // TODO check status???
         return l_s;
@@ -280,6 +280,8 @@ int32_t dht_mgr::init(void)
                                   _bootstrap,
                                   (void *)this,
                                   &l_timer);
+        UNUSED(l_s);
+        UNUSED(l_timer);
         // -------------------------------------------------
         // kick off announce
         // -------------------------------------------------
@@ -287,6 +289,8 @@ int32_t dht_mgr::init(void)
                                   _announce,
                                   (void *)this,
                                   &l_timer);
+        UNUSED(l_s);
+        UNUSED(l_timer);
         // -------------------------------------------------
         // kick off periodic
         // -------------------------------------------------
@@ -294,6 +298,8 @@ int32_t dht_mgr::init(void)
                                   _periodic,
                                   (void *)this,
                                   &l_timer);
+        UNUSED(l_s);
+        UNUSED(l_timer);
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------

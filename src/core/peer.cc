@@ -370,7 +370,7 @@ int32_t peer::connect(void)
         // utp setup
         // -------------------------------------------------
         // TODO wrap in "if utp" or in separate utp connect
-        m_utp_conn = utp_create_socket(m_session.get_utp_ctx());
+        m_utp_conn = utp_create_socket(m_peer_mgr.get_utp_ctx());
         //NDBG_PRINT("[HOST: %s] [UTP_CON: %p]\n", m_host.c_str(), m_utp_conn);
         if (!m_utp_conn)
         {
@@ -381,6 +381,10 @@ int32_t peer::connect(void)
         l_ptr = utp_set_userdata(m_utp_conn, this);
         // TODO -check return???
         UNUSED(l_ptr);
+        // -------------------------------------------------
+        // debugging
+        // -------------------------------------------------
+        m_peer_mgr.m_ctx_peer_map[m_utp_conn] = this;
         // -------------------------------------------------
         // kick off timeout
         // -------------------------------------------------
@@ -450,114 +454,110 @@ int32_t peer::accept_utp(void *a_ctx)
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
+//! ****************************************************************************
+//!                        U T P   C A L L B A C K S
+//! ****************************************************************************
+//! ----------------------------------------------------------------------------
+void peer::pr_utp_on_read(const uint8_t* a_buf, size_t a_len)
+{
+        //NDBG_PRINT("[%sUTP%s]: [HOST: %s] ON_READ: len: %lu\n",
+        //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
+        //           m_host.c_str(),
+        //           a_len);
+        int32_t l_s;
+        l_s = utp_read(a_buf, a_len);
+        if (!m_in_q.read_avail())
+        {
+                utp_read_drained(m_utp_conn);
+        }
+        if (l_s != NTRNT_STATUS_OK)
+        {
+                TRC_ERROR("performing utp_read");
+        }
+}
+//! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-uint64_t peer::utp_cb(utp_socket* a_utp_conn,
-                      int a_type,
-                      int a_state,
-                      const uint8_t* a_buf,
-                      size_t a_len)
+size_t peer::pr_utp_get_read_buffer_size(void)
 {
-        //NDBG_PRINT("[UTP] [HOST: %s]: type: %d state: %d\n", m_host.c_str(), a_type, a_state);
+        return m_in_q.read_avail();
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+void peer::pr_utp_on_error(int a_error_code)
+{
+        TRC_ERROR("utp[skt: %p] error[%d]: %s",
+                  m_utp_conn,
+                  a_error_code,
+                  utp_error_code_names[a_error_code]);
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+void peer::pr_utp_on_overhead_statistics(int a_direction, size_t a_len)
+{
         // -------------------------------------------------
-        // for msg type...
+        // direction:
+        //   1 == up
+        //   0 == down
         // -------------------------------------------------
-        switch(a_type)
+        //NDBG_PRINT("[%sUTP%s]: ON_OVERHEAD_STATISTICS: direction: %d len: %lu\n",
+        //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
+        //           a_direction,
+        //           a_len);
+        // TODO
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+void peer::pr_utp_on_state_change(int a_state)
+{
+        //NDBG_PRINT("[%sUTP%s]: ON_STATE_CHANGE: state: %d\n",
+        //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
+        //           a_state);
+        switch(a_state)
         {
         // -------------------------------------------------
-        // UTP_ON_OVERHEAD_STATISTICS
+        // UTP_STATE_CONNECT
         // -------------------------------------------------
-        case UTP_ON_OVERHEAD_STATISTICS:
+        case UTP_STATE_CONNECT:
         {
-                //NDBG_PRINT("[%sUTP%s]: ON_OVERHEAD_STATISTICS: direction: %d len: %lu\n",
-                //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
-                //           a_args->send,
-                //           a_args->len);
-                // TODO
-                break;
-        }
-        // -------------------------------------------------
-        // UTP_ON_STATE_CHANGE
-        // -------------------------------------------------
-        case UTP_ON_STATE_CHANGE:
-        {
-                //NDBG_PRINT("[%sUTP%s]: ON_STATE_CHANGE: state: %d\n",
-                //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
-                //           a_state);
-                switch(a_state)
+                switch(m_state)
                 {
                 // -----------------------------------------
-                // UTP_STATE_CONNECT
+                // STATE_NONE
                 // -----------------------------------------
-                case UTP_STATE_CONNECT:
+                case STATE_UTP_CONNECTING:
                 {
-                        switch(m_state)
+                        // set state to setup
+                        m_state = STATE_PHE_SETUP;
+                        //NDBG_PRINT("[%sUTP%s]: ON_STATE_CHANGE: state: CONNECT\n", ANSI_COLOR_FG_BLUE, ANSI_COLOR_OFF);
+                        // set state to none -indicates outbound
+                        m_phe->set_state(phe::PHE_STATE_NONE);
+                        // setup channel
+                        int32_t l_s;
+                        l_s = m_phe->connect(m_in_q, m_out_q);
+                        if (l_s == NTRNT_STATUS_AGAIN)
                         {
-                        // ---------------------------------
-                        // STATE_NONE
-                        // ---------------------------------
-                        case STATE_UTP_CONNECTING:
+                                return;
+                        }
+                        else if (l_s != NTRNT_STATUS_OK)
                         {
-                                // set state to setup
-                                m_state = STATE_PHE_SETUP;
-                                //NDBG_PRINT("[%sUTP%s]: ON_STATE_CHANGE: state: CONNECT\n", ANSI_COLOR_FG_BLUE, ANSI_COLOR_OFF);
-                                // set state to none -indicates outbound
-                                m_phe->set_state(phe::PHE_STATE_NONE);
-                                // setup channel
-                                int32_t l_s;
-                                l_s = m_phe->connect(m_in_q, m_out_q);
-                                if (l_s == NTRNT_STATUS_AGAIN)
-                                {
-                                        return NTRNT_STATUS_OK;
-                                }
-                                else if (l_s != NTRNT_STATUS_OK)
-                                {
-                                        TRC_ERROR("performing phe connect");
-                                        return NTRNT_STATUS_ERROR;
-                                }
-                                // send handhake
-                                // utp support for peer
-                                break;
+                                TRC_ERROR("performing phe connect");
+                                shutdown(ERROR_CONNECT);
+                                return;
                         }
-                        // ---------------------------------
-                        // default
-                        // ---------------------------------
-                        default:
-                        {
-                                TRC_ERROR("STATE_CONNECT from peer state[%d] != STATE_UTP_CONNECTING", m_state);
-                                break;
-                        }
-                        }
-                        break;
-                }
-                // -----------------------------------------
-                // UTP_STATE_WRITABLE
-                // -----------------------------------------
-                case UTP_STATE_WRITABLE:
-                {
-                        //NDBG_PRINT("[%sUTP%s]: [HOST: %s] ON_STATE_CHANGE: state: WRITABLE\n",
-                        //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF, m_host.c_str());
-                        break;
-                }
-                // -----------------------------------------
-                // UTP_STATE_EOF
-                // -----------------------------------------
-                case UTP_STATE_EOF:
-                {
-                        //NDBG_PRINT("[%sUTP%s]: [HOST: %s] ON_STATE_CHANGE: state: EOF\n",
-                        //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF, m_host.c_str());
-                        shutdown(ERROR_EOF);
-                        return NTRNT_STATUS_DONE;
-                }
-                // -----------------------------------------
-                // UTP_STATE_DESTROYING
-                // -----------------------------------------
-                case UTP_STATE_DESTROYING:
-                {
-                        //NDBG_PRINT("[%sUTP%s]: [HOST: %s] ON_STATE_CHANGE: state: DESTROYING\n",
-                        //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF, m_host.c_str());
+                        // send handhake
+                        // utp support for peer
                         break;
                 }
                 // -----------------------------------------
@@ -565,71 +565,49 @@ uint64_t peer::utp_cb(utp_socket* a_utp_conn,
                 // -----------------------------------------
                 default:
                 {
-                        NDBG_PRINT("[%sUTP%s]: [HOST: %s] ON_STATE_CHANGE: state: ???\n",
-                                   ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF, m_host.c_str());
+                        TRC_ERROR("STATE_CONNECT from peer state[%d] != STATE_UTP_CONNECTING", m_state);
                         break;
                 }
                 }
                 break;
         }
         // -------------------------------------------------
-        // UTP_ON_READ
+        // UTP_STATE_WRITABLE
         // -------------------------------------------------
-        case UTP_ON_READ:
+        case UTP_STATE_WRITABLE:
         {
-                //NDBG_PRINT("[%sUTP%s]: [HOST: %s] ON_READ: len: %lu\n",
-                //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
-                //           m_host.c_str(),
-                //           a_len);
-                int32_t l_s;
-                l_s = utp_read(a_buf, a_len);
-                if (!m_in_q.read_avail())
-                {
-                        utp_read_drained(a_utp_conn);
-                }
-                if (l_s != NTRNT_STATUS_OK)
-                {
-                        TRC_ERROR("performing utp_read");
-                        return NTRNT_STATUS_ERROR;
-                }
+                //NDBG_PRINT("[%sUTP%s]: [HOST: %s] ON_STATE_CHANGE: state: WRITABLE\n",
+                //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF, m_host.c_str());
                 break;
         }
         // -------------------------------------------------
-        // UTP_GET_READ_BUFFER_SIZE
+        // UTP_STATE_EOF
         // -------------------------------------------------
-        case UTP_GET_READ_BUFFER_SIZE:
+        case UTP_STATE_EOF:
         {
-                //NDBG_PRINT("[%sUTP%s]: GET_READ_BUFFER_SIZE: ???\n",
-                //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF);
-                return m_in_q.read_avail();
-        }
-        // -------------------------------------------------
-        // UTP_LOG
-        // -------------------------------------------------
-        case UTP_LOG:
-        {
-                // TODO unused if trace not enabled???
+                //NDBG_PRINT("[%sUTP%s]: [HOST: %s] ON_STATE_CHANGE: state: EOF\n",
+                //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF, m_host.c_str());
+                shutdown(ERROR_EOF);
                 break;
         }
         // -------------------------------------------------
-        // UTP_ON_ERROR
+        // UTP_STATE_DESTROYING
         // -------------------------------------------------
-        case UTP_ON_ERROR:
+        case UTP_STATE_DESTROYING:
         {
-                // TODO unused if trace not enabled???
-                TRC_ERROR("[HOST: %s] error", m_host.c_str());
+                //NDBG_PRINT("[%sUTP%s]: [HOST: %s] ON_STATE_CHANGE: state: DESTROYING\n",
+                //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF, m_host.c_str());
                 break;
         }
         // -------------------------------------------------
-        // ???
+        // default
         // -------------------------------------------------
         default:
         {
-                TRC_ERROR("[HOST: %s] unhandled utp msg type: %d", m_host.c_str(), a_type);
+                TRC_WARN("[UTP]: [HOST: %s] ON_STATE_CHANGE: state: ???", m_host.c_str());
                 break;
         }
         }
-        return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO
