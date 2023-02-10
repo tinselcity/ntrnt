@@ -123,13 +123,11 @@ static uint64 _pm_utp_on_read(utp_callback_arguments* a_args)
         peer* l_peer = nullptr;
         if (!a_args->socket)
         {
-                TRC_ERROR("a_args->socket == null");
                 return 0;
         }
         l_peer = static_cast<peer*>(utp_get_userdata(a_args->socket));
         if (!l_peer)
         {
-                TRC_ERROR("peer == null");
                 return 0;
         }
         // -------------------------------------------------
@@ -151,13 +149,11 @@ static uint64 _pm_utp_get_read_buffer_size(utp_callback_arguments* a_args)
         peer* l_peer = nullptr;
         if (!a_args->socket)
         {
-                TRC_ERROR("a_args->socket == null");
                 return 0;
         }
         l_peer = static_cast<peer*>(utp_get_userdata(a_args->socket));
         if (!l_peer)
         {
-                TRC_ERROR("peer == null");
                 return 0;
         }
         // -------------------------------------------------
@@ -178,13 +174,11 @@ static uint64 _pm_utp_on_error(utp_callback_arguments* a_args)
         peer* l_peer = nullptr;
         if (!a_args->socket)
         {
-                TRC_ERROR("a_args->socket == null");
                 return 0;
         }
         l_peer = static_cast<peer*>(utp_get_userdata(a_args->socket));
         if (!l_peer)
         {
-                TRC_ERROR("peer == null");
                 return 0;
         }
         // -------------------------------------------------
@@ -206,13 +200,11 @@ static uint64 _pm_utp_on_overhead_statistics(utp_callback_arguments* a_args)
         peer* l_peer = nullptr;
         if (!a_args->socket)
         {
-                TRC_ERROR("a_args->socket == null");
                 return 0;
         }
         l_peer = static_cast<peer*>(utp_get_userdata(a_args->socket));
         if (!l_peer)
         {
-                TRC_ERROR("peer == null");
                 return 0;
         }
         // -------------------------------------------------
@@ -234,13 +226,11 @@ static uint64 _pm_utp_on_state_change(utp_callback_arguments* a_args)
         peer* l_peer = nullptr;
         if (!a_args->socket)
         {
-                TRC_ERROR("a_args->socket == null");
                 return 0;
         }
         l_peer = static_cast<peer*>(utp_get_userdata(a_args->socket));
         if (!l_peer)
         {
-                TRC_ERROR("peer == null");
                 return 0;
         }
         // -------------------------------------------------
@@ -304,20 +294,20 @@ peer_mgr::peer_mgr(session& a_session):
 peer_mgr::~peer_mgr(void)
 {
         // -------------------------------------------------
-        // peer_map
-        // -------------------------------------------------
-        for(auto && i_p : m_peer_vec)
-        {
-                peer* l_p = i_p;
-                if (l_p) { delete l_p; l_p = nullptr;}
-        }
-        // -------------------------------------------------
         // utp ctx
         // -------------------------------------------------
         if (m_utp_ctx)
         {
                 utp_destroy(m_utp_ctx);
                 m_utp_ctx = nullptr;
+        }
+        // -------------------------------------------------
+        // peer_map
+        // -------------------------------------------------
+        for(auto && i_p : m_peer_vec)
+        {
+                peer* l_p = i_p;
+                if (l_p) { delete l_p; l_p = nullptr;}
         }
         pthread_mutex_destroy(&m_mutex);
 }
@@ -350,12 +340,7 @@ int32_t peer_mgr::init(void)
         utp_set_callback(m_utp_ctx, UTP_ON_ACCEPT, _pm_utp_on_accept);
         utp_set_callback(m_utp_ctx, UTP_SENDTO, _pm_utp_on_sendto);
         utp_set_callback(m_utp_ctx, UTP_ON_READ, _pm_utp_on_read);
-        // TODO -don't implement for now...
-#if 0
         utp_set_callback(m_utp_ctx, UTP_GET_READ_BUFFER_SIZE, _pm_utp_get_read_buffer_size);
-#else
-        UNUSED(_pm_utp_get_read_buffer_size);
-#endif
         utp_set_callback(m_utp_ctx, UTP_ON_ERROR, _pm_utp_on_error);
         utp_set_callback(m_utp_ctx, UTP_ON_OVERHEAD_STATISTICS, _pm_utp_on_overhead_statistics);
         utp_set_callback(m_utp_ctx, UTP_ON_STATE_CHANGE, _pm_utp_on_state_change);
@@ -459,6 +444,7 @@ int32_t peer_mgr::connect_peers(void)
         // -------------------------------------------------
         // check peer state
         // -------------------------------------------------
+#if 0
         uint64_t l_now_s = get_time_s();
         for (auto && i_p : m_peer_connected_vec)
         {
@@ -492,6 +478,7 @@ int32_t peer_mgr::connect_peers(void)
                         continue;
                 }
         }
+#endif
         // -------------------------------------------------
         // update swarm
         // -------------------------------------------------
@@ -500,6 +487,7 @@ int32_t peer_mgr::connect_peers(void)
         m_peer_active_vec_v6.clear();
         uint32_t l_states[16]  = { 0 };
         size_t l_inflight = 0;
+        size_t l_active = 0;
         pthread_mutex_lock(&m_mutex);
         for (auto && i_p : m_peer_vec)
         {
@@ -519,6 +507,7 @@ int32_t peer_mgr::connect_peers(void)
                 // -----------------------------------------
                 if (l_ps != peer::STATE_NONE)
                 {
+                        ++l_active;
                         const sockaddr_storage& l_sas = l_p.get_sas();
                         if (l_sas.ss_family == AF_INET)
                         {
@@ -555,23 +544,29 @@ int32_t peer_mgr::connect_peers(void)
         // try connect to up to N peers per period from
         // list of potential peers
         // -------------------------------------------------
-        size_t l_num = m_cfg_max_conn - l_st_connected;
+        if (l_active >= m_cfg_max_conn)
+        {
+                return NTRNT_STATUS_OK;
+        }
+        size_t l_num = m_cfg_max_conn - l_active;
         typedef std::vector <peer*> _peer_vector_t;
         _peer_vector_t l_pv;
         pthread_mutex_lock(&m_mutex);
-        size_t l_pv_len = m_peer_vec.size();
-        for (size_t i_pc = 0; i_pc < l_pv_len; ++i_pc)
+        for (size_t i_pc = 0;
+             (i_pc < m_peer_vec.size()) &&
+             (l_pv.size() <= l_num);
+             ++i_pc)
         {
                 peer* i_p = m_peer_vec[m_peer_vec_idx];
+                if (!i_p) { continue; }
                 // -----------------------------------------
                 // increment next idx
                 // -----------------------------------------
                 ++m_peer_vec_idx;
-                if (m_peer_vec_idx >= l_pv_len)
+                if (m_peer_vec_idx >= m_peer_vec.size())
                 {
                         m_peer_vec_idx = 0;
                 }
-                if (!i_p) { continue; }
                 // -----------------------------------------
                 // check for self
                 // -----------------------------------------
@@ -588,10 +583,6 @@ int32_t peer_mgr::connect_peers(void)
                 if (l_st == peer::STATE_NONE)
                 {
                         l_pv.push_back(i_p);
-                        if (l_pv.size() >= (l_num))
-                        {
-                                break;
-                        }
                 }
         }
         pthread_mutex_unlock(&m_mutex);
@@ -701,6 +692,7 @@ int32_t peer_mgr::validate_address(const sockaddr_storage& a_sas)
                 // -----------------------------------------
                 // check for martian
                 // -----------------------------------------
+#if 0
                 const uint8_t* l_addr = (uint8_t*)(&(l_sin->sin_addr));
                 if ((l_addr[0] == 0) ||
                     (l_addr[0] == 127) ||
@@ -709,6 +701,7 @@ int32_t peer_mgr::validate_address(const sockaddr_storage& a_sas)
                         TRC_ERROR("address[%s] appears to be local", sas_to_str(a_sas).c_str());
                         return NTRNT_STATUS_ERROR;
                 }
+#endif
         }
         // -------------------------------------------------
         // ipv6
@@ -848,15 +841,24 @@ int32_t peer_mgr::pm_utp_on_accept(utp_socket* a_utp_conn)
                 return NTRNT_STATUS_OK;
         }
         // -------------------------------------------------
+        // block if at max
+        // -------------------------------------------------
+        if (m_peer_connected_vec.size() >= m_cfg_max_conn)
+        {
+                utp_close(a_utp_conn);
+                return NTRNT_STATUS_OK;
+        }
+        // -------------------------------------------------
         // get peer
         // -------------------------------------------------
         struct sockaddr_storage l_sas;
         struct sockaddr* l_sa = (struct sockaddr*)(&l_sas);
-        socklen_t l_sa_len;
+        socklen_t l_sa_len = sizeof(l_sas);
         l_s = utp_getpeername(a_utp_conn, l_sa, &l_sa_len);
         if (l_s != 0)
         {
                 TRC_ERROR("performing utp_getpeername");
+                utp_close(a_utp_conn);
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -875,8 +877,9 @@ int32_t peer_mgr::pm_utp_on_accept(utp_socket* a_utp_conn)
         }
         else
         {
-                TRC_ERROR("unrecognized address family: %u",
-                          l_sa->sa_family);
+                TRC_ERROR("unrecognized address family: %u len: %u",
+                          l_sa->sa_family, l_sa_len);
+                utp_close(a_utp_conn);
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -886,6 +889,7 @@ int32_t peer_mgr::pm_utp_on_accept(utp_socket* a_utp_conn)
         l_s = validate_address(l_psas);
         if (l_s != NTRNT_STATUS_OK)
         {
+                utp_close(a_utp_conn);
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -893,6 +897,7 @@ int32_t peer_mgr::pm_utp_on_accept(utp_socket* a_utp_conn)
         // -------------------------------------------------
         if (peer_exists(l_psas))
         {
+                utp_close(a_utp_conn);
                 return NTRNT_STATUS_OK;
         }
         // -------------------------------------------------
@@ -903,7 +908,9 @@ int32_t peer_mgr::pm_utp_on_accept(utp_socket* a_utp_conn)
         if (l_s != NTRNT_STATUS_OK)
         {
                 TRC_ERROR("performing accept_utp");
+                utp_set_userdata(a_utp_conn, nullptr);
                 if (l_peer) { delete l_peer; l_peer = nullptr; }
+                utp_close(a_utp_conn);
                 return NTRNT_STATUS_OK;
         }
         l_peer->set_state(peer::STATE_PHE_SETUP);
@@ -948,6 +955,7 @@ int32_t peer_mgr::pm_utp_sendto(const uint8_t* a_buf,
         int l_s;
         errno = 0;
         //NDBG_PRINT("[SENDTO] [LEN: %lu]\n", a_len);
+        //NDBG_PRINT("SENDTO [LEN: %lu]\n", a_len);
         l_s = sendto(l_fd, a_buf, a_len, 0, a_sa, a_socklen);
         if (l_s < 0)
         {
@@ -1057,7 +1065,7 @@ int32_t peer_mgr::dequeue_out_v4(void)
                         return NTRNT_STATUS_OK;
                 }
                 // -----------------------------------------
-                // write until eagain
+                // write until EAGAIN
                 // -----------------------------------------
                 nbq& l_q = l_p.get_out_q();
                 while (l_q.read_avail())
@@ -1162,12 +1170,15 @@ int32_t peer_mgr::dequeue_out_v6(void)
 int32_t peer_mgr::pm_utp_check_timeouts(void)
 {
         // -------------------------------------------------
-        // utp maintenance
+        // utp_check_timeouts
         // -------------------------------------------------
-        // TODO -issue defer-d acks???
-        ::utp_issue_deferred_acks(m_utp_ctx);
-        // check timeouts
-        ::utp_check_timeouts(m_utp_ctx);
+        //NDBG_PRINT("utp_check_timeouts\n");
+        utp_check_timeouts(m_utp_ctx);
+        // -------------------------------------------------
+        // issue deferred acks
+        // -------------------------------------------------
+        //NDBG_PRINT("utp_issue_deferred_acks\n");
+        utp_issue_deferred_acks(m_utp_ctx);
         // -------------------------------------------------
         // fire again
         // -------------------------------------------------

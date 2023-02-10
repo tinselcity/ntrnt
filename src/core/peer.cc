@@ -256,6 +256,127 @@ peer::~peer(void)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
+static const char* _get_error_str(peer::error_t a_error)
+{
+#define _CASE_PEER_ERR_STR(_err) case peer::ERROR_##_err: { return #_err; }
+        switch(a_error) {
+        _CASE_PEER_ERR_STR(NONE)
+        _CASE_PEER_ERR_STR(TIMEOUT)
+        _CASE_PEER_ERR_STR(EOF)
+        _CASE_PEER_ERR_STR(EXPIRED_BR)
+        _CASE_PEER_ERR_STR(IDLE_TIMEOUT)
+        _CASE_PEER_ERR_STR(CONNECT)
+        _CASE_PEER_ERR_STR(UTP_EOF)
+        _CASE_PEER_ERR_STR(UTP_CB_DONE)
+        _CASE_PEER_ERR_STR(UTP_CB_ERROR)
+        _CASE_PEER_ERR_STR(UTP_ON_ERROR)
+        _CASE_PEER_ERR_STR(HANDSHAKE_SELF)
+        _CASE_PEER_ERR_STR(UTP_ON_ERROR_PEER_MGR)
+        default: { return "NONE"; } }
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+static const char* _get_from_str(peer_from_t a_from)
+{
+#define _CASE_PEER_FROM_STR(_from) case NTRNT_PEER_FROM_##_from: { return #_from; }
+        switch(a_from) {
+        _CASE_PEER_FROM_STR(NONE)
+        _CASE_PEER_FROM_STR(SELF)
+        _CASE_PEER_FROM_STR(TRACKER)
+        _CASE_PEER_FROM_STR(DHT)
+        _CASE_PEER_FROM_STR(INBOUND)
+        _CASE_PEER_FROM_STR(PEX)
+        default: { return "NONE"; } }
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+static const char* _get_state_str(peer::state_t a_state)
+{
+#define _CASE_PEER_STATE_STR(_state) case peer::STATE_##_state: { return #_state; }
+        switch(a_state) {
+        _CASE_PEER_STATE_STR(NONE)
+        _CASE_PEER_STATE_STR(UTP_CONNECTING)
+        _CASE_PEER_STATE_STR(PHE_SETUP)
+        _CASE_PEER_STATE_STR(PHE_CONNECTING)
+        _CASE_PEER_STATE_STR(HANDSHAKING)
+        _CASE_PEER_STATE_STR(CONNECTED)
+        default: { return "NONE"; } }
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+static const char* _get_btp_cmd_str(int a_cmd)
+{
+#define _CASE_BTP_CMD_STR(_cmd) case peer::BTP_CMD_##_cmd: { return #_cmd; }
+        switch(a_cmd) {
+        _CASE_BTP_CMD_STR(CHOKE)
+        _CASE_BTP_CMD_STR(UNCHOKE)
+        _CASE_BTP_CMD_STR(INTERESTED)
+        _CASE_BTP_CMD_STR(NOT_INTERESTED)
+        _CASE_BTP_CMD_STR(HAVE)
+        _CASE_BTP_CMD_STR(BITFIELD)
+        _CASE_BTP_CMD_STR(REQUEST)
+        _CASE_BTP_CMD_STR(PIECE)
+        _CASE_BTP_CMD_STR(CANCEL)
+        _CASE_BTP_CMD_STR(PORT)
+        _CASE_BTP_CMD_STR(FEXT_SUGGEST)
+        _CASE_BTP_CMD_STR(FEXT_HAVE_ALL)
+        _CASE_BTP_CMD_STR(FEXT_HAVE_NONE)
+        _CASE_BTP_CMD_STR(FEXT_REJECT)
+        _CASE_BTP_CMD_STR(FEXT_ALLOWED_FAST)
+        _CASE_BTP_CMD_STR(LTEP)
+        default: { return "NONE"; } }
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+void peer::display(void)
+{
+        NDBG_OUTPUT("+-PEER-------------------------------------------+\n");
+        NDBG_OUTPUT(": host:                    %s\n", m_host.c_str());
+        NDBG_OUTPUT(": from:                    %s\n", _get_from_str(m_from));
+        NDBG_OUTPUT(": state:                   %s\n", _get_state_str(m_state));
+        NDBG_OUTPUT(": err:                     %s\n", _get_error_str(m_error));
+        NDBG_OUTPUT(": num_block_rqst_inflight: %lu\n", m_num_block_rqst_inflight);
+        NDBG_OUTPUT(": in_q.read_avail:         %lu\n", m_in_q.read_avail());
+        NDBG_OUTPUT(": out_q.read_avail:        %lu\n", m_out_q.read_avail());
+        NDBG_OUTPUT(": btp_pieces_have:         %lu\n", m_btp_pieces_have.get_count());
+        NDBG_OUTPUT(": btp_am_choking:          %d\n", m_btp_am_choking);
+        NDBG_OUTPUT(": btp_am_interested:       %d\n", m_btp_am_interested);
+        NDBG_OUTPUT(": btp_peer_choking:        %d\n", m_btp_peer_choking);
+        NDBG_OUTPUT(": btp_peer_interested:     %d\n", m_btp_peer_interested);
+        NDBG_OUTPUT(": btp_cmd:                 %s\n", _get_btp_cmd_str(m_btp_cmd));
+        NDBG_OUTPUT(": btp_cmd_len:             %u\n", m_btp_cmd_len);
+
+#if 0
+        // -------------------------------------------------
+        // stats
+        // -------------------------------------------------
+        size_t m_stat_expired_br;
+        size_t m_stat_bytes_sent;
+        size_t m_stat_bytes_sent_last;
+        size_t m_stat_bytes_sent_per_s;
+        size_t m_stat_bytes_recv;
+        size_t m_stat_bytes_recv_last;
+        size_t m_stat_bytes_recv_per_s;
+        size_t m_stat_last_recvd_time_s;
+#endif
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
 void peer::reset(void)
 {
         // -------------------------------------------------
@@ -276,10 +397,12 @@ void peer::reset(void)
         // -------------------------------------------------
         m_in_q.reset_write();
         m_out_q.reset_write();
+#if 0
         // -------------------------------------------------
-        // TODO
+        // cancel timer
         // -------------------------------------------------
         m_session.cancel_timer(m_timer);
+#endif
         // -------------------------------------------------
         // cleanup utp state
         // -------------------------------------------------
@@ -385,6 +508,7 @@ int32_t peer::connect(void)
         // debugging
         // -------------------------------------------------
         m_peer_mgr.m_ctx_peer_map[m_utp_conn] = this;
+#if 0
         // -------------------------------------------------
         // kick off timeout
         // -------------------------------------------------
@@ -394,6 +518,7 @@ int32_t peer::connect(void)
                 TRC_ERROR("performing add_timer");
                 return NTRNT_STATUS_ERROR;
         }
+#endif
         // -------------------------------------------------
         // utp connect
         // -------------------------------------------------
@@ -442,6 +567,7 @@ int32_t peer::accept_utp(void *a_ctx)
         l_ptr = utp_set_userdata(m_utp_conn, this);
         // TODO -check return???
         UNUSED(l_ptr);
+#if 0
         // -------------------------------------------------
         // kick off timeout
         // -------------------------------------------------
@@ -451,12 +577,18 @@ int32_t peer::accept_utp(void *a_ctx)
                 TRC_ERROR("performing add_timer");
                 return NTRNT_STATUS_ERROR;
         }
+#endif
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
 //! ****************************************************************************
 //!                        U T P   C A L L B A C K S
 //! ****************************************************************************
+//! ----------------------------------------------------------------------------
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
 //! ----------------------------------------------------------------------------
 void peer::pr_utp_on_read(const uint8_t* a_buf, size_t a_len)
 {
@@ -466,13 +598,18 @@ void peer::pr_utp_on_read(const uint8_t* a_buf, size_t a_len)
         //           a_len);
         int32_t l_s;
         l_s = utp_read(a_buf, a_len);
-        if (!m_in_q.read_avail())
-        {
-                utp_read_drained(m_utp_conn);
-        }
         if (l_s != NTRNT_STATUS_OK)
         {
                 TRC_ERROR("performing utp_read");
+        }
+        // -------------------------------------------------
+        // test setting read drained
+        // -------------------------------------------------
+        //NDBG_PRINT("m_in_q.read_avail(): %lu\n", m_in_q.read_avail());
+        if (!m_in_q.read_avail())
+        {
+                //NDBG_PRINT("utp_read_drained\n");
+                utp_read_drained(m_utp_conn);
         }
 }
 //! ----------------------------------------------------------------------------
@@ -482,7 +619,8 @@ void peer::pr_utp_on_read(const uint8_t* a_buf, size_t a_len)
 //! ----------------------------------------------------------------------------
 size_t peer::pr_utp_get_read_buffer_size(void)
 {
-        return m_in_q.read_avail();
+        size_t l_ra = m_in_q.read_avail();
+        return l_ra;
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO
@@ -495,6 +633,7 @@ void peer::pr_utp_on_error(int a_error_code)
                   m_utp_conn,
                   a_error_code,
                   utp_error_code_names[a_error_code]);
+        shutdown(peer::ERROR_UTP_ON_ERROR);
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO
@@ -578,6 +717,36 @@ void peer::pr_utp_on_state_change(int a_state)
         {
                 //NDBG_PRINT("[%sUTP%s]: [HOST: %s] ON_STATE_CHANGE: state: WRITABLE\n",
                 //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF, m_host.c_str());
+                // -----------------------------------------
+                // write until EAGAIN
+                // -----------------------------------------
+                while (m_out_q.read_avail())
+                {
+                        ssize_t l_s;
+                        int32_t l_try_write = m_out_q.b_read_avail();
+                        l_s = utp_write(m_utp_conn, m_out_q.b_read_ptr(), l_try_write);
+                        //NDBG_PRINT("[%sutp_write%s: %ld / %d] [errno[%d] %s]\n",
+                        //           ANSI_COLOR_FG_CYAN, ANSI_COLOR_OFF,
+                        //           l_s, l_try_read,
+                        //           errno, strerror(errno));
+                        // ---------------------------------
+                        // socket no longer writable
+                        // ---------------------------------
+                        if (l_s == 0)
+                        {
+                                //NDBG_PRINT("NO LONGER WRITEABLE\n");
+                                break;
+                        }
+                        // ---------------------------------
+                        // shrink q  by read
+                        // ---------------------------------
+                        else if (l_s > 0)
+                        {
+                                m_stat_bytes_sent += l_s;
+                                m_out_q.b_read_incr(l_s);
+                                m_out_q.shrink();
+                        }
+                }
                 break;
         }
         // -------------------------------------------------
@@ -585,8 +754,6 @@ void peer::pr_utp_on_state_change(int a_state)
         // -------------------------------------------------
         case UTP_STATE_EOF:
         {
-                //NDBG_PRINT("[%sUTP%s]: [HOST: %s] ON_STATE_CHANGE: state: EOF\n",
-                //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF, m_host.c_str());
                 shutdown(ERROR_EOF);
                 break;
         }
@@ -595,8 +762,6 @@ void peer::pr_utp_on_state_change(int a_state)
         // -------------------------------------------------
         case UTP_STATE_DESTROYING:
         {
-                //NDBG_PRINT("[%sUTP%s]: [HOST: %s] ON_STATE_CHANGE: state: DESTROYING\n",
-                //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF, m_host.c_str());
                 break;
         }
         // -------------------------------------------------
@@ -716,6 +881,7 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
                         // connected
                         // ---------------------------------
                         m_state = STATE_CONNECTED;
+#if 0
                         // -----------------------------------------
                         // reset timer
                         // -----------------------------------------
@@ -726,6 +892,7 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
                                 TRC_ERROR("performing cancel_timer");
                                 return NTRNT_STATUS_ERROR;
                         }
+#endif
                 }
                 break;
         }
@@ -758,6 +925,7 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
                 // connected
                 // -----------------------------------------
                 m_state = STATE_CONNECTED;
+#if 0
                 // -----------------------------------------
                 // reset timer
                 // -----------------------------------------
@@ -767,6 +935,7 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
                         TRC_ERROR("performing cancel_timer");
                         return NTRNT_STATUS_ERROR;
                 }
+#endif
                 break;
         }
         // -------------------------------------------------

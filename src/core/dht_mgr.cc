@@ -319,14 +319,20 @@ int32_t dht_mgr::recv_msg(struct sockaddr_storage& a_ss,
                 return NTRNT_STATUS_ERROR;
         }
         // dht requires zero-terminated messages
+#if 0
         if (a_msg[a_msg_len] != '\0')
         {
                 TRC_ERROR("bad message length msg: %p msg_len: %u -missing null terminator", a_msg, a_msg_len);
+                NDBG_PRINT("DHT msg: from: %s\n", sas_to_str(a_ss).c_str());
+                NDBG_HEXDUMP(a_msg, a_msg_len);
                 return NTRNT_STATUS_ERROR;
         }
-        //NDBG_PRINT("DHT msg\n");
-        //NDBG_HEXDUMP(a_msg, a_msg_len);
+#else
+        a_msg[a_msg_len] = '\0';
+#endif
+        // -------------------------------------------------
         // run periodic
+        // -------------------------------------------------
         time_t l_to_sleep;
         int32_t l_s;
         l_s = m_dhsco->periodic((const void*)a_msg,

@@ -156,6 +156,7 @@ public:
              peer_mgr& a_peer_mgr,
              const sockaddr_storage& a_sas);
         ~peer(void);
+        void display(void);
         void reset(void);
         int32_t connect(void);
         int32_t accept_utp(void *a_ctx);

@@ -228,16 +228,12 @@ int32_t session::init_w_metainfo(const std::string& a_path)
         // -------------------------------------------------
         // parse info
         // -------------------------------------------------
-        if (l_info.m_type == BE_OBJ_DICT)
+        l_s = m_info_pickr.parse_info(l_info.m_ptr, l_info.m_len);
+        if (l_s != NTRNT_STATUS_OK)
         {
-                const be_dict_t& l_info_dict = *((const be_dict_t*)l_info.m_obj);
-                l_s = m_info_pickr.parse_info(l_info_dict);
-                if (l_s != NTRNT_STATUS_OK)
-                {
-                        NTRNT_PERROR("performing parse_info");
-                        if (l_buf) { free(l_buf); l_buf = nullptr; }
-                        return NTRNT_STATUS_ERROR;
-                }
+                NTRNT_PERROR("performing parse_info");
+                if (l_buf) { free(l_buf); l_buf = nullptr; }
+                return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
         // helper
@@ -849,12 +845,14 @@ int32_t session::udp_mux(struct sockaddr_storage& a_ss,
                 // add inactivity timer???
                 utp_context* l_ctx = m_peer_mgr.get_utp_ctx();
                 int32_t l_s;
+                // -----------------------------------------
+                // process
+                // -----------------------------------------
                 l_s = utp_process_udp(l_ctx, a_msg, a_msg_len, (const sockaddr*)(&a_ss), sas_size(a_ss));
                 // -----------------------------------------
-                // ref: utp_internal.cpp
-                // - "Should be called each time the UDP
-                //  socket is drained" ???
+                // issue deferred acks
                 // -----------------------------------------
+                //NDBG_PRINT("utp_issue_deferred_acks: a_msg_len: %u\n", a_msg_len);
                 utp_issue_deferred_acks(l_ctx);
                 if (l_s != 1)
                 {
@@ -949,7 +947,7 @@ int32_t session::setup_udp(void)
         // -------------------------------------------------
         l_s = m_evr_loop->add_fd(m_udp_fd,
                                  EVR_FILE_ATTR_MASK_READ |
-                                 EVR_FILE_ATTR_MASK_WRITE |
+                                 EVR_FILE_ATTR_MASK_STATUS_ERROR |
                                  EVR_FILE_ATTR_MASK_RD_HUP|
                                  EVR_FILE_ATTR_MASK_ET,
                                  &m_evr_udp_fd);
@@ -990,7 +988,7 @@ int32_t session::udp_fd_readable_cb(void *a_data)
                 // -----------------------------------------
                 // clear buffer
                 // -----------------------------------------
-                memset(s_msg, 0, _MSG_SIZE_MAX);
+                //memset(s_msg, 0, _MSG_SIZE_MAX);
                 struct sockaddr_storage l_from;
                 socklen_t l_from_len = sizeof(l_from);
                 int32_t l_s;
@@ -1007,9 +1005,25 @@ int32_t session::udp_fd_readable_cb(void *a_data)
                 //           errno, strerror(errno));
                 if (l_s < 0)
                 {
+                        // ---------------------------------
+                        // EAGAIN
+                        // ---------------------------------
                         if (errno == EAGAIN)
                         {
+                                // -------------------------
+                                // rearm
+                                // -------------------------
+                                evr_loop* l_evr = l_ses->get_evr_loop();
+                                l_s = l_evr->mod_fd(l_fd,
+                                                    EVR_FILE_ATTR_MASK_READ |
+                                                    EVR_FILE_ATTR_MASK_WRITE |
+                                                    EVR_FILE_ATTR_MASK_STATUS_ERROR |
+                                                    EVR_FILE_ATTR_MASK_HUP |
+                                                    EVR_FILE_ATTR_MASK_ET,
+                                                    &(l_ses->get_evr_udp_fd()));
+                                // -------------------------
                                 // TODO -only if signaled data???
+                                // -------------------------
                                 return udp_fd_writeable_cb(a_data);
                         }
                         TRC_ERROR("error performing recvfrom. Reason: %s\n", strerror(errno));
@@ -1152,7 +1166,7 @@ int32_t session::setup_udp6(void)
         // -------------------------------------------------
         l_s = m_evr_loop->add_fd(m_udp6_fd,
                                  EVR_FILE_ATTR_MASK_READ |
-                                 EVR_FILE_ATTR_MASK_WRITE |
+                                 EVR_FILE_ATTR_MASK_STATUS_ERROR |
                                  EVR_FILE_ATTR_MASK_RD_HUP|
                                  EVR_FILE_ATTR_MASK_ET,
                                  &m_evr_udp6_fd);
@@ -1213,9 +1227,25 @@ int32_t session::udp6_fd_readable_cb(void *a_data)
                 //           errno, strerror(errno));
                 if (l_s < 0)
                 {
+                        // ---------------------------------
+                        // EAGAIN
+                        // ---------------------------------
                         if (errno == EAGAIN)
                         {
+                                // -------------------------
+                                // rearm
+                                // -------------------------
+                                evr_loop* l_evr = l_ses->get_evr_loop();
+                                l_s = l_evr->mod_fd(l_fd,
+                                                    EVR_FILE_ATTR_MASK_READ |
+                                                    EVR_FILE_ATTR_MASK_WRITE |
+                                                    EVR_FILE_ATTR_MASK_STATUS_ERROR |
+                                                    EVR_FILE_ATTR_MASK_HUP |
+                                                    EVR_FILE_ATTR_MASK_ET,
+                                                    &(l_ses->get_evr_udp6_fd()));
+                                // -------------------------
                                 // TODO -only if signaled data???
+                                // -------------------------
                                 return udp6_fd_writeable_cb(a_data);
                         }
                         TRC_ERROR("error performing recvfrom. Reason: %s\n", strerror(errno));

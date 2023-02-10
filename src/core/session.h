@@ -83,7 +83,9 @@ public:
         bool get_stopped(void) { return (bool)m_stopped; }
         nresolver& get_resolver(void) { return *m_nresolver; }
         SSL_CTX* get_client_ssl_ctx(void) { return m_client_ssl_ctx; }
-        evr_loop *get_evr_loop(void) { return m_evr_loop; }
+        evr_loop* get_evr_loop(void) { return m_evr_loop; }
+        evr_fd_t& get_evr_udp_fd(void) { return m_evr_udp_fd; }
+        evr_fd_t& get_evr_udp6_fd(void) { return m_evr_udp6_fd; }
         std::string& get_ext_ip(void) { return m_ext_ip; }
         uint16_t get_ext_port(void) { return m_ext_port; }
         int get_udp_fd(void) { return m_udp_fd; }

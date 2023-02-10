@@ -545,7 +545,6 @@ int32_t pickr::peer_request_more(peer& a_peer)
                 TRC_ERROR("performing pickr get blocks");
                 return NTRNT_STATUS_ERROR;
         }
-        //NDBG_PRINT("REQUEST: [NUM: %lu]\n", l_blk_rqst_vec.size());
         // -------------------------------------------------
         // make requests
         // -------------------------------------------------
