@@ -56,6 +56,31 @@ ns_ntrnt::session *g_session = NULL;
 ns_is2::srvr *g_srvr = NULL;
 #endif
 //! ----------------------------------------------------------------------------
+//! \details: display_status
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+#define _T_DISPLAY_STATUS_MS 200
+static int32_t _t_display_status(void *a_data)
+{
+        // -------------------------------------------------
+        // show status
+        // -------------------------------------------------
+        NDBG_OUTPUT("STATUS...\n");
+        // -------------------------------------------------
+        // fire status
+        // -------------------------------------------------
+        int32_t l_s;
+        void *l_timer = NULL;
+        l_s = g_session->add_timer((uint32_t)(_T_DISPLAY_STATUS_MS),
+                                   _t_display_status,
+                                   (void *)nullptr,
+                                   &l_timer);
+        UNUSED(l_s);
+        UNUSED(l_timer);
+        return NTRNT_STATUS_OK;
+}
+//! ----------------------------------------------------------------------------
 //! define handler for get
 //! ----------------------------------------------------------------------------
 #ifdef ENABLE_IS2
@@ -87,7 +112,7 @@ private:
 
 };
 //! ----------------------------------------------------------------------------
-//! \details: sighandler
+//! \details: do_get
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
@@ -720,6 +745,15 @@ int main(int argc, char** argv)
                 ProfilerStart(l_gprof_file.c_str());
         }
 #endif
+        // -------------------------------------------------
+        // fire status
+        // -------------------------------------------------
+        void *l_timer = NULL;
+        l_s = g_session->add_timer((uint32_t)(_T_DISPLAY_STATUS_MS),
+                                   _t_display_status,
+                                   (void *)nullptr,
+                                   &l_timer);
+        UNUSED(l_timer);
         // -------------------------------------------------
         // run...
         // -------------------------------------------------
