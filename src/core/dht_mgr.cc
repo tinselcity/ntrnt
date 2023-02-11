@@ -133,7 +133,6 @@ namespace ns_ntrnt {
 //! ----------------------------------------------------------------------------
 static int32_t _periodic(void *a_data)
 {
-        //NDBG_PRINT("[%sDHT_PERIODIC%s]: ...\n", ANSI_COLOR_BG_MAGENTA, ANSI_COLOR_OFF);
         if(!a_data)
         {
                 return NTRNT_STATUS_ERROR;
@@ -155,7 +154,6 @@ static int32_t _periodic(void *a_data)
 //! ----------------------------------------------------------------------------
 static int32_t _bootstrap(void *a_data)
 {
-        //NDBG_PRINT("[%sDHT_BOOTSTRAP%s]: ...\n", ANSI_COLOR_BG_MAGENTA, ANSI_COLOR_OFF);
         if(!a_data)
         {
                 return NTRNT_STATUS_ERROR;
@@ -177,7 +175,6 @@ static int32_t _bootstrap(void *a_data)
 //! ----------------------------------------------------------------------------
 static int32_t _announce(void *a_data)
 {
-        //NDBG_PRINT("[%sDHT_ANNOUNCE%s]: ...\n", ANSI_COLOR_BG_MAGENTA, ANSI_COLOR_OFF);
         if(!a_data)
         {
                 return NTRNT_STATUS_ERROR;
@@ -323,8 +320,6 @@ int32_t dht_mgr::recv_msg(struct sockaddr_storage& a_ss,
         if (a_msg[a_msg_len] != '\0')
         {
                 TRC_ERROR("bad message length msg: %p msg_len: %u -missing null terminator", a_msg, a_msg_len);
-                NDBG_PRINT("DHT msg: from: %s\n", sas_to_str(a_ss).c_str());
-                NDBG_HEXDUMP(a_msg, a_msg_len);
                 return NTRNT_STATUS_ERROR;
         }
 #else
@@ -380,11 +375,6 @@ void dht_mgr::dht_cb(void* a_ctx,
         }
         dht_mgr& l_mgr = *((dht_mgr*)a_ctx);
         session& l_ses = l_mgr.get_session();
-        //NDBG_PRINT("[%sDHT_CB%s] event: %d data: %p len: %lu\n",
-        //           ANSI_COLOR_BG_RED, ANSI_COLOR_OFF,
-        //           a_event,
-        //           a_data,
-        //           a_data_len);
         switch(a_event)
         {
         // -------------------------------------------------
@@ -392,7 +382,6 @@ void dht_mgr::dht_cb(void* a_ctx,
         // -------------------------------------------------
         case DHT_EVENT_VALUES:
         {
-                //NDBG_PRINT("[%sDHT_CB%s] DHT_EVENT_VALUES\n", ANSI_COLOR_BG_RED, ANSI_COLOR_OFF);
                 int32_t l_s;
                 l_s = l_ses.add_peer_raw(AF_INET, (uint8_t*)a_data, a_data_len, NTRNT_PEER_FROM_DHT);
                 UNUSED(l_s);
@@ -403,7 +392,6 @@ void dht_mgr::dht_cb(void* a_ctx,
         // -------------------------------------------------
         case DHT_EVENT_VALUES6:
         {
-                //NDBG_PRINT("[%sDHT_CB%s] DHT_EVENT_VALUES6\n", ANSI_COLOR_BG_RED, ANSI_COLOR_OFF);
                 int32_t l_s;
                 l_s = l_ses.add_peer_raw(AF_INET6, (uint8_t*)a_data, a_data_len, NTRNT_PEER_FROM_DHT);
                 UNUSED(l_s);
@@ -414,7 +402,6 @@ void dht_mgr::dht_cb(void* a_ctx,
         // -------------------------------------------------
         case DHT_EVENT_SEARCH_DONE:
         {
-                //NDBG_PRINT("[%sDHT_CB%s] DHT_EVENT_SEARCH_DONE\n", ANSI_COLOR_BG_RED, ANSI_COLOR_OFF);
                 break;
         }
         // -------------------------------------------------
@@ -422,7 +409,6 @@ void dht_mgr::dht_cb(void* a_ctx,
         // -------------------------------------------------
         case DHT_EVENT_SEARCH_DONE6:
         {
-                //NDBG_PRINT("[%sDHT_CB%s] DHT_EVENT_SEARCH_DONE6\n", ANSI_COLOR_BG_RED, ANSI_COLOR_OFF);
                 break;
         }
         // -------------------------------------------------
@@ -430,7 +416,6 @@ void dht_mgr::dht_cb(void* a_ctx,
         // -------------------------------------------------
         default:
         {
-                //NDBG_PRINT("[%sDHT_CB%s] DHT_EVENT ???\n", ANSI_COLOR_BG_RED, ANSI_COLOR_OFF);
                 break;
         }
         }

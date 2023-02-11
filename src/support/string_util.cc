@@ -284,8 +284,6 @@ int32_t parse_args(mutable_arg_list_t &ao_arg_list,
                    uint32_t a_buf_len,
                    char a_arg_sep)
 {
-        //NDBG_PRINT("a_buf:     %p\n", a_buf);
-        //NDBG_PRINT("a_buf_len: %d\n", (int)a_buf_len);
         // -------------------------------------------------
         // TODO -make zero copy impl
         // -------------------------------------------------
@@ -489,17 +487,14 @@ int32_t parse_cookies(arg_list_t &ao_cookie_list,
         const char *l_key = a_buf;
         const char *l_val=NULL;
         const char *l_keyend=NULL;
-        //NDBG_PRINT("SKIP l_del_chars\n");
         for(; is_char_in_set(l_del_set, sizeof(l_del_set), *l_key); ++l_key) {}
         if (*l_key == '\0') return NTRNT_STATUS_OK;
-        //NDBG_PRINT("l_key: %s\n", l_key);
         // -------------------------------------------------
         // NOTE: assume \0 terminated string
         // -------------------------------------------------
         arg_t l_arg;
         for(const char* i_p = l_key + 1; ; ++i_p)
         {
-                //NDBG_PRINT("i_p: %s\n", i_p);
                 switch (*i_p)
                 {
                 // -----------------------------------------
@@ -517,8 +512,6 @@ int32_t parse_cookies(arg_list_t &ao_cookie_list,
                                 while(l_len && *l_p_i == ' ') { --l_len; --l_p_i; }
                                 l_arg.m_val = l_val;
                                 l_arg.m_val_len = l_len;
-                                //NDBG_PRINT("l_key: \"%s\"\n", l_key_str.c_str());
-                                //NDBG_PRINT("l_val: \"%s\"\n", l_val_str.c_str());
                                 ao_cookie_list.push_back(l_arg);
                                 l_arg.clear();
                         }
@@ -545,7 +538,6 @@ int32_t parse_cookies(arg_list_t &ao_cookie_list,
                         // next non-delimiter character
                         // ---------------------------------
                         l_keyend = i_p++;
-                        //NDBG_PRINT("SKIP l_valdel_chars\n");
                         for(; is_char_in_set(l_valdel_set, sizeof(l_valdel_set), *i_p); ++i_p) {}
                         if (*i_p == '\0') return NTRNT_STATUS_OK;
                         if (*i_p != ';')
@@ -562,7 +554,7 @@ int32_t parse_cookies(arg_list_t &ao_cookie_list,
                 {
                         if (l_val)
                         {
-                                // we got "key=value;"
+                                // got "key=value;"
                                 l_arg.m_key = l_key;
                                 l_arg.m_key_len = l_keyend - l_key;
                                 int l_len = (int)(i_p - l_val);
@@ -570,14 +562,12 @@ int32_t parse_cookies(arg_list_t &ao_cookie_list,
                                 while(l_len && *l_p_i == ' ') { --l_len; --l_p_i; }
                                 l_arg.m_val = l_val;
                                 l_arg.m_val_len = l_len;
-                                //NDBG_PRINT("l_key: \"%s\"\n", l_key_str.c_str());
-                                //NDBG_PRINT("l_val: \"%s\"\n", l_val_str.c_str());
                                 ao_cookie_list.push_back(l_arg);
                                 l_arg.clear();
                         }
                         else
                         {
-                                // we got a key with no value
+                                // got a key with no value
                                 l_arg.m_key = l_key;
                                 l_arg.m_key_len = i_p - l_key;
                                 l_arg.m_val = NULL;
@@ -587,7 +577,6 @@ int32_t parse_cookies(arg_list_t &ao_cookie_list,
                         }
                         // jump to next non-delimiter char
                         ++i_p;
-                        //NDBG_PRINT("SKIP l_del_chars\n");
                         for(; is_char_in_set(l_del_set, sizeof(l_del_set), *i_p); ++i_p) {}
                         if (*i_p == '\0') return NTRNT_STATUS_OK;
                         l_key = i_p;

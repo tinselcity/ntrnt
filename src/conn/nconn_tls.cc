@@ -276,7 +276,7 @@ int32_t show_tls_info(nconn *a_nconn)
         l_cert = SSL_get_peer_certificate(l_tls);
         if (l_cert == NULL)
         {
-                NDBG_PRINT("SSL_get_peer_certificate error.  tls: %p\n", l_tls);
+                TRC_ERROR("SSL_get_peer_certificate error.  tls: %p\n", l_tls);
                 return NTRNT_STATUS_ERROR;
         }
         TRC_OUTPUT("%s", ANSI_COLOR_FG_MAGENTA);
@@ -1208,8 +1208,6 @@ ncconnect_state_top:
                 const char *l_alpn = NULL;
                 uint32_t l_alpn_len;
                 SSL_get0_alpn_selected(m_ssl, (const unsigned char**)&l_alpn, &l_alpn_len);
-                //NDBG_PRINT("showing alpn\n");
-                //mem_display((const uint8_t *)l_alpn, l_alpn_len, true);
                 if ((strncmp("h2",    l_alpn, l_alpn_len) == 0) ||
                    (strncmp("h2-16", l_alpn, l_alpn_len) == 0) ||
                    (strncmp("h2-14", l_alpn, l_alpn_len) == 0))

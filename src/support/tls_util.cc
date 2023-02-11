@@ -232,7 +232,6 @@ int32_t get_tls_options_str_val(const std::string a_options_str, long &ao_val)
                 l_token = l_options_str.substr(l_start, l_end - l_start);
                 l_start = l_end + l_delim.length();
                 l_end = l_options_str.find(l_delim, l_start);
-                //NDBG_PRINT("TOKEN: %s\n", l_token.c_str());
                 tls_options_map_t::iterator i_option  = g_tls_options_map.find(l_token);
                 if (i_option == g_tls_options_map.end())
                 {
@@ -242,7 +241,6 @@ int32_t get_tls_options_str_val(const std::string a_options_str, long &ao_val)
                 ao_val |= i_option->second;
         };
         l_token = l_options_str.substr(l_start, l_options_str.length() - l_start);
-        //NDBG_PRINT("TOKEN: %s\n", l_token.c_str());
         tls_options_map_t::iterator i_option  = g_tls_options_map.find(l_token);
         if (i_option == g_tls_options_map.end())
         {
@@ -250,7 +248,6 @@ int32_t get_tls_options_str_val(const std::string a_options_str, long &ao_val)
                 return NTRNT_STATUS_ERROR;
         }
         ao_val |= i_option->second;
-        //NDBG_PRINT("ao_val: 0x%08lX\n", ao_val);
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -364,8 +361,6 @@ int tls_cert_verify_callback_allow_self_signed(int ok, X509_STORE_CTX* store)
                          "tls_cert_verify_callback_allow_self_signed Error[%d].  Reason: %s",
                          err,
                          X509_verify_cert_error_string(err));
-                //NDBG_PRINT("tls_cert_verify_callback_allow_self_signed Error[%d].  Reason: %s\n",
-                //      err, X509_verify_cert_error_string(err));
         }
         return ok;
 }
@@ -387,7 +382,6 @@ int tls_cert_verify_callback(int ok, X509_STORE_CTX* store)
                 //int depth = X509_STORE_CTX_get_error_depth(store);
                 int err = X509_STORE_CTX_get_error(store);
                 snprintf(gts_last_tls_error, 256, "Error[%d].  Reason: %s", err, X509_verify_cert_error_string(err));
-                //NDBG_PRINT("Error[%d].  Reason: %s\n", err, X509_verify_cert_error_string(err));
         }
         return ok;
 }
@@ -461,7 +455,6 @@ static int validate_server_certificate_hostname(X509* a_cert, const char* a_host
         if (!l_get_ids_status)
         {
                 // No names found bail out
-                //NDBG_PRINT("LABEL[%s]: tls_x509_get_ids returned no names.\n", a_host);
                 return -1;
         }
         for(uint32_t i_name = 0; i_name < l_cert_name_list.size(); ++i_name)
@@ -471,7 +464,6 @@ static int validate_server_certificate_hostname(X509* a_cert, const char* a_host
                         return 0;
                 }
         }
-        //NDBG_PRINT("LABEL[%s]: Error hostname match failed.\n", a_host);
         return -1;
 }
 //! ----------------------------------------------------------------------------
@@ -483,12 +475,10 @@ static int validate_server_certificate_hostname(X509* a_cert, const char* a_host
 int32_t validate_server_certificate(SSL *a_tls, const char* a_host, bool a_disallow_self_signed)
 {
         X509* l_cert = NULL;
-        //NDBG_PRINT("a_host: %s\n", a_host);
         // Get certificate
         l_cert = SSL_get_peer_certificate(a_tls);
         if (NULL == l_cert)
         {
-                //NDBG_PRINT("LABEL[%s]: SSL_get_peer_certificate error.  tls: %p", a_host, (void *)a_tls);
                 return -1;
         }
         // Example of displaying cert
@@ -537,11 +527,12 @@ int32_t validate_server_certificate(SSL *a_tls, const char* a_host, bool a_disal
                                         X509_free(l_cert);
                                         l_cert = NULL;
                                 }
-                                //NDBG_PRINT("Error self-signed.\n");
+                                // self signed
+                                //TRC_ERROR("self-signed.\n");
                                 return -1;
                         }
                 }
-                //NDBG_PRINT("LABEL[%s]: SSL_get_verify_result[%ld]: %s",
+                //TRC_ERROR("LABEL[%s]: SSL_get_verify_result[%ld]: %s",
                 //      a_host,
                 //      l_tls_verify_result,
                 //      X509_verify_cert_error_string(l_tls_verify_result));
@@ -550,7 +541,6 @@ int32_t validate_server_certificate(SSL *a_tls, const char* a_host, bool a_disal
                         X509_free(l_cert);
                         l_cert = NULL;
                 }
-                //NDBG_PRINT("Error\n");
                 return -1;
         }
 #endif

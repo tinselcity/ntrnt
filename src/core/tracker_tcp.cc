@@ -231,7 +231,6 @@ private:
 //! ----------------------------------------------------------------------------
 static int32_t run_state_machine(void *a_data, evr_mode_t a_conn_mode)
 {
-        //NDBG_PRINT("RUN a_conn_mode: %d a_data: %p\n", a_conn_mode, a_data);
         //CHECK_FOR_NULL_ERROR(a_data);
         // TODO -return OK for a_data == nullptr
         if (!a_data)
@@ -334,11 +333,7 @@ static int32_t run_state_machine(void *a_data, evr_mode_t a_conn_mode)
         // state machine
         // **************************************************
         // --------------------------------------------------
-        //NDBG_PRINT("%sRUN_STATE_MACHINE%s: CONN[%p] STATE[%d] MODE: %d --START\n",
-        //            ANSI_COLOR_BG_YELLOW, ANSI_COLOR_OFF, &l_nconn, l_nconn.get_state(), a_conn_mode);
 state_top:
-        //NDBG_PRINT("%sRUN_STATE_MACHINE%s: CONN[%p] STATE[%d] MODE: %d\n",
-        //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF, &l_nconn, l_nconn.get_state(), a_conn_mode);
         switch(l_nconn.get_state())
         {
         // -------------------------------------------------
@@ -361,10 +356,8 @@ state_top:
         // -------------------------------------------------
         case nconn::NC_STATE_CONNECTING:
         {
-                //NDBG_PRINT("%sConnecting%s: host: %s\n", ANSI_COLOR_FG_RED, ANSI_COLOR_OFF, l_nconn.m_label.c_str());
                 int32_t l_s;
                 l_s = l_nconn.ncconnect();
-                //NDBG_PRINT("%sConnecting%s: ncconnect: %d\n", ANSI_COLOR_FG_RED, ANSI_COLOR_OFF, l_s);
                 if (l_s == nconn::NC_STATUS_ERROR)
                 {
                         int32_t l_s;
@@ -375,11 +368,8 @@ state_top:
                 }
                 if (l_nconn.is_connecting())
                 {
-                        //NDBG_PRINT("Still connecting...\n");
                         return NTRNT_STATUS_OK;
                 }
-                //NDBG_PRINT("%sConnected%s: label: %s\n", ANSI_COLOR_FG_RED, ANSI_COLOR_OFF, l_nconn.m_label.c_str());
-                //TRC_DEBUG("Connected: label: %s\n", l_nconn.m_label.c_str());
                 // Returning client fd
                 // If OK -change state to connected???
                 l_nconn.set_state(nconn::NC_STATE_CONNECTED);
@@ -429,8 +419,6 @@ state_top:
                         char *l_buf = nullptr;
                         uint64_t l_off = l_in_q->get_cur_write_offset();
                         l_s = l_nconn.nc_read(l_in_q, &l_buf, l_read);
-                        //l_ses.m_stat.m_upsv_bytes_read += l_read;
-                        //NDBG_PRINT("nc_read: status[%d] l_read[%d]\n", l_s, (int)l_read);
                         // ---------------------------------
                         // handle error
                         // ---------------------------------
@@ -508,11 +496,6 @@ state_top:
                         {
                                 http_msg *l_hmsg = static_cast<http_msg *>(l_rqst->m_resp);
                                 size_t l_parse_status = 0;
-                                //NDBG_PRINT("%sHTTP_PARSER%s: m_read_buf: %p, m_read_buf_idx: %d, l_bytes_read: %d\n",
-                                //              ANSI_COLOR_BG_WHITE, ANSI_COLOR_OFF,
-                                //              l_buf,
-                                //              (int)l_off,
-                                //              (int)l_read);
                                 l_hmsg->m_cur_buf = l_buf;
                                 l_hmsg->m_cur_off = l_off;
                                 l_parse_status = http_parser_execute(l_hmsg->m_http_parser,
@@ -524,7 +507,6 @@ state_top:
                                         TRC_ERROR("Parse error.  Reason: %s: %s\n",
                                                    http_errno_name((enum http_errno)l_hmsg->m_http_parser->http_errno),
                                                    http_errno_description((enum http_errno)l_hmsg->m_http_parser->http_errno));
-                                        //TRC_VERBOSE("teardown status: %d\n", HTTP_STATUS_BAD_GATEWAY);
                                         TRC_ERROR("unhandled connection state: %d\n", l_s);
                                         int32_t l_s;
                                         l_s = tracker_tcp_rqst::teardown(l_rqst, l_nconn, HTTP_STATUS_BAD_GATEWAY);
@@ -644,7 +626,6 @@ state_top:
                         uint32_t l_written = 0;
                         int32_t l_s = nconn::NC_STATUS_OK;
                         l_s = l_nconn.nc_write(l_out_q, l_written);
-                        //NDBG_PRINT("nc_write: status[%d] l_written[%d]\n", l_s, (int)l_written);
                         //l_ses.m_stat.m_upsv_bytes_written += l_written;
                         // ---------------------------------
                         // handle error
@@ -718,7 +699,6 @@ state_top:
         // -------------------------------------------------
         default:
         {
-                //NDBG_PRINT("default\n");
                 TRC_ERROR("unexpected conn state %d\n", l_nconn.get_state());
                 return NTRNT_STATUS_ERROR;
         }
@@ -879,13 +859,11 @@ int32_t tracker_tcp_rqst::serialize(nbq &ao_q)
         // -------------------------------------------------
         // generate request string
         // -------------------------------------------------
-        //NDBG_PRINT("HOST: %s PATH: %s\n", a_reqlet.m_url.m_host.c_str(), l_path_ref.c_str());
         int32_t l_len = 0;
         char l_buf[2048];
         l_len = snprintf(l_buf, sizeof(l_buf),
                         "%s %s HTTP/1.1",
                         m_verb.c_str(), l_path.c_str());
-        //NDBG_PRINT("request line: %.*s\n", l_len, l_buf);
         nbq_write_request_line(ao_q, l_buf, l_len);
         // -------------------------------------------------
         // accedpt
@@ -916,14 +894,11 @@ int32_t tracker_tcp_rqst::start(session &a_session)
         // try get idle from proxy pool
         // -------------------------------------------------
         nresolver& l_resolver = a_session.get_resolver();
-        //NDBG_PRINT("l_nconn: %p\n", l_nconn);
         // Try fast
         host_info l_host_info;
-        //NDBG_PRINT("resolve: %s\n", m_host.c_str());
         l_s = l_resolver.lookup_tryfast(m_host,
                                         m_port,
                                         l_host_info);
-        //NDBG_PRINT("l_resolver: %d\n", l_s);
         if (l_s != NTRNT_STATUS_OK)
         {
                 // sync dns
@@ -947,7 +922,6 @@ int32_t tracker_tcp_rqst::start(session &a_session)
         else if (m_scheme == SCHEME_TLS) { m_nconn = new nconn_tls(); }
         if (!m_nconn)
         {
-                //NDBG_PRINT("Returning nullptr\n");
                 return NTRNT_STATUS_AGAIN;
         }
         m_nconn->set_label(m_label);
@@ -1025,14 +999,6 @@ int32_t tracker_tcp_rqst::teardown(tracker_tcp_rqst *a_rqst,
                                    nconn &a_nconn,
                                    http_status_t a_status)
 {
-        //NDBG_PRINT("%sTEARDOWN%s: a_nconn[%s]: %p session: %p a_status: %8d a_rqst: %p\n",
-        //           ANSI_COLOR_FG_RED,
-        //           ANSI_COLOR_OFF,
-        //           a_nconn.get_label().c_str(),
-        //           &a_nconn,
-        //           &a_session,
-        //           a_status,
-        //           a_rqst);
         if (a_rqst &&
             a_rqst->m_nconn)
         {
@@ -1131,7 +1097,6 @@ int32_t tracker_tcp_rqst::evr_event_readable_cb(void *a_data)
         {
                 l_rqst->m_evr_readable = nullptr;
         }
-        NDBG_PRINT("readable\n");
         return run_state_machine(a_data, EVR_MODE_READ);
 }
 //! ----------------------------------------------------------------------------
@@ -1392,7 +1357,6 @@ int32_t tracker_tcp::scrape(void)
 //! ----------------------------------------------------------------------------
 int32_t tracker_tcp::rqst_dequeue(void *a_data)
 {
-        // TODO FIX!!!
         if (!a_data)
         {
                 // TODO -log error???
@@ -1400,8 +1364,6 @@ int32_t tracker_tcp::rqst_dequeue(void *a_data)
         }
         tracker_tcp &l_tracker = *(static_cast <tracker_tcp *>(a_data));
         session &l_session = l_tracker.m_session;
-        //NDBG_PRINT("%sSTART%s\n", ANSI_COLOR_BG_GREEN, ANSI_COLOR_OFF);
-        //NDBG_PRINT("l_session.m_tcp_rqst_list.size(): %d\n", (int)l_session.m_tcp_rqst_list.size());
         // -------------------------------------------------
         // dequeue until stopped or empty
         // -------------------------------------------------
@@ -1420,7 +1382,6 @@ int32_t tracker_tcp::rqst_dequeue(void *a_data)
                 // -----------------------------------------
                 // get front
                 // -----------------------------------------
-                //NDBG_PRINT("%sSTART%s\n", ANSI_COLOR_BG_GREEN, ANSI_COLOR_OFF);
                 tracker_tcp_rqst &l_rqst = *(l_list.front());
                 l_list.pop_front();
                 // -----------------------------------------
@@ -1467,8 +1428,6 @@ int32_t tracker_tcp::handle_announce_response(http_resp& a_resp)
         m_stat_last_announce_time_s = l_now_s;
         m_next_announce_s = l_now_s + NTRNT_SESSION_TRACKER_ANNOUNCE_S;
         ++m_stat_announce_num;
-        //NDBG_PRINT("%sDONE%s\n", ANSI_COLOR_FG_GREEN, ANSI_COLOR_OFF);
-        //a_resp.show();
         // -------------------------------------------------
         // get body
         // -------------------------------------------------
@@ -1513,7 +1472,6 @@ int32_t tracker_tcp::handle_announce_response(http_resp& a_resp)
                 if ((i_m.first == "peers") &&
                     (i_obj.m_type == BE_OBJ_STRING))
                 {
-                        //NDBG_PRINT("[HOST: %s] peers: raw: %lu -- ipv4: %lu\n", m_host.c_str(), i_obj.m_len, i_obj.m_len/6);
                         for (size_t i_p = 0; i_p < i_obj.m_len/6; ++i_p)
                         {
                                 off_t l_off = i_p*6;
@@ -1526,7 +1484,6 @@ int32_t tracker_tcp::handle_announce_response(http_resp& a_resp)
                 else if ((i_m.first == "peers6") &&
                          (i_obj.m_type == BE_OBJ_STRING))
                 {
-                        //NDBG_PRINT("[HOST: %s] peers6: raw: %lu -- ipv6: %lu\n", m_host.c_str(), i_obj.m_len, i_obj.m_len/18);
                         for (size_t i_p = 0; i_p < i_obj.m_len/18; ++i_p)
                         {
                                 off_t l_off = i_p*18;
@@ -1556,7 +1513,6 @@ int32_t tracker_tcp::handle_scrape_response(http_resp& a_resp)
 {
         m_stat_last_scrape_time_s = get_time_s();
         ++m_stat_scrape_num;
-        //NDBG_PRINT("%sDONE%s\n", ANSI_COLOR_FG_GREEN, ANSI_COLOR_OFF);
         // -------------------------------------------------
         // get body
         // -------------------------------------------------

@@ -19,7 +19,7 @@
                 int _status = 0;\
                 _status = _conn.set_opt((_opt), (_buf), (_len));\
                 if (_status != NTRNT_STATUS_OK) {\
-                        NDBG_PRINT("STATUS_ERROR: Failed to set_opt %d.  Status: %d.\n", _opt, _status); \
+                        TRC_ERROR("failed to set_opt %d.  Status: %d.\n", _opt, _status); \
                         return NTRNT_STATUS_ERROR;\
                 }\
         } while(0)

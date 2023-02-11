@@ -36,8 +36,7 @@ ai_cache::ai_cache(const std::string &a_ai_cache_file):
                 int32_t l_status = read(m_ai_cache_file, m_ai_cache_map);
                 if (l_status != NTRNT_STATUS_OK)
                 {
-                        //NDBG_PRINT("Error: read with cache file: %s.\n",
-                        //                m_ai_cache_file.c_str());
+                        //TRC_ERROR("read with cache file: %s.\n", m_ai_cache_file.c_str());
                 }
         }
 }
@@ -53,8 +52,7 @@ ai_cache::~ai_cache()
                 int32_t l_status = sync(m_ai_cache_file, m_ai_cache_map);
                 if (l_status != NTRNT_STATUS_OK)
                 {
-                        //NDBG_PRINT("Error: sync with ai_cache file: %s.\n",
-                        //                m_ai_cache_file.c_str());
+                        //TRC_ERROR("sync with ai_cache file: %s.\n", m_ai_cache_file.c_str());
                 }
         }
         for(ai_cache_map_t::iterator i_h = m_ai_cache_map.begin();
@@ -80,11 +78,11 @@ host_info *ai_cache::lookup(const std::string a_label)
         {
                 l_host_info = m_ai_cache_map[a_label];
                 // Check expires
-                //NDBG_PRINT("Seconds left: %ld\n", (l_host_info->m_expires_s - get_time_s()));
+                //TRC_DEBUG("Seconds left: %ld\n", (l_host_info->m_expires_s - get_time_s()));
                 if (l_host_info->m_expires_s &&
                    (get_time_s() > l_host_info->m_expires_s))
                 {
-                        //NDBG_PRINT("KEY: %s EXPIRED! -diff: %lu -expires: %lu cur: %lu -l_host_info: %p\n",
+                        //TRC_ERROR("KEY: %s EXPIRED! -diff: %lu -expires: %lu cur: %lu -l_host_info: %p\n",
                         //                a_label.c_str(),
                         //                get_time_s() - l_host_info->m_expires_s,
                         //                l_host_info->m_expires_s,
@@ -146,7 +144,7 @@ int32_t ai_cache::sync(const std::string &a_ai_cache_file,
         FILE *l_file_ptr = fopen(a_ai_cache_file.c_str(), "w+");
         if (l_file_ptr == NULL)
         {
-                //NDBG_PRINT("Error performing fopen. Reason: %s\n", strerror(errno));
+                //TRC_ERROR("Error performing fopen. Reason: %s\n", strerror(errno));
                 return NTRNT_STATUS_ERROR;
         }
         fprintf(l_file_ptr, "[");
@@ -172,7 +170,7 @@ int32_t ai_cache::sync(const std::string &a_ai_cache_file,
         l_status = fclose(l_file_ptr);
         if (l_status != 0)
         {
-                NDBG_PRINT("Error performing fclose. Reason: %s\n", strerror(errno));
+                //TRC_ERROR("performing fclose. Reason: %s\n", strerror(errno));
                 return NTRNT_STATUS_ERROR;
         }
         return NTRNT_STATUS_OK;
@@ -190,13 +188,13 @@ int32_t ai_cache::read(const std::string &a_ai_cache_file,
         l_status = stat(a_ai_cache_file.c_str(), &l_stat);
         if (l_status != 0)
         {
-                //NDBG_PRINT("Error performing stat on file: %s.  Reason: %s\n",
+                //TRC_ERROR("performing stat on file: %s.  Reason: %s\n",
                 //           a_ai_cache_file.c_str(), strerror(errno));
                 return NTRNT_STATUS_OK;
         }
         if (!(l_stat.st_mode & S_IFREG))
         {
-                //NDBG_PRINT("Error opening file: %s.  Reason: is NOT a regular file\n",
+                //TRC_ERROR("opening file: %s.  Reason: is NOT a regular file\n",
                 //           a_ai_cache_file.c_str());
                 return NTRNT_STATUS_OK;
         }
@@ -204,7 +202,7 @@ int32_t ai_cache::read(const std::string &a_ai_cache_file,
         l_file = fopen(a_ai_cache_file.c_str(),"r");
         if (NULL == l_file)
         {
-                //NDBG_PRINT("Error opening file: %s.  Reason: %s\n",
+                //TRC_ERROR("opening file: %s.  Reason: %s\n",
                 //           a_ai_cache_file.c_str(), strerror(errno));
                 return NTRNT_STATUS_OK;
         }
@@ -215,8 +213,7 @@ int32_t ai_cache::read(const std::string &a_ai_cache_file,
         l_read_size = fread(l_buf, 1, l_size, l_file);
         if (l_read_size != l_size)
         {
-                //NDBG_PRINT("Error performing fread.  Reason: %s [%d:%d]\n",
-                //                strerror(errno), l_read_size, l_size);
+                //TRC_ERROR("performing fread.  Reason: %s [%d:%d]\n", strerror(errno), l_read_size, l_size);
                 return NTRNT_STATUS_OK;
         }
         std::string l_buf_str;
@@ -226,7 +223,7 @@ int32_t ai_cache::read(const std::string &a_ai_cache_file,
         l_doc.Parse(l_buf_str.c_str());
         if (!l_doc.IsArray())
         {
-                //NDBG_PRINT("Error reading json from file: %s. Data not an array\n",
+                //TRC_ERROR("reading json from file: %s. Data not an array\n",
                 //                a_ai_cache_file.c_str());
                 if (l_buf)
                 {
@@ -240,7 +237,7 @@ int32_t ai_cache::read(const std::string &a_ai_cache_file,
         {
                 if (!l_doc[i_record].IsObject())
                 {
-                        //NDBG_PRINT("Error reading json from file: %s. Array member not an object\n",
+                        //TRC_ERROR("reading json from file: %s. Array member not an object\n",
                         //           a_ai_cache_file.c_str());
                         if (l_buf)
                         {
@@ -268,7 +265,7 @@ int32_t ai_cache::read(const std::string &a_ai_cache_file,
         l_status = fclose(l_file);
         if (l_status != NTRNT_STATUS_OK)
         {
-                NDBG_PRINT("Error performing fclose.  Reason: %s\n", strerror(errno));
+                //TRC_ERROR("Error performing fclose.  Reason: %s\n", strerror(errno));
                 if (l_buf)
                 {
                         free(l_buf);

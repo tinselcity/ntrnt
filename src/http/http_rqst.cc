@@ -299,12 +299,13 @@ int32_t http_rqst::parse_uri()
         {
                 return NTRNT_STATUS_OK;
         }
+        // -------------------------------------------------
         // Copy out the url...
+        // -------------------------------------------------
         // TODO zero copy???
         if (!m_q ||
            !m_p_url.m_len)
         {
-                NDBG_PRINT("ERROR!\n");
                 return NTRNT_STATUS_ERROR;
         }
         // -------------------------------------------------
@@ -315,8 +316,6 @@ int32_t http_rqst::parse_uri()
         m_url_buf_len = m_p_url.m_len;
         http_parser_url l_url;
         http_parser_url_init(&l_url);
-        // silence bleating memory sanitizers...
-        //memset(&l_url, 0, sizeof(l_url));
         // -------------------------------------------------
         // parse
         // -------------------------------------------------
@@ -334,10 +333,7 @@ int32_t http_rqst::parse_uri()
         // -------------------------------------------------
         for(uint32_t i_part = 0; i_part < UF_MAX; ++i_part)
         {
-                //NDBG_PRINT("i_part: %d offset: %d len: %d\n", i_part, l_url.field_data[i_part].off, l_url.field_data[i_part].len);
-                //NDBG_PRINT("len+off: %d\n",       l_url.field_data[i_part].len + l_url.field_data[i_part].off);
                 if (l_url.field_data[i_part].len &&
-                  // TODO Some bug with parser -parsing urls like "http://127.0.0.1" sans paths
                   ((l_url.field_data[i_part].len + l_url.field_data[i_part].off) <= m_url_buf_len))
                 {
                         switch(i_part)
@@ -346,28 +342,24 @@ int32_t http_rqst::parse_uri()
                         {
                                 m_url_path.m_data = m_url_buf + l_url.field_data[i_part].off;
                                 m_url_path.m_len = l_url.field_data[i_part].len;
-                                //NDBG_PRINT("l_part[UF_PATH]: %.*s\n", m_url_path.m_len, m_url_path.m_data);
                                 break;
                         }
                         case UF_QUERY:
                         {
                                 m_url_query.m_data = m_url_buf + l_url.field_data[i_part].off;
                                 m_url_query.m_len = l_url.field_data[i_part].len;
-                                //NDBG_PRINT("l_part[UF_QUERY]: %.*s\n", m_url_query.m_len, m_url_query.m_data);
                                 break;
                         }
                         case UF_FRAGMENT:
                         {
                                 m_url_fragment.m_data = m_url_buf + l_url.field_data[i_part].off;
                                 m_url_fragment.m_len = l_url.field_data[i_part].len;
-                                //NDBG_PRINT("l_part[UF_FRAGMENT]: %.*s\n", m_url_fragment.m_len, m_url_fragment.m_data);
                                 break;
                         }
                         case UF_HOST:
                         {
                                 m_url_host.m_data = m_url_buf + l_url.field_data[i_part].off;
                                 m_url_host.m_len = l_url.field_data[i_part].len;
-                                //NDBG_PRINT("l_part[UF_PATH]: %.*s\n", m_url_host.m_len, m_url_host.m_data);
                                 break;
                         }
                         case UF_USERINFO:

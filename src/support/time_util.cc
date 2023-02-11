@@ -126,7 +126,6 @@ uint64_t get_time_s(void)
         {
                 return g_last_s;
         }
-        //NDBG_PRINT("HERE g_count: %lu\n", ++g_count);
 	struct timespec l_timespec;
 	_rt_gettime(l_timespec);
 	g_last_s = (((uint64_t)l_timespec.tv_sec));
@@ -143,7 +142,6 @@ uint64_t get_time_ms(void)
         {
                 return g_last_ms;
         }
-        //NDBG_PRINT("HERE g_count: %lu\n", ++g_count);
 	struct timespec l_timespec;
         _rt_gettime(l_timespec);
 	g_last_ms = (((uint64_t)l_timespec.tv_sec) * 1000) + (((uint64_t)l_timespec.tv_nsec) / 1000000);
@@ -160,7 +158,6 @@ uint64_t get_time_us(void)
         {
                 return g_last_us;
         }
-        //NDBG_PRINT("HERE g_count: %lu\n", ++g_count);
 	struct timespec l_timespec;
         _rt_gettime(l_timespec);
         g_last_us = (((uint64_t)l_timespec.tv_sec) * 1000000) + (((uint64_t)l_timespec.tv_nsec) / 1000);

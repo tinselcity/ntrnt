@@ -347,12 +347,11 @@ int32_t session::init_w_magnet(const std::string& a_path)
                 // -----------------------------------------
                 _ELIF_Q_KEY("xt")
                 {
-                        //NDBG_PRINT("%.*s: %.*s\n",
-                        //           (int)i_q.m_key_len, i_q.m_key,
-                        //           (int)i_q.m_val_len, i_q.m_val);
+                        // ---------------------------------
                         // format "urn:<type>"
                         // only support for:
                         // BitTorrent info hash (BTIH) "btih"
+                        // ---------------------------------
 #define _URN_BTIH "urn:btih:"
                         if(strncmp(i_q.m_val, _URN_BTIH, sizeof(_URN_BTIH)-1) == 0)
                         {
@@ -800,8 +799,6 @@ int32_t session::udp_mux(struct sockaddr_storage& a_ss,
         // -------------------------------------------------
         if (a_msg[0] == 'd')
         {
-                //NDBG_PRINT("DHT msg\n");
-                //NDBG_HEXDUMP(a_msg, a_msg_len);
                 if (m_dht_mgr)
                 {
                         l_s = m_dht_mgr->recv_msg(a_ss, a_ss_len, a_msg, a_msg_len);
@@ -824,7 +821,6 @@ int32_t session::udp_mux(struct sockaddr_storage& a_ss,
                 (a_msg[2] == 0) &&
                 (a_msg[3] <= 3))
         {
-                //NDBG_PRINT("UDP tracker msg: 0x%08x\n", ((*(uint32_t*)(a_msg))));
                 int32_t l_s;
                 l_s = tracker_udp::handle_resp(m_tid_tracker_udp_map, a_msg, a_msg_len);
                 if (l_s != NTRNT_STATUS_OK)
@@ -838,9 +834,6 @@ int32_t session::udp_mux(struct sockaddr_storage& a_ss,
         // -------------------------------------------------
         else
         {
-                //std::string l_host;
-                //NDBG_PRINT("[%sUTP%s] [HOST: %s] msg len: %u\n", ANSI_COLOR_BG_YELLOW, ANSI_COLOR_OFF, sas_to_str(a_ss).c_str(), a_msg_len);
-                //NDBG_HEXDUMP(a_msg, a_msg_len);
                 // TODO
                 // add inactivity timer???
                 utp_context* l_ctx = m_peer_mgr.get_utp_ctx();
@@ -852,7 +845,6 @@ int32_t session::udp_mux(struct sockaddr_storage& a_ss,
                 // -----------------------------------------
                 // issue deferred acks
                 // -----------------------------------------
-                //NDBG_PRINT("utp_issue_deferred_acks: a_msg_len: %u\n", a_msg_len);
                 utp_issue_deferred_acks(l_ctx);
                 if (l_s != 1)
                 {
@@ -988,7 +980,6 @@ int32_t session::udp_fd_readable_cb(void *a_data)
                 // -----------------------------------------
                 // clear buffer
                 // -----------------------------------------
-                //memset(s_msg, 0, _MSG_SIZE_MAX);
                 struct sockaddr_storage l_from;
                 socklen_t l_from_len = sizeof(l_from);
                 int32_t l_s;
@@ -999,10 +990,6 @@ int32_t session::udp_fd_readable_cb(void *a_data)
                                0,
                                (struct sockaddr*)&l_from,
                                &l_from_len);
-                //NDBG_PRINT("[%srecvfrom%s: %d] [fd: %d] [errno[%d]: %s]\n",
-                //           ANSI_COLOR_FG_GREEN, ANSI_COLOR_OFF,
-                //           l_s, l_fd,
-                //           errno, strerror(errno));
                 if (l_s < 0)
                 {
                         // ---------------------------------
@@ -1053,7 +1040,6 @@ int32_t session::udp_fd_readable_cb(void *a_data)
 //! ----------------------------------------------------------------------------
 int32_t session::udp_fd_writeable_cb(void *a_data)
 {
-        //NDBG_PRINT("[WRITEABLE]\n");
         if (!a_data)
         {
                 TRC_ERROR("data == null");
@@ -1080,7 +1066,7 @@ int32_t session::udp_fd_writeable_cb(void *a_data)
 //! ----------------------------------------------------------------------------
 int32_t session::udp_fd_error_cb(void *a_data)
 {
-        NDBG_PRINT("[%sERROR%s]\n", ANSI_COLOR_FG_RED, ANSI_COLOR_OFF);
+        // do nothing
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -1221,10 +1207,6 @@ int32_t session::udp6_fd_readable_cb(void *a_data)
                                0,
                                (struct sockaddr*)&l_from,
                                &l_from_len);
-                //NDBG_PRINT("[%srecvfrom%s: %d] [fd: %d] [errno[%d]: %s]\n",
-                //           ANSI_COLOR_FG_GREEN, ANSI_COLOR_OFF,
-                //           l_s, l_fd,
-                //           errno, strerror(errno));
                 if (l_s < 0)
                 {
                         // ---------------------------------
@@ -1303,7 +1285,7 @@ int32_t session::udp6_fd_writeable_cb(void *a_data)
 //! ----------------------------------------------------------------------------
 int32_t session::udp6_fd_error_cb(void *a_data)
 {
-        NDBG_PRINT("[%sERROR%s]\n", ANSI_COLOR_FG_RED, ANSI_COLOR_OFF);
+        // do nothing
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -1417,7 +1399,6 @@ int32_t session::t_trackers(void)
                 if (l_now_s > i_t->m_next_announce_s)
                 {
                         i_t->m_next_announce_s = l_now_s + NTRNT_SESSION_TRACKER_ANNOUNCE_RETRY_S;
-                        NDBG_PRINT(": %sannounce%s: %s\n", ANSI_COLOR_BG_MAGENTA, ANSI_COLOR_OFF, i_t->str().c_str());
                         l_s = i_t->announce();
                         if (l_s != NTRNT_STATUS_OK)
                         {
@@ -1431,7 +1412,6 @@ int32_t session::t_trackers(void)
                 if (l_now_s > i_t->m_next_scrape_s)
                 {
                         i_t->m_next_scrape_s = l_now_s + NTRNT_SESSION_TRACKER_SCRAPE_RETRY_S;
-                        //NDBG_PRINT(": scrape: %s\n", i_t->str().c_str());
                         l_s = i_t->scrape();
                         if (l_s != NTRNT_STATUS_OK)
                         {
@@ -1592,7 +1572,6 @@ int32_t session::run(void)
         {
                 return NTRNT_STATUS_ERROR;
         }
-        //NDBG_PRINT(": run...\n");
         m_stopped = false;
         // -------------------------------------------------
         // init trackers

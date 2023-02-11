@@ -624,10 +624,8 @@ int32_t nbq::split(nbq **ao_nbq_tail, size_t a_offset)
                         TRC_ERROR("block iter in nbq == nullptr\n");
                         return NTRNT_STATUS_ERROR;
                 }
-                //NDBG_PRINT("adding tail block\n");
                 l_nbq->m_q.push_back(*i_b);
                 (*i_b)->read_reset();
-                //NDBG_PRINT("removing tail block\n");
                 m_cur_write_offset -= (*i_b)->written();
                 l_nbq->m_cur_write_offset += (*i_b)->written();
                 m_q.erase(i_b++);

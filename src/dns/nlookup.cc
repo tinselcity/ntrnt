@@ -18,9 +18,6 @@ namespace ns_ntrnt {
 //! ----------------------------------------------------------------------------
 int32_t nlookup(const std::string &a_host, uint16_t a_port, host_info &ao_host_info)
 {
-        //NDBG_PRINT("%sRESOLVE%s: a_host: %s a_port: %d\n",
-        //           ANSI_COLOR_BG_RED, ANSI_COLOR_OFF,
-        //           a_host.c_str(), a_port);
         // Initialize...
         ao_host_info.m_sa_len = sizeof(ao_host_info.m_sa);
         memset((void*) &(ao_host_info.m_sa), 0, ao_host_info.m_sa_len);
@@ -38,8 +35,7 @@ int32_t nlookup(const std::string &a_host, uint16_t a_port, host_info &ao_host_i
         l_gaierr = getaddrinfo(a_host.c_str(), portstr, &l_hints, &l_addrinfo);
         if (l_gaierr != 0)
         {
-                //NDBG_PRINT("Error getaddrinfo '%s': %s\n",
-                //           a_host.c_str(), gai_strerror(l_gaierr));
+                //TRC_ERROR("Error getaddrinfo '%s': %s\n", a_host.c_str(), gai_strerror(l_gaierr));
                 return NTRNT_STATUS_ERROR;
         }
         // Find the first IPv4 and IPv6 entries.
@@ -65,26 +61,21 @@ int32_t nlookup(const std::string &a_host, uint16_t a_port, host_info &ao_host_i
                 }
                 }
         }
-        //NDBG_PRINT("RESOLVE:\n");
         // If there's an IPv4 address, use that, otherwise try IPv6.
         if (l_addrinfo_v4 != NULL)
         {
                 if (sizeof(ao_host_info.m_sa) < l_addrinfo_v4->ai_addrlen)
                 {
-                        NDBG_PRINT("Error %s - sockaddr too small (%lu < %lu)\n",
-                                   a_host.c_str(),
-                              (unsigned long) sizeof(ao_host_info.m_sa),
-                              (unsigned long) l_addrinfo_v4->ai_addrlen);
+                        //TRC_ERROR("%s - sockaddr too small (%lu < %lu)\n",
+                        //          a_host.c_str(),
+                        //          (unsigned long) sizeof(ao_host_info.m_sa),
+                        //          (unsigned long) l_addrinfo_v4->ai_addrlen);
                         return NTRNT_STATUS_ERROR;
                 }
                 ao_host_info.m_sock_family = l_addrinfo_v4->ai_family;
                 ao_host_info.m_sock_type = l_addrinfo_v4->ai_socktype;
                 ao_host_info.m_sock_protocol = l_addrinfo_v4->ai_protocol;
                 ao_host_info.m_sa_len = l_addrinfo_v4->ai_addrlen;
-                //NDBG_PRINT("memmove: addrlen: %d\n", l_addrinfo_v4->ai_addrlen);
-                //mem_display((const uint8_t *)l_addrinfo_v4->ai_addr,
-                //                   l_addrinfo_v4->ai_addrlen);
-                //show_host_info();
                 memmove(&(ao_host_info.m_sa),
                         l_addrinfo_v4->ai_addr,
                         l_addrinfo_v4->ai_addrlen);
@@ -96,20 +87,16 @@ int32_t nlookup(const std::string &a_host, uint16_t a_port, host_info &ao_host_i
         {
                 if (sizeof(ao_host_info.m_sa) < l_addrinfo_v6->ai_addrlen)
                 {
-                        NDBG_PRINT("Error %s - sockaddr too small (%lu < %lu)\n",
-                                   a_host.c_str(),
-                              (unsigned long) sizeof(ao_host_info.m_sa),
-                              (unsigned long) l_addrinfo_v6->ai_addrlen);
+                        //TRC_ERROR("%s - sockaddr too small (%lu < %lu)\n",
+                        //          a_host.c_str(),
+                        //          (unsigned long) sizeof(ao_host_info.m_sa),
+                        //          (unsigned long) l_addrinfo_v6->ai_addrlen);
                         return NTRNT_STATUS_ERROR;
                 }
                 ao_host_info.m_sock_family = l_addrinfo_v6->ai_family;
                 ao_host_info.m_sock_type = l_addrinfo_v6->ai_socktype;
                 ao_host_info.m_sock_protocol = l_addrinfo_v6->ai_protocol;
                 ao_host_info.m_sa_len = l_addrinfo_v6->ai_addrlen;
-                //NDBG_PRINT("memmove: addrlen: %d\n", l_addrinfo_v6->ai_addrlen);
-                //mem_display((const uint8_t *)l_addrinfo_v6->ai_addr,
-                //                    l_addrinfo_v6->ai_addrlen);
-                //show_host_info();
                 memmove(&ao_host_info.m_sa,
                         l_addrinfo_v6->ai_addr,
                         l_addrinfo_v6->ai_addrlen);
@@ -119,8 +106,7 @@ int32_t nlookup(const std::string &a_host, uint16_t a_port, host_info &ao_host_i
         }
         else
         {
-                NDBG_PRINT("Error no valid address found for host %s\n",
-                           a_host.c_str());
+                //TRC_ERROR("Error no valid address found for host %s\n", a_host.c_str());
                 return NTRNT_STATUS_ERROR;
         }
         // Set to 60min -cuz getaddr-info stinks...
