@@ -674,6 +674,7 @@ int main(int argc, char** argv)
         // -------------------------------------------------
         // session
         // -------------------------------------------------
+        void *l_timer = NULL;
         ns_ntrnt::upnp l_upnp;
         int32_t l_ret = STATUS_OK;
         ns_ntrnt::session l_ses;
@@ -830,7 +831,6 @@ int main(int argc, char** argv)
         // -------------------------------------------------
         // fire status
         // -------------------------------------------------
-        void *l_timer = NULL;
         l_s = g_session->add_timer((uint32_t)(_T_DISPLAY_STATUS_MS),
                                    _t_display_status,
                                    (void *)nullptr,
