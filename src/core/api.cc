@@ -54,7 +54,9 @@ int32_t session::api_get_info(std::string& ao_body)
         // -------------------------------------------------
         // progress
         // -------------------------------------------------
-        // TODO
+        btfield& l_pieces = m_pickr.get_pieces();
+        l_writer.Key("pieces_have");
+        l_writer.Uint64(l_pieces.get_count());
         // -------------------------------------------------
         // end object
         // -------------------------------------------------
@@ -245,6 +247,17 @@ int32_t peer_mgr::get_peers_api(std::string& ao_body)
                 l_writer.Uint64(l_p.m_stat_bytes_sent);
                 l_writer.Key("sent_per_s");
                 l_writer.Uint64(l_p.m_stat_bytes_sent_per_s);
+                // -----------------------------------------
+                // interest/choke
+                // -----------------------------------------
+                l_writer.Key("am_choking");
+                l_writer.Bool(l_p.m_btp_am_choking);
+                l_writer.Key("am_interested");
+                l_writer.Bool(l_p.m_btp_am_interested);
+                l_writer.Key("peer_choking");
+                l_writer.Bool(l_p.m_btp_peer_choking);
+                l_writer.Key("peer_interested");
+                l_writer.Bool(l_p.m_btp_peer_interested);
                 // -----------------------------------------
                 // geo
                 // -----------------------------------------

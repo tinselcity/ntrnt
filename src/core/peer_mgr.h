@@ -76,6 +76,7 @@ public:
         // -------------------------------------------------
         // get
         // -------------------------------------------------
+        peer_vec_t& get_peer_vec(void) { return m_peer_vec; }
         peer_vec_t& get_peer_connected_vec(void) { return m_peer_connected_vec; }
         bool get_no_accept(void) {return m_no_accept; }
         utp_context* get_utp_ctx(void) { return m_utp_ctx; }

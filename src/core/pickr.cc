@@ -35,7 +35,9 @@ pickr::pickr(session& a_session):
         m_stub(),
         m_stat_rm_br_expired(0),
         m_stat_rm_br_ctx(0),
-        m_stat_rm_br_block(0)
+        m_stat_rm_br_block(0),
+        m_stat_num_blocks_rqstd(0),
+        m_stat_num_blocks_recvd(0)
 {
 }
 //! ----------------------------------------------------------------------------
@@ -180,7 +182,9 @@ bool pickr::validate_piece(uint32_t a_piece)
                 TRC_ERROR("info pieces == null");
                 return false;
         }
+        // -------------------------------------------------
         // sanity check len
+        // -------------------------------------------------
         const id_vector_t& l_ids = (*m_info_pieces);
         uint32_t l_num_pieces = l_ids.size();
         size_t l_size = (size_t)m_info_length;
@@ -189,7 +193,9 @@ bool pickr::validate_piece(uint32_t a_piece)
                 TRC_ERROR("piece[%u] > number of pieces[%u]", a_piece,  l_num_pieces);
                 return false;
         }
+        // -------------------------------------------------
         // calculate offset/length of piece
+        // -------------------------------------------------
         size_t l_off = (size_t)(m_info_piece_length*(size_t)a_piece);
         size_t l_len = (size_t)m_info_piece_length;
         // -------------------------------------------------
@@ -550,6 +556,7 @@ int32_t pickr::peer_request_more(peer& a_peer)
         // -------------------------------------------------
         for (auto && i_b : l_blk_rqst_vec)
         {
+                ++m_stat_num_blocks_rqstd;
                 l_s = a_peer.btp_send_request(i_b.m_idx, i_b.m_off, i_b.m_len);
                 if (l_s != NTRNT_STATUS_OK)
                 {
@@ -776,6 +783,7 @@ int32_t pickr::recv_piece(peer* a_peer,
                           uint32_t a_off,
                           uint32_t a_len)
 {
+        ++m_stat_num_blocks_recvd;
         if (a_q.read_avail() < a_len)
         {
                 TRC_ERROR("read avail < len");
