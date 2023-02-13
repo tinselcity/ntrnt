@@ -39,12 +39,12 @@ TODO...
 #### `info hash` Torrenting
 This is probably an easy addition to the open source clients, but just not exposed.  The prerequisites are a healthy DHT locally, which might be untenable, but it seems like a great censorship resistant way to distribute data (ie for "[Trackerless Publishing](https://lwn.net/Articles/137523/)".
 
-TODO
+<video src='/data/ntrnt-info-hash.webm' width=180/></video>
 
 #### Visualizing Peers Geographically
 Apart from learning the protocols, the other thing I wanted to do with `ntrnt` was to be able to visualize where the peers were.  I wrote a basic [web-gui](https://github.com/tinselcity/ntrnt-ui) and interact with the `ntrnt` client application over a json API.
 
-TODO
+<video src='/data/ntrnt-ui.webm' width=180/></video>
 
 ## Install
 
