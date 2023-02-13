@@ -25,7 +25,9 @@ info_pickr::info_pickr(session& a_session):
         m_info_length(0),
         m_info_piece_length(0),
         m_info_pieces(),
-        m_info_files()
+        m_info_files(),
+        m_stat_num_pieces_rqstd(0),
+        m_stat_num_pieces_recvd(0)
 {
 }
 //! ----------------------------------------------------------------------------
@@ -370,6 +372,7 @@ int32_t info_pickr::peer_request_info(peer& a_peer)
                         TRC_ERROR("performing peer ltep_send_metadata_request");
                         return NTRNT_STATUS_ERROR;
                 }
+                ++m_stat_num_pieces_rqstd;
         }
         return NTRNT_STATUS_OK;
 }
@@ -380,6 +383,7 @@ int32_t info_pickr::peer_request_info(peer& a_peer)
 //! ----------------------------------------------------------------------------
 int32_t info_pickr::recv_info_piece(peer* a_peer, uint32_t a_idx, const char* a_buf, size_t a_len)
 {
+        ++m_stat_num_pieces_recvd;
         // -------------------------------------------------
         // have already?
         // -------------------------------------------------

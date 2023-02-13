@@ -69,7 +69,7 @@
                                 &_l__sock_opt_val, \
                                 sizeof(_l__sock_opt_val)); \
                 if (_l_status == -1) { \
-                        NDBG_PRINT("Failed to set sock_opt: %s.  Reason: %s.\n", #_sock_opt_name, strerror(errno)); \
+                        TRC_ERROR("Failed to set sock_opt: %s.  Reason: %s.", #_sock_opt_name, strerror(errno)); \
                         return NTRNT_STATUS_ERROR;\
                 } \
         } while(0)
@@ -363,9 +363,6 @@ int32_t tracker_udp_rqst::send_connect(void)
         uint32_t l_tid_swp = bswap_32(m_tid);
         memcpy((void*)(l_msg+l_off), &l_tid_swp, sizeof(l_tid_swp));
         l_off += sizeof(l_tid_swp);
-        //NDBG_OUTPUT("protocol_id:    0x%08lx\n", _PROTOCOL_ID);
-        //NDBG_OUTPUT("action_id:      0x%08x\n", _ACTION_CONNECT);
-        //NDBG_OUTPUT("transaction_id: 0x%08x\n", m_tid);
         // -------------------------------------------------
         // sendto
         // -------------------------------------------------
@@ -376,7 +373,6 @@ int32_t tracker_udp_rqst::send_connect(void)
                      0,
                      (struct sockaddr*)(&m_host_info.m_sa),
                      m_host_info.m_sa_len);
-        //NDBG_PRINT("sendto: l_s: %d\n", l_s);
         if (l_s < 0)
         {
                 // -----------------------------------------
@@ -384,7 +380,7 @@ int32_t tracker_udp_rqst::send_connect(void)
                 // -----------------------------------------
                 if (errno == EAGAIN)
                 {
-                        NDBG_PRINT("unexpected EAGAIN from sendto\n");
+                        TRC_ERROR("unexpected EAGAIN from sendto\n");
                         return NTRNT_STATUS_AGAIN;
                 }
                 TRC_ERROR("error performing sendto. Reason: %s\n", strerror(errno));
@@ -399,8 +395,6 @@ int32_t tracker_udp_rqst::send_connect(void)
 //! ----------------------------------------------------------------------------
 int32_t tracker_udp_rqst::recv_connect(uint8_t* a_msg, uint32_t a_msg_len)
 {
-        //NDBG_PRINT("read %d bytes\n", l_s);
-        //mem_display((const uint8_t*)l_msg, (size_t)l_s);
         m_state = STATE_CONNECTED;
         // -------------------------------------------------
         // 32 action                       0 (connect)
@@ -422,9 +416,6 @@ int32_t tracker_udp_rqst::recv_connect(uint8_t* a_msg, uint32_t a_msg_len)
                 TRC_ERROR("Error transaction id's don't match (%08x != %08x)\n", m_tid, l_tid);
                 return NTRNT_STATUS_ERROR;
         }
-        //NDBG_OUTPUT("action_id:      0x%08x\n", l_aid);
-        //NDBG_OUTPUT("transaction_id: 0x%08x\n", l_tid);
-        //NDBG_OUTPUT("connection_id:  0x%016lx\n", m_cid);
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -555,7 +546,6 @@ int32_t tracker_udp_rqst::send_announce(void)
                      0,
                      (struct sockaddr*)(&m_host_info.m_sa),
                      m_host_info.m_sa_len);
-        //NDBG_PRINT("sendto: l_s: %d\n", l_s);
         if (l_s < 0)
         {
                 // -----------------------------------------
@@ -563,7 +553,7 @@ int32_t tracker_udp_rqst::send_announce(void)
                 // -----------------------------------------
                 if (errno == EAGAIN)
                 {
-                        NDBG_PRINT("unexpected EAGAIN from sendto\n");
+                        TRC_ERROR("unexpected EAGAIN from sendto\n");
                         return NTRNT_STATUS_AGAIN;
                 }
                 TRC_ERROR("error performing sendto. Reason: %s\n", strerror(errno));
@@ -582,7 +572,6 @@ int32_t tracker_udp_rqst::recv_announce(uint8_t* a_msg, uint32_t a_msg_len)
         m_tracker.m_stat_last_announce_time_s = l_now_s;
         m_tracker.m_next_announce_s = l_now_s + NTRNT_SESSION_TRACKER_ANNOUNCE_S;
         ++m_tracker.m_stat_announce_num;
-        //NDBG_PRINT("read %d bytes\n", a_msg_len);
         // -------------------------------------------------
         // 0           32-bit integer  action          1              announce
         // 4           32-bit integer  transaction_id
@@ -607,11 +596,6 @@ int32_t tracker_udp_rqst::recv_announce(uint8_t* a_msg, uint32_t a_msg_len)
         l_off+= sizeof(l_int);
         l_sdr = bswap_32((*((uint64_t*)(a_msg+l_off))));
         l_off+= sizeof(l_int);
-        //NDBG_OUTPUT("action_id:      0x%08x\n", l_aid);
-        //NDBG_OUTPUT("transaction_id: 0x%08x\n", l_tid);
-        //NDBG_OUTPUT("interval:       0x%08x\n", l_int);
-        //NDBG_OUTPUT("leechers:       0x%08x\n", l_lcr);
-        //NDBG_OUTPUT("seeders:        0x%08x\n", l_sdr);
         UNUSED(l_lcr);
         UNUSED(l_sdr);
         // -------------------------------------------------
@@ -620,7 +604,6 @@ int32_t tracker_udp_rqst::recv_announce(uint8_t* a_msg, uint32_t a_msg_len)
         uint32_t l_p_size = a_msg_len-l_off;
         if (m_host_info.m_sock_family == AF_INET)
         {
-                //NDBG_PRINT("[HOST: %s] peers: raw: %u -- ipv4: %u\n", m_tracker.m_host.c_str(), l_p_size, l_p_size/6);
                 int32_t l_s;
                 l_s = m_tracker.m_session.add_peer_raw(AF_INET, a_msg + l_off, l_p_size, NTRNT_PEER_FROM_TRACKER);
                 UNUSED(l_s);
@@ -630,7 +613,6 @@ int32_t tracker_udp_rqst::recv_announce(uint8_t* a_msg, uint32_t a_msg_len)
         // -------------------------------------------------
         else if (m_host_info.m_sock_family == AF_INET6)
         {
-                //NDBG_PRINT("[HOST: %s] peers6: raw: %u -- ipv6: %u\n",  m_tracker.m_host.c_str(), l_p_size, l_p_size/18);
                 int32_t l_s;
                 l_s = m_tracker.m_session.add_peer_raw(AF_INET6, a_msg + l_off, l_p_size, NTRNT_PEER_FROM_TRACKER);
                 UNUSED(l_s);
@@ -692,7 +674,6 @@ int32_t tracker_udp_rqst::send_scrape(void)
                      0,
                      (struct sockaddr*)(&m_host_info.m_sa),
                      m_host_info.m_sa_len);
-        //NDBG_PRINT("sendto: l_s: %d\n", l_s);
         if (l_s < 0)
         {
                 // -----------------------------------------
@@ -700,7 +681,7 @@ int32_t tracker_udp_rqst::send_scrape(void)
                 // -----------------------------------------
                 if (errno == EAGAIN)
                 {
-                        NDBG_PRINT("unexpected EAGAIN from sendto\n");
+                        TRC_ERROR("unexpected EAGAIN from sendto\n");
                         return NTRNT_STATUS_AGAIN;
                 }
                 TRC_ERROR("error performing sendto. Reason: %s\n", strerror(errno));
@@ -717,7 +698,6 @@ int32_t tracker_udp_rqst::recv_scrape(uint8_t* a_msg, uint32_t a_msg_len)
 {
         m_tracker.m_stat_last_scrape_time_s = get_time_s();
         ++m_tracker.m_stat_scrape_num;
-        //NDBG_PRINT("read %d bytes\n", a_msg_len);
         // -------------------------------------------------
         // 0           32-bit integer  action          2 (scrape)
         // 4           32-bit integer  transaction_id
@@ -892,7 +872,6 @@ int32_t tracker_udp::handle_resp(tid_tracker_udp_map_t& a_map,
                 TRC_ERROR("receieved udp tracker message w/o associated tid for request\n");
                 return NTRNT_STATUS_ERROR;
         }
-        //NDBG_PRINT("[tid: 0x%08x] FOUND RUNNING!\n", l_tid);
         l_rqst = i_rqst->second;
         // -------------------------------------------------
         // handle resp

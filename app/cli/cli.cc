@@ -56,6 +56,111 @@ ns_ntrnt::session *g_session = NULL;
 ns_is2::srvr *g_srvr = NULL;
 #endif
 //! ----------------------------------------------------------------------------
+//! \details: display_status
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+#define _T_DISPLAY_STATUS_MS 200
+static int32_t _t_display_status(void *a_data)
+{
+        // -------------------------------------------------
+        // have info???
+        // -------------------------------------------------
+        static bool s_show_info_progress_heading = false;
+        static bool s_show_progress_heading = false;
+        ns_ntrnt::peer_mgr& l_peer_mgr = g_session->get_peer_mgr();
+        ns_ntrnt::info_pickr& l_info_pickr = g_session->get_info_pickr();
+        ns_ntrnt::pickr& l_pickr = g_session->get_pickr();
+        if (!g_session->get_info_num_pieces())
+        {
+                if (!s_show_info_progress_heading)
+                {
+                NDBG_OUTPUT("%sRequesting Metadata Pieces%s\n",
+                                ANSI_COLOR_FG_MAGENTA, ANSI_COLOR_OFF);
+                NDBG_OUTPUT("+-------------------------+--------------------------------+\n");
+                NDBG_OUTPUT("| %sPeers%s (connected/total) | %sPieces%s (requested/recvd/total) |\n",
+                                ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
+                                ANSI_COLOR_FG_BLUE, ANSI_COLOR_OFF);
+                NDBG_OUTPUT("+-------------------------+--------------------------------+\n");
+                s_show_info_progress_heading = true;
+                }
+                NDBG_OUTPUT("|           %s%6lu%s/%6lu |                    %3lu/%s%3lu%s/%3lu |\r",
+                            ANSI_COLOR_FG_YELLOW,
+                            l_peer_mgr.get_peer_connected_vec().size(),
+                            ANSI_COLOR_OFF,
+                            l_peer_mgr.get_peer_vec().size(),
+                            l_info_pickr.get_stat_num_pieces_rqstd(),
+                            ANSI_COLOR_FG_BLUE,
+                            l_info_pickr.get_stat_num_pieces_recvd(),
+                            ANSI_COLOR_OFF,
+                            l_info_pickr.get_info_buf_pieces_size());
+        }
+        else
+        {
+                if (!s_show_progress_heading)
+                {
+                if (s_show_info_progress_heading)
+                {
+                NDBG_OUTPUT("|           %s%6lu%s/%6lu |                    %3lu/%s%3lu%s/%3lu |\n",
+                            ANSI_COLOR_FG_YELLOW,
+                            l_peer_mgr.get_peer_connected_vec().size(),
+                            ANSI_COLOR_OFF,
+                            l_peer_mgr.get_peer_vec().size(),
+                            l_info_pickr.get_stat_num_pieces_rqstd(),
+                            ANSI_COLOR_FG_BLUE,
+                            l_info_pickr.get_stat_num_pieces_recvd(),
+                            ANSI_COLOR_OFF,
+                            l_info_pickr.get_info_buf_pieces_size());
+                NDBG_OUTPUT("+-------------------------+--------------------------------+\n");
+                NDBG_OUTPUT("Received metadata for torrent:\n");
+                NDBG_OUTPUT("  %s%s%s\n",
+                                ANSI_COLOR_FG_WHITE,
+                                l_info_pickr.get_info_name().c_str(),
+                                ANSI_COLOR_OFF);
+                }
+                NDBG_OUTPUT("%sRequesting Pieces%s\n",
+                             ANSI_COLOR_FG_CYAN, ANSI_COLOR_OFF);
+                NDBG_OUTPUT("+-------------------------+--------------------------+----------------------+\n");
+                NDBG_OUTPUT("| %sPeers%s (connected/total) | %sBlocks%s (requested/recvd) | %sPieces%s (recvd/total) |\n",
+                            ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
+                            ANSI_COLOR_FG_MAGENTA, ANSI_COLOR_OFF,
+                            ANSI_COLOR_FG_GREEN, ANSI_COLOR_OFF);
+                NDBG_OUTPUT("+-------------------------+--------------------------+----------------------+\n");
+                s_show_progress_heading = true;
+                }
+                const char* l_recv_chr = ANSI_COLOR_FG_GREEN;
+                if (l_pickr.get_pieces().get_count() == l_pickr.get_pieces().get_size())
+                {
+                        l_recv_chr = ANSI_COLOR_BG_GREEN;
+                }
+                NDBG_OUTPUT("|           %s%6lu%s/%6lu |        %8lu/%s%8lu%s |    %s%8lu%s/%8lu |\r",
+                            ANSI_COLOR_FG_YELLOW,
+                            l_peer_mgr.get_peer_connected_vec().size(),
+                            ANSI_COLOR_OFF,
+                            l_peer_mgr.get_peer_vec().size(),
+                            l_pickr.get_stat_num_blocks_rqstd(),
+                            ANSI_COLOR_FG_MAGENTA,
+                            l_pickr.get_stat_num_blocks_recvd(),
+                            ANSI_COLOR_OFF,
+                            l_recv_chr,
+                            l_pickr.get_pieces().get_count(),
+                            ANSI_COLOR_OFF,
+                            l_pickr.get_pieces().get_size());
+        }
+        // -------------------------------------------------
+        // fire status
+        // -------------------------------------------------
+        int32_t l_s;
+        void *l_timer = NULL;
+        l_s = g_session->add_timer((uint32_t)(_T_DISPLAY_STATUS_MS),
+                                   _t_display_status,
+                                   (void *)nullptr,
+                                   &l_timer);
+        UNUSED(l_s);
+        UNUSED(l_timer);
+        return NTRNT_STATUS_OK;
+}
+//! ----------------------------------------------------------------------------
 //! define handler for get
 //! ----------------------------------------------------------------------------
 #ifdef ENABLE_IS2
@@ -87,7 +192,7 @@ private:
 
 };
 //! ----------------------------------------------------------------------------
-//! \details: sighandler
+//! \details: do_get
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
@@ -195,6 +300,8 @@ static void _sig_handler(int signo)
                 {
                         g_session->stop();
                 }
+                // for display
+                NDBG_OUTPUT("\n");
         }
 }
 //! ----------------------------------------------------------------------------
@@ -567,6 +674,7 @@ int main(int argc, char** argv)
         // -------------------------------------------------
         // session
         // -------------------------------------------------
+        void *l_timer = NULL;
         ns_ntrnt::upnp l_upnp;
         int32_t l_ret = STATUS_OK;
         ns_ntrnt::session l_ses;
@@ -720,6 +828,14 @@ int main(int argc, char** argv)
                 ProfilerStart(l_gprof_file.c_str());
         }
 #endif
+        // -------------------------------------------------
+        // fire status
+        // -------------------------------------------------
+        l_s = g_session->add_timer((uint32_t)(_T_DISPLAY_STATUS_MS),
+                                   _t_display_status,
+                                   (void *)nullptr,
+                                   &l_timer);
+        UNUSED(l_timer);
         // -------------------------------------------------
         // run...
         // -------------------------------------------------

@@ -39,12 +39,12 @@ TODO...
 #### `info hash` Torrenting
 This is probably an easy addition to the open source clients, but just not exposed.  The prerequisites are a healthy DHT locally, which might be untenable, but it seems like a great censorship resistant way to distribute data (ie for "[Trackerless Publishing](https://lwn.net/Articles/137523/)".
 
-TODO
+[ntrnt-info-hash.webm](https://user-images.githubusercontent.com/3515625/218380681-69268a34-5449-443c-9f73-26bdcc077cc2.webm)
 
 #### Visualizing Peers Geographically
 Apart from learning the protocols, the other thing I wanted to do with `ntrnt` was to be able to visualize where the peers were.  I wrote a basic [web-gui](https://github.com/tinselcity/ntrnt-ui) and interact with the `ntrnt` client application over a json API.
 
-TODO
+[ntrnt-ui.webm](https://user-images.githubusercontent.com/3515625/218380720-87964630-fa18-49f8-b5f6-2c3156a8a123.webm)
 
 ## Install
 
@@ -97,7 +97,6 @@ Debug Options:
 ## Todo
 A list of critical missing features that'd be nice to have someday:
 
-- Queue'ing issue causing slow downloads.  Rethink how commands are sent and queue'd.  Maybe sending requests or protocol messages (not piece data immediately), to prevent blocking on receipt for leechers.
 - [Fast Extension](https://www.bittorrent.org/beps/bep_0006.html) support.
 - TCP connection support for peers (encrypted only)
 - Endgame support: when bytes/blocks outstanding >= bytes/blocks remaining, send to all peers (support for cancelling outstanding requests)

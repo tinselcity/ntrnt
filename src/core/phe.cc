@@ -427,8 +427,6 @@ void phe::set_ia(const uint8_t* a_buf, uint16_t a_len)
 //! ----------------------------------------------------------------------------
 int32_t phe::send_ya(nbq& a_out_q)
 {
-        //NDBG_PRINT("[PHE] send_ya\n");
-        //NDBG_HEXDUMP(m_pub_key, sizeof(m_pub_key));
         // -------------------------------------------------
         // 1 A->B: Diffie Hellman Ya, PadA
         // -------------------------------------------------
@@ -448,7 +446,6 @@ int32_t phe::send_ya(nbq& a_out_q)
 //! ----------------------------------------------------------------------------
 int32_t phe::send_yb(nbq& a_out_q)
 {
-        //NDBG_PRINT("[PHE] send_yb\n");
         // -------------------------------------------------
         // 2 B->A: Diffie Hellman Yb, PadB
         // -------------------------------------------------
@@ -468,9 +465,7 @@ int32_t phe::send_yb(nbq& a_out_q)
 //! ----------------------------------------------------------------------------
 int32_t phe::recv_ya(nbq& a_in_q)
 {
-        //NDBG_PRINT("[PHE] recv_ya [READ_AVAIL: %lu]\n", a_in_q.read_avail());
         int32_t l_s;
-        //NDBG_HEXDUMP(a_buf, a_len);
         // -------------------------------------------------
         // check len
         // -------------------------------------------------
@@ -486,7 +481,6 @@ int32_t phe::recv_ya(nbq& a_in_q)
         ssize_t l_ss;
         l_buf = (char*)malloc(sizeof(char)*PHE_PUBLIC_KEY_SIZE);
         l_ss = a_in_q.read(l_buf, PHE_PUBLIC_KEY_SIZE);
-        //NDBG_PRINT("[PHE] recv_ya [READ_AVAIL: %lu]\n", a_in_q.read_avail());
         UNUSED(l_ss);
         // -------------------------------------------------
         // create bignum
@@ -533,7 +527,6 @@ int32_t phe::recv_ya(nbq& a_in_q)
 //! ----------------------------------------------------------------------------
 int32_t phe::recv_yb(nbq& a_in_q)
 {
-        //NDBG_PRINT("[PHE] recv_yb\n");
         int32_t l_s;
         // -------------------------------------------------
         // get public key
@@ -596,7 +589,6 @@ int32_t phe::recv_yb(nbq& a_in_q)
 //! ----------------------------------------------------------------------------
 int32_t phe::send_ab(nbq& a_out_q)
 {
-        //NDBG_PRINT("[PHE] send_ab\n");
         if (!m_skey ||
             !m_skey_len)
         {
@@ -621,7 +613,6 @@ int32_t phe::send_ab(nbq& a_out_q)
         l_req1_sha.update(m_secret, sizeof(m_secret));
         l_req1_sha.finish();
         a_out_q.write((const char*)(l_req1_sha.get_hash()), NTRNT_SHA1_SIZE);
-        //NDBG_PRINT("[%sSENDING%s] HASH('req1', S)\n", ANSI_COLOR_BG_GREEN, ANSI_COLOR_OFF);
         // -------------------------------------------------
         // HASH('req2', SKEY) xor HASH('req3', S),
         // -------------------------------------------------
@@ -721,7 +712,6 @@ int32_t phe::send_ab(nbq& a_out_q)
 //! ----------------------------------------------------------------------------
 int32_t phe::send_ba(nbq& a_out_q)
 {
-        //NDBG_PRINT("[PHE] send_ba\n");
         if (!m_skey ||
             !m_skey_len)
         {
@@ -751,8 +741,6 @@ int32_t phe::send_ba(nbq& a_out_q)
         l_key_sha.update(m_secret, sizeof(m_secret));
         l_key_sha.update(m_skey, m_skey_len);
         l_key_sha.finish();
-        //NDBG_PRINT("[%sPHE%s]: ENCRYPT KEY\n", ANSI_COLOR_BG_MAGENTA, ANSI_COLOR_OFF);
-        //NDBG_HEXDUMP(l_key_sha.get_hash(), NTRNT_SHA1_SIZE);
         // -------------------------------------------------
         // init encrypt
         // -------------------------------------------------
@@ -799,7 +787,6 @@ int32_t phe::send_ba(nbq& a_out_q)
 //! ----------------------------------------------------------------------------
 int32_t phe::recv_ab_needle(nbq& a_in_q)
 {
-        //NDBG_PRINT("[PHE] recv_ab_needle [READ_AVAIL: %lu]\n", a_in_q.read_avail());
         if (a_in_q.read_avail() < NTRNT_SHA1_SIZE)
         {
                 //TRC_ERROR("not enough bytes... read more?");
@@ -823,10 +810,6 @@ int32_t phe::recv_ab_needle(nbq& a_in_q)
         // -------------------------------------------------
         // find in message
         // -------------------------------------------------
-        //NDBG_PRINT("SEARCHING FOR NEEDLE\n");
-        //NDBG_HEXDUMP(l_req1_sha.get_hash(), NTRNT_SHA1_SIZE);
-        //NDBG_PRINT("HAYSTACK\n");
-        //a_in_q.b_display_written();
         while (true)
         {
                 if (a_in_q.read_avail() < NTRNT_SHA1_SIZE)
@@ -850,7 +833,6 @@ int32_t phe::recv_ab_needle(nbq& a_in_q)
 //! ----------------------------------------------------------------------------
 int32_t phe::recv_ab(nbq& a_in_q)
 {
-        //NDBG_PRINT("[PHE] recv_ab\n");
         int32_t l_s;
         ssize_t l_ss;
         // -------------------------------------------------
@@ -938,8 +920,6 @@ int32_t phe::recv_ab(nbq& a_in_q)
         uint8_t l_vc[8];
         l_ss = a_in_q.read((char*)l_vc, sizeof(l_vc));
         m_decrypt->process(l_vc, l_vc, sizeof(l_vc));
-        //NDBG_PRINT("VC:\n");
-        //NDBG_HEXDUMP(&l_vc, sizeof(l_vc));
         // -------------------------------------------------
         // crypto provide
         // -------------------------------------------------
@@ -947,7 +927,6 @@ int32_t phe::recv_ab(nbq& a_in_q)
         l_ss = a_in_q.read((char*)(&l_tmp32), sizeof(l_tmp32));
         m_decrypt->process(&l_tmp32, &l_tmp32, sizeof(l_tmp32));
         m_crypto_provide = ntohl(l_tmp32);
-        //NDBG_PRINT("CRYPTO_PROVIDE: 0x%x\n", m_crypto_provide);
         // -------------------------------------------------
         // pad c len
         // -------------------------------------------------
@@ -955,7 +934,6 @@ int32_t phe::recv_ab(nbq& a_in_q)
         l_ss = a_in_q.read((char*)(&l_tmp16), sizeof(l_tmp16));
         m_decrypt->process(&l_tmp16, &l_tmp16, sizeof(l_tmp16));
         m_padc_len = htons(l_tmp16);
-        //NDBG_PRINT("PAD C LEN: %u\n", m_padc_len);
         // -------------------------------------------------
         // wait for pad c
         // -------------------------------------------------
@@ -968,7 +946,6 @@ int32_t phe::recv_ab(nbq& a_in_q)
 //! ----------------------------------------------------------------------------
 int32_t phe::recv_ab_padc(nbq& a_in_q)
 {
-        //NDBG_PRINT("[PHE] recv_ab_padc\n");
         if (!m_padc_len)
         {
                 goto done;
@@ -999,7 +976,6 @@ done:
 //! ----------------------------------------------------------------------------
 int32_t phe::recv_ab_ia_len(nbq& a_in_q)
 {
-        //NDBG_PRINT("[PHE] recv_ab_ia_len\n");
         ssize_t l_ss;
         // -------------------------------------------------
         // check len
@@ -1030,7 +1006,6 @@ int32_t phe::recv_ab_ia_len(nbq& a_in_q)
 int32_t phe::recv_ab_ia(nbq& a_in_q)
 {
         ssize_t l_ss;
-        //NDBG_PRINT("[PHE] recv_ab_ia: recvd_ia_len: %u\n", m_recvd_ia_len);
         if (!m_recvd_ia_len)
         {
                 goto done;
@@ -1063,7 +1038,6 @@ done:
 //! ----------------------------------------------------------------------------
 int32_t phe::recv_ba_needle(nbq& a_in_q)
 {
-        //NDBG_PRINT("[PHE] recv_ba_needle\n");
         if (!m_skey ||
             !m_skey_len)
         {
@@ -1103,8 +1077,6 @@ int32_t phe::recv_ba_needle(nbq& a_in_q)
         // -------------------------------------------------
         // search for verification constant
         // -------------------------------------------------
-        //NDBG_PRINT("NEEDLE:\n");
-        //NDBG_HEXDUMP(l_needle, sizeof(l_needle));
         size_t l_discarded = 0;
         while (true)
         {
@@ -1129,7 +1101,6 @@ int32_t phe::recv_ba_needle(nbq& a_in_q)
         // -------------------------------------------------
         // discard vc
         // -------------------------------------------------
-        //NDBG_PRINT("DISCARD NEEDLE: (discarded: %lu)\n", l_discarded);
         a_in_q.discard(sizeof(l_needle));
         m_decrypt->discard(sizeof(l_needle));
         // -------------------------------------------------
@@ -1144,7 +1115,6 @@ int32_t phe::recv_ba_needle(nbq& a_in_q)
 //! ----------------------------------------------------------------------------
 int32_t phe::recv_ba_crypto_select(nbq& a_in_q)
 {
-        //NDBG_PRINT("[PHE] recv_ba_crypto_select\n");
         ssize_t l_ss;
         if (!m_skey ||
             !m_skey_len)
@@ -1168,7 +1138,6 @@ int32_t phe::recv_ba_crypto_select(nbq& a_in_q)
         UNUSED(l_ss);
         m_decrypt->process(&l_tmp32, &l_tmp32, sizeof(l_tmp32));
         m_crypto_select = ntohl(l_tmp32);
-        //NDBG_PRINT("CRYPTO_SELECT: 0x%x\n", m_crypto_select);
         // -------------------------------------------------
         // test unencrypted
         // -------------------------------------------------
@@ -1195,7 +1164,6 @@ int32_t phe::recv_ba_crypto_select(nbq& a_in_q)
         UNUSED(l_ss);
         m_decrypt->process(&l_tmp16, &l_tmp16, sizeof(l_tmp16));
         m_padd_len = ntohl(l_tmp16);
-        //NDBG_PRINT("PAD D LEN: %u\n", m_padd_len);
         // -------------------------------------------------
         // wait for pad d
         // -------------------------------------------------
@@ -1208,7 +1176,6 @@ int32_t phe::recv_ba_crypto_select(nbq& a_in_q)
 //! ----------------------------------------------------------------------------
 int32_t phe::recv_ba_pad_d(nbq& a_in_q)
 {
-        //NDBG_PRINT("[PHE] recv_ba_pad_d\n");
         if (!m_padd_len)
         {
                 goto done;
@@ -1250,7 +1217,6 @@ done:
 //! ----------------------------------------------------------------------------
 int32_t phe::padded_send(nbq& a_out_q, uint8_t* a_buf, uint32_t a_len)
 {
-        //NDBG_PRINT("[PHE] padded_send\n");
         // -------------------------------------------------
         // create random pad
         // -------------------------------------------------
@@ -1545,7 +1511,6 @@ int32_t phe::decrypt(uint8_t* a_buf, size_t a_len)
         {
                 return NTRNT_STATUS_ERROR;
         }
-        //NDBG_PRINT("[PHE] [DECRYPT] [LEN: %lu]\n", a_len);
         m_decrypt->process((void*)a_buf, a_buf, a_len);
         return NTRNT_STATUS_OK;
 }
@@ -1560,7 +1525,6 @@ int32_t phe::encrypt(uint8_t* a_buf, uint32_t a_len)
         {
                 return NTRNT_STATUS_ERROR;
         }
-        //NDBG_PRINT("[PHE] [ENCRYPT] [LEN: %u]\n", a_len);
         m_encrypt->process(a_buf, a_buf, a_len);
         return NTRNT_STATUS_OK;
 }

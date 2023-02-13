@@ -71,7 +71,7 @@ target_link_libraries(ntrnt_cmd
 # ------------------------------------------------------------------------------
 # install
 # ------------------------------------------------------------------------------
-install(TARGETS ntrnt
+install(TARGETS ntrnt_cmd
     DESTINATION ${CMAKE_INSTALL_PREFIX}/bin/
     COMPONENT Executables
 )

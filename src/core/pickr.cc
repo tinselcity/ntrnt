@@ -35,7 +35,9 @@ pickr::pickr(session& a_session):
         m_stub(),
         m_stat_rm_br_expired(0),
         m_stat_rm_br_ctx(0),
-        m_stat_rm_br_block(0)
+        m_stat_rm_br_block(0),
+        m_stat_num_blocks_rqstd(0),
+        m_stat_num_blocks_recvd(0)
 {
 }
 //! ----------------------------------------------------------------------------
@@ -180,7 +182,9 @@ bool pickr::validate_piece(uint32_t a_piece)
                 TRC_ERROR("info pieces == null");
                 return false;
         }
+        // -------------------------------------------------
         // sanity check len
+        // -------------------------------------------------
         const id_vector_t& l_ids = (*m_info_pieces);
         uint32_t l_num_pieces = l_ids.size();
         size_t l_size = (size_t)m_info_length;
@@ -189,7 +193,9 @@ bool pickr::validate_piece(uint32_t a_piece)
                 TRC_ERROR("piece[%u] > number of pieces[%u]", a_piece,  l_num_pieces);
                 return false;
         }
+        // -------------------------------------------------
         // calculate offset/length of piece
+        // -------------------------------------------------
         size_t l_off = (size_t)(m_info_piece_length*(size_t)a_piece);
         size_t l_len = (size_t)m_info_piece_length;
         // -------------------------------------------------
@@ -550,6 +556,7 @@ int32_t pickr::peer_request_more(peer& a_peer)
         // -------------------------------------------------
         for (auto && i_b : l_blk_rqst_vec)
         {
+                ++m_stat_num_blocks_rqstd;
                 l_s = a_peer.btp_send_request(i_b.m_idx, i_b.m_off, i_b.m_len);
                 if (l_s != NTRNT_STATUS_OK)
                 {
@@ -575,9 +582,6 @@ int32_t pickr::get_block_rqsts(block_rqst_vec_t& ao_vec,
         uint32_t l_max = l_max_reqq - a_peer.m_num_block_rqst_inflight;
         if (!l_max)
         {
-                //NDBG_PRINT("max == 0 [MAX_INFLIGHT: %d] [inflight: %lu]\n",
-                //           l_max_reqq,
-                //           a_peer.m_num_block_rqst_inflight);
                 return NTRNT_STATUS_OK;
         }
         // -------------------------------------------------
@@ -779,6 +783,7 @@ int32_t pickr::recv_piece(peer* a_peer,
                           uint32_t a_off,
                           uint32_t a_len)
 {
+        ++m_stat_num_blocks_recvd;
         if (a_q.read_avail() < a_len)
         {
                 TRC_ERROR("read avail < len");
@@ -792,11 +797,6 @@ int32_t pickr::recv_piece(peer* a_peer,
         bool l_new_piece = false;
         uint32_t l_block = a_off / NTRNT_TORRENT_BLOCK_SIZE;
         uint64_t l_key = (((uint64_t)a_idx << 32)) | ((uint64_t)(l_block));
-        //NDBG_PRINT("[%sRECEIVE_BLOCKS%s]: PEER[%s] PIECE[%u] BLOCK[%u]\n",
-        //           ANSI_COLOR_BG_GREEN, ANSI_COLOR_OFF,
-        //           "__na__",
-        //           a_idx,
-        //           l_block);
         // -------------------------------------------------
         // block accepting/recv strategy is a:
         // "liberal in what is accepted and strict in what
@@ -832,8 +832,6 @@ int32_t pickr::recv_piece(peer* a_peer,
                 // TODO len check!!!
                 blocks_t& l_bs = *(m_blocks_vec[a_idx]);
                 l_bs.m_btfield.set(l_block, true);
-                //blocks_t& l_bs = m_torrent.get_piece_blocks(a_idx);
-                //NDBG_PRINT("[PIECE: %u] [BLOCKS %lu / %lu]\n", a_idx, l_bs.m_btfield.get_count(), l_bs.m_btfield.get_size());
                 // -----------------------------------------
                 // check all set
                 // -----------------------------------------
@@ -850,14 +848,6 @@ int32_t pickr::recv_piece(peer* a_peer,
                                 return NTRNT_STATUS_ERROR;
                         }
                         m_pieces.set(a_idx, true);
-                        // ---------------------------------
-                        // notify caller -got a piece
-                        // ---------------------------------
-                        NDBG_PRINT("[PIECE: %8u] [%sVALIDATE%s %8lu / %8lu]\n",
-                                   a_idx,
-                                   ANSI_COLOR_FG_GREEN, ANSI_COLOR_OFF,
-                                   m_pieces.get_count(),
-                                   m_pieces.get_size());
                         // ---------------------------------
                         // check is complete
                         // ---------------------------------
@@ -899,7 +889,6 @@ int32_t pickr::recv_piece(peer* a_peer,
                 // -----------------------------------------
                 // find block rqst to be removed
                 // -----------------------------------------
-                //NDBG_PRINT("block_rqst_list_map size: %lu\n", m_block_rqst_list_map.size());
                 block_rqst_t& l_br = i_br->second;
                 if (l_br.m_ctx == (void*)a_peer)
                 {
@@ -913,7 +902,6 @@ int32_t pickr::recv_piece(peer* a_peer,
         // -------------------------------------------------
         // if inflight < low water -request more
         // -------------------------------------------------
-        //NDBG_PRINT("inflight: %lu\n", a_peer->m_num_block_rqst_inflight);
         if (!m_complete &&
             (a_peer->m_num_block_rqst_inflight < NTRNT_SESSION_PEER_INFLIGHT_LOW_WATER))
         {

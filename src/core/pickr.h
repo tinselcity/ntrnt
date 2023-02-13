@@ -104,6 +104,8 @@ public:
         uint64_t get_stat_rm_br_block(void) { return m_stat_rm_br_block;}
         btfield& get_pieces(void) { return m_pieces; }
         bool complete(void) { return m_complete; }
+        size_t get_stat_num_blocks_rqstd(void) { return m_stat_num_blocks_rqstd; }
+        size_t get_stat_num_blocks_recvd(void) { return m_stat_num_blocks_recvd; }
 private:
         // -------------------------------------------------
         // private methods
@@ -149,6 +151,8 @@ private:
         size_t m_stat_rm_br_expired;
         size_t m_stat_rm_br_ctx;
         size_t m_stat_rm_br_block;
+        size_t m_stat_num_blocks_rqstd;
+        size_t m_stat_num_blocks_recvd;
 };
 }
 #endif

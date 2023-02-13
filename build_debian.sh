@@ -26,7 +26,6 @@ pushd build && \
     -DBUILD_TESTS=ON \
     -DBUILD_APPS=ON \
     -DBUILD_UTILS=ON \
-    -DBUILD_LINUX=ON \
     -DCMAKE_INSTALL_PREFIX=/usr && \
     make -j$(nproc) && \
     umask 0022 && chmod -R a+rX . && \

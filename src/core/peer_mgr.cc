@@ -428,10 +428,10 @@ void peer_mgr::display_peers(void)
         for (auto && i_p : m_peer_map)
         {
                 if (!i_p.second) { continue; }
-                NDBG_PRINT("HOST: %s STATE: %d FROM: %d\n",
-                           i_p.second->get_host().c_str(),
-                           i_p.second->get_state(),
-                           i_p.second->get_from());
+                NDBG_OUTPUT("HOST: %s STATE: %d FROM: %d\n",
+                            i_p.second->get_host().c_str(),
+                            i_p.second->get_state(),
+                            i_p.second->get_from());
         }
 }
 //! ----------------------------------------------------------------------------
@@ -954,8 +954,6 @@ int32_t peer_mgr::pm_utp_sendto(const uint8_t* a_buf,
         }
         int l_s;
         errno = 0;
-        //NDBG_PRINT("[SENDTO] [LEN: %lu]\n", a_len);
-        //NDBG_PRINT("SENDTO [LEN: %lu]\n", a_len);
         l_s = sendto(l_fd, a_buf, a_len, 0, a_sa, a_socklen);
         if (l_s < 0)
         {
@@ -964,7 +962,6 @@ int32_t peer_mgr::pm_utp_sendto(const uint8_t* a_buf,
                 // -----------------------------------------
                 if (errno == EAGAIN)
                 {
-                        NDBG_PRINT("%sEAGAIN%s\n", ANSI_COLOR_BG_RED, ANSI_COLOR_OFF);
                         return NTRNT_STATUS_AGAIN;
                 }
                 TRC_ERROR("error performing sendto. Reason: %s", strerror(errno));
@@ -996,7 +993,6 @@ bool peer_mgr::peer_exists(const sockaddr_storage& a_sas)
 //! ----------------------------------------------------------------------------
 void peer_mgr::add_peer(peer* a_peer)
 {
-        //NDBG_PRINT("[HOST: %s] [FROM: %d]\n", a_peer->m_host.c_str(), a_peer->m_from);
         const sockaddr_storage& a_sas = a_peer->get_sas();
         pthread_mutex_lock(&m_mutex);
         m_peer_vec.push_back(a_peer);
@@ -1073,16 +1069,11 @@ int32_t peer_mgr::dequeue_out_v4(void)
                         ssize_t l_s;
                         int32_t l_try_read = l_q.b_read_avail();
                         l_s = utp_write(l_utp_conn, l_q.b_read_ptr(), l_try_read);
-                        //NDBG_PRINT("[%sutp_write%s: %ld / %d] [errno[%d] %s]\n",
-                        //           ANSI_COLOR_FG_CYAN, ANSI_COLOR_OFF,
-                        //           l_s, l_try_read,
-                        //           errno, strerror(errno));
                         // ---------------------------------
                         // socket no longer writable
                         // ---------------------------------
                         if (l_s == 0)
                         {
-                                //NDBG_PRINT("NO LONGER WRITEABLE\n");
                                 break;
                         }
                         // ---------------------------------
@@ -1138,10 +1129,6 @@ int32_t peer_mgr::dequeue_out_v6(void)
                         ssize_t l_s;
                         int32_t l_try_read = l_q.b_read_avail();
                         l_s = utp_write(l_utp_conn, l_q.b_read_ptr(), l_try_read);
-                        //NDBG_PRINT("[%sutp_write%s: %ld / %d] [errno[%d] %s]\n",
-                        //           ANSI_COLOR_FG_CYAN, ANSI_COLOR_OFF,
-                        //           l_s, l_try_read,
-                        //           errno, strerror(errno));
                         // ---------------------------------
                         // socket no longer writable
                         // ---------------------------------
@@ -1172,12 +1159,10 @@ int32_t peer_mgr::pm_utp_check_timeouts(void)
         // -------------------------------------------------
         // utp_check_timeouts
         // -------------------------------------------------
-        //NDBG_PRINT("utp_check_timeouts\n");
         utp_check_timeouts(m_utp_ctx);
         // -------------------------------------------------
         // issue deferred acks
         // -------------------------------------------------
-        //NDBG_PRINT("utp_issue_deferred_acks\n");
         utp_issue_deferred_acks(m_utp_ctx);
         // -------------------------------------------------
         // fire again

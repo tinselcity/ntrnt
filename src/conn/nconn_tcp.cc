@@ -91,7 +91,6 @@ int32_t nconn_tcp::get_opt(uint32_t a_opt, void **a_buf, uint32_t *a_len)
         }
         default:
         {
-                //NDBG_PRINT("Error unsupported option: %d\n", a_opt);
                 return NC_STATUS_UNSUPPORTED;
         }
         }

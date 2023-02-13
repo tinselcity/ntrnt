@@ -47,6 +47,9 @@ public:
         size_t get_info_files_size(void) { return m_info_files.size(); }
         const id_vector_t& get_info_pieces(void) { return m_info_pieces; }
         const files_list_t& get_info_files(void) { return m_info_files; }
+        size_t get_info_buf_pieces_size(void) { return m_info_buf_pieces.get_size(); }
+        size_t get_stat_num_pieces_rqstd(void) { return m_stat_num_pieces_rqstd; }
+        size_t get_stat_num_pieces_recvd(void) { return m_stat_num_pieces_recvd; }
 private:
         // -------------------------------------------------
         // private methods
@@ -78,6 +81,11 @@ private:
         int64_t m_info_piece_length;
         id_vector_t m_info_pieces;
         files_list_t m_info_files;
+        // -------------------------------------------------
+        // stats
+        // -------------------------------------------------
+        size_t m_stat_num_pieces_rqstd;
+        size_t m_stat_num_pieces_recvd;
 };
 }
 #endif

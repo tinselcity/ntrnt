@@ -47,7 +47,6 @@ typedef std::vector<uint8_t> uint8_vec_t;
 //! ----------------------------------------------------------------------------
 static int32_t _timeout(void *a_data)
 {
-        //NDBG_PRINT("[%sTIMEOUT!!!%s]: ...\n", ANSI_COLOR_BG_MAGENTA, ANSI_COLOR_OFF);
         if(!a_data)
         {
                 return NTRNT_STATUS_ERROR;
@@ -357,20 +356,6 @@ void peer::display(void)
         NDBG_OUTPUT(": btp_peer_interested:     %d\n", m_btp_peer_interested);
         NDBG_OUTPUT(": btp_cmd:                 %s\n", _get_btp_cmd_str(m_btp_cmd));
         NDBG_OUTPUT(": btp_cmd_len:             %u\n", m_btp_cmd_len);
-
-#if 0
-        // -------------------------------------------------
-        // stats
-        // -------------------------------------------------
-        size_t m_stat_expired_br;
-        size_t m_stat_bytes_sent;
-        size_t m_stat_bytes_sent_last;
-        size_t m_stat_bytes_sent_per_s;
-        size_t m_stat_bytes_recv;
-        size_t m_stat_bytes_recv_last;
-        size_t m_stat_bytes_recv_per_s;
-        size_t m_stat_last_recvd_time_s;
-#endif
 }
 //! ----------------------------------------------------------------------------
 //! \details: TODO
@@ -494,7 +479,6 @@ int32_t peer::connect(void)
         // -------------------------------------------------
         // TODO wrap in "if utp" or in separate utp connect
         m_utp_conn = utp_create_socket(m_peer_mgr.get_utp_ctx());
-        //NDBG_PRINT("[HOST: %s] [UTP_CON: %p]\n", m_host.c_str(), m_utp_conn);
         if (!m_utp_conn)
         {
                 TRC_ERROR("performing utp_create_socket");
@@ -522,7 +506,6 @@ int32_t peer::connect(void)
         // -------------------------------------------------
         // utp connect
         // -------------------------------------------------
-        //NDBG_PRINT("[%sUTP%s]: [HOST: %s] CONNECT\n", ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF, m_host.c_str());
         l_s = utp_connect(m_utp_conn, (const sockaddr*)(&m_sas), sas_size(m_sas));
         if (l_s != 0)
         {
@@ -592,10 +575,6 @@ int32_t peer::accept_utp(void *a_ctx)
 //! ----------------------------------------------------------------------------
 void peer::pr_utp_on_read(const uint8_t* a_buf, size_t a_len)
 {
-        //NDBG_PRINT("[%sUTP%s]: [HOST: %s] ON_READ: len: %lu\n",
-        //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
-        //           m_host.c_str(),
-        //           a_len);
         int32_t l_s;
         l_s = utp_read(a_buf, a_len);
         if (l_s != NTRNT_STATUS_OK)
@@ -605,10 +584,8 @@ void peer::pr_utp_on_read(const uint8_t* a_buf, size_t a_len)
         // -------------------------------------------------
         // test setting read drained
         // -------------------------------------------------
-        //NDBG_PRINT("m_in_q.read_avail(): %lu\n", m_in_q.read_avail());
         if (!m_in_q.read_avail())
         {
-                //NDBG_PRINT("utp_read_drained\n");
                 utp_read_drained(m_utp_conn);
         }
 }
@@ -647,10 +624,7 @@ void peer::pr_utp_on_overhead_statistics(int a_direction, size_t a_len)
         //   1 == up
         //   0 == down
         // -------------------------------------------------
-        //NDBG_PRINT("[%sUTP%s]: ON_OVERHEAD_STATISTICS: direction: %d len: %lu\n",
-        //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
-        //           a_direction,
-        //           a_len);
+        //TRC_DEBUG("direction: %d len: %lu", a_direction, a_len);
         // TODO
 }
 //! ----------------------------------------------------------------------------
@@ -660,9 +634,6 @@ void peer::pr_utp_on_overhead_statistics(int a_direction, size_t a_len)
 //! ----------------------------------------------------------------------------
 void peer::pr_utp_on_state_change(int a_state)
 {
-        //NDBG_PRINT("[%sUTP%s]: ON_STATE_CHANGE: state: %d\n",
-        //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
-        //           a_state);
         switch(a_state)
         {
         // -------------------------------------------------
@@ -679,7 +650,6 @@ void peer::pr_utp_on_state_change(int a_state)
                 {
                         // set state to setup
                         m_state = STATE_PHE_SETUP;
-                        //NDBG_PRINT("[%sUTP%s]: ON_STATE_CHANGE: state: CONNECT\n", ANSI_COLOR_FG_BLUE, ANSI_COLOR_OFF);
                         // set state to none -indicates outbound
                         m_phe->set_state(phe::PHE_STATE_NONE);
                         // setup channel
@@ -715,8 +685,6 @@ void peer::pr_utp_on_state_change(int a_state)
         // -------------------------------------------------
         case UTP_STATE_WRITABLE:
         {
-                //NDBG_PRINT("[%sUTP%s]: [HOST: %s] ON_STATE_CHANGE: state: WRITABLE\n",
-                //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF, m_host.c_str());
                 // -----------------------------------------
                 // write until EAGAIN
                 // -----------------------------------------
@@ -725,16 +693,11 @@ void peer::pr_utp_on_state_change(int a_state)
                         ssize_t l_s;
                         int32_t l_try_write = m_out_q.b_read_avail();
                         l_s = utp_write(m_utp_conn, m_out_q.b_read_ptr(), l_try_write);
-                        //NDBG_PRINT("[%sutp_write%s: %ld / %d] [errno[%d] %s]\n",
-                        //           ANSI_COLOR_FG_CYAN, ANSI_COLOR_OFF,
-                        //           l_s, l_try_read,
-                        //           errno, strerror(errno));
                         // ---------------------------------
                         // socket no longer writable
                         // ---------------------------------
                         if (l_s == 0)
                         {
-                                //NDBG_PRINT("NO LONGER WRITEABLE\n");
                                 break;
                         }
                         // ---------------------------------
@@ -781,10 +744,6 @@ void peer::pr_utp_on_state_change(int a_state)
 //! ----------------------------------------------------------------------------
 int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
 {
-        //NDBG_PRINT("[%s---------READ-------%s]: [HOST: %s] ON_READ: len: %lu\n",
-        //           ANSI_COLOR_BG_CYAN, ANSI_COLOR_OFF,
-        //           m_host.c_str(),
-        //           a_len);
         // -------------------------------------------------
         // stats
         // -------------------------------------------------
@@ -799,11 +758,6 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
         // -------------------------------------------------
         while(true)
         {
-        //NDBG_PRINT("[%s---------READ-------%s]: [HOST: %s] ON_READ: len: %lu state: %d\n",
-        //           ANSI_COLOR_FG_CYAN, ANSI_COLOR_OFF,
-        //           m_host.c_str(),
-        //           a_len,
-        //           m_state);
         switch(m_state)
         {
         // -------------------------------------------------
@@ -835,7 +789,6 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
         case STATE_PHE_CONNECTING:
         {
                 int32_t l_s;
-                //NDBG_PRINT("[PHE] CONNECT\n");
                 l_s = m_phe->connect(m_in_q, m_out_q);
                 if (l_s == NTRNT_STATUS_AGAIN)
                 {
@@ -851,7 +804,6 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
                 // -----------------------------------------
                 if (m_phe->get_state() == phe::PHE_STATE_CONNECTED)
                 {
-                        //NDBG_PRINT("SET DECRYPT FILTER\n");
                         m_in_q.set_filter_cb(_decrypt_filter_cb, this);
                         m_out_q.set_filter_cb(_encrypt_filter_cb, this);
                         m_state = STATE_HANDSHAKING;
@@ -871,7 +823,6 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
                                 if (l_s == NTRNT_STATUS_AGAIN)
                                 {
                                         // need more data
-                                        NDBG_PRINT("NEED MORE DATA\n");
                                         return NTRNT_STATUS_OK;
                                 }
                                 TRC_ERROR("performing btp_parse_handshake_ia");
@@ -901,13 +852,9 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
         // -------------------------------------------------
         case STATE_HANDSHAKING:
         {
-                //NDBG_PRINT("[%sUTP%s]: [HOST: %s] HANDSHAKE!\n",
-                //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
-                //           m_host.c_str());
                 // -----------------------------------------
                 // parse handshake
                 // -----------------------------------------
-                //NDBG_PRINT("INQ READAVAIL: %lu\n", m_in_q.read_avail());
                 int32_t l_s;
                 l_s = btp_parse_handshake();
                 if (l_s != NTRNT_STATUS_OK)
@@ -915,7 +862,6 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
                         if (l_s == NTRNT_STATUS_AGAIN)
                         {
                                 // need more data
-                                //NDBG_PRINT("NEED MORE DATA\n");
                                 return NTRNT_STATUS_OK;
                         }
                         TRC_ERROR("performing btp_parse_handshake");
@@ -943,9 +889,6 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
         // -------------------------------------------------
         case STATE_CONNECTED:
         {
-                //NDBG_PRINT("[%sUTP%s]: [HOST: %s] CONNECTED!!\n",
-                //           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
-                //           m_host.c_str());
                 // -----------------------------------------
                 // process
                 // -----------------------------------------
@@ -966,10 +909,7 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
         // -------------------------------------------------
         default:
         {
-                NDBG_PRINT("[%sUTP%s]: [HOST: %s] UNHANDLED STATE: %u\n",
-                           ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
-                           m_host.c_str(),
-                           m_state);
+                TRC_ERROR("[UTP]: [HOST: %s] UNHANDLED STATE: %u\n", m_host.c_str(), m_state);
                 return NTRNT_STATUS_OK;
         }
         }
@@ -983,9 +923,7 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
 //! ----------------------------------------------------------------------------
 void peer::shutdown(error_t a_reason)
 {
-        TRC_DEBUG("[HOST %s] SHUTDOWN [REASON: %d]",
-                  m_host.c_str(),
-                  a_reason);
+        TRC_DEBUG("[HOST %s] SHUTDOWN [REASON: %d]", m_host.c_str(), a_reason);
         if (m_state == STATE_NONE)
         {
                 return;
@@ -1333,7 +1271,6 @@ int32_t peer::btp_read_until(void)
                 l_s = btp_read_cmd();
                 if (l_s == NTRNT_STATUS_AGAIN)
                 {
-                        //NDBG_PRINT("[CMD_READ_UNTIL: break AGAIN.\n");
                         return NTRNT_STATUS_AGAIN;
                 }
                 if (l_s != NTRNT_STATUS_OK)
@@ -1341,7 +1278,6 @@ int32_t peer::btp_read_until(void)
                         return NTRNT_STATUS_ERROR;
                 }
         } while(true);
-        //NDBG_PRINT("[CMD_READ_UNTIL: done...\n");
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -1351,12 +1287,6 @@ int32_t peer::btp_read_until(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_read_cmd(void)
 {
-        //NDBG_PRINT("[%sBTP COMMAND%s]: [READ_AVAIL: %ld] [CMD: %u] [CMD_LEN: %u]\n",
-        //           ANSI_COLOR_BG_MAGENTA, ANSI_COLOR_OFF,
-        //           m_in_q.read_avail(),
-        //           m_btp_cmd,
-        //           m_btp_cmd_len);
-        //NDBG_PRINT("[%sBTP COMMAND%s]: NEED MORE!\n", ANSI_COLOR_BG_MAGENTA, ANSI_COLOR_OFF);
 #define _CHECK_LEN(_len) do { \
         if (m_in_q.read_avail() < _len) { \
                 return NTRNT_STATUS_AGAIN; \
@@ -1438,7 +1368,6 @@ int32_t peer::btp_read_cmd(void)
         // -------------------------------------------------
         case BTP_CMD_UNCHOKE:
         {
-                //NDBG_PRINT("[BTP] [CMD: BTP_CMD_UNCHOKE]\n");
                 m_btp_peer_choking = false;
                 break;
         }
@@ -1471,7 +1400,6 @@ int32_t peer::btp_read_cmd(void)
         // -------------------------------------------------
         case BTP_CMD_NOT_INTERESTED:
         {
-                //NDBG_PRINT("[BTP] [CMD: BTP_CMD_NOT_INTERESTED]\n");
                 m_btp_peer_interested = false;
                 break;
         }
@@ -1583,7 +1511,6 @@ int32_t peer::btp_read_cmd(void)
         case BTP_CMD_FEXT_SUGGEST:
         {
                 _CHECK_LEN(m_btp_cmd_len-1);
-                //NDBG_PRINT("[BTP] [RECV] BTP_CMD_FEXT_SUGGEST\n");
                 // TODO discard for now
                 m_in_q.discard(m_btp_cmd_len-1);
                 break;
@@ -1595,7 +1522,6 @@ int32_t peer::btp_read_cmd(void)
         case BTP_CMD_FEXT_HAVE_ALL:
         {
                 _CHECK_LEN(m_btp_cmd_len-1);
-                //NDBG_PRINT("[BTP] [RECV] BTP_CMD_FEXT_HAVE_ALL\n");
                 // TODO discard for now
                 m_in_q.discard(m_btp_cmd_len-1);
                 break;
@@ -1607,7 +1533,6 @@ int32_t peer::btp_read_cmd(void)
         case BTP_CMD_FEXT_HAVE_NONE:
         {
                 _CHECK_LEN(m_btp_cmd_len-1);
-                //NDBG_PRINT("[BTP] [RECV] BTP_CMD_FEXT_HAVE_NONE\n");
                 // TODO discard for now
                 m_in_q.discard(m_btp_cmd_len-1);
                 break;
@@ -1619,7 +1544,6 @@ int32_t peer::btp_read_cmd(void)
         case BTP_CMD_FEXT_REJECT:
         {
                 _CHECK_LEN(m_btp_cmd_len-1);
-                //NDBG_PRINT("[BTP] [RECV] BTP_CMD_FEXT_REJECT\n");
                 // TODO discard for now
                 m_in_q.discard(m_btp_cmd_len-1);
                 break;
@@ -1631,7 +1555,6 @@ int32_t peer::btp_read_cmd(void)
         case BTP_CMD_FEXT_ALLOWED_FAST:
         {
                 _CHECK_LEN(m_btp_cmd_len-1);
-                //NDBG_PRINT("[BTP] [RECV] BTP_CMD_FEXT_ALLOWED_FAST\n");
                 // TODO discard for now
                 m_in_q.discard(m_btp_cmd_len-1);
                 break;
@@ -1658,11 +1581,11 @@ int32_t peer::btp_read_cmd(void)
         default:
         {
                 _CHECK_LEN(m_btp_cmd_len-1);
-                NDBG_PRINT("[HOST: %s] [CLIENT: %s] [BTP] [RECV] unhandled btp cmd: %u\n",
-                           m_host.c_str(),
-                           m_ltep_peer_id.c_str(),
-                           m_btp_cmd);
-                // TODO discard for now
+                TRC_WARN("[HOST: %s] [CLIENT: %s] [BTP] [RECV] unhandled btp cmd: %u\n",
+                         m_host.c_str(),
+                         m_ltep_peer_id.c_str(),
+                         m_btp_cmd);
+                // discard for now
                 m_in_q.discard(m_btp_cmd_len-1);
                 break;
         }
@@ -1682,7 +1605,6 @@ int32_t peer::btp_read_cmd(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_send_keepalive(void)
 {
-        //NDBG_PRINT("[BTP] [SEND] BTP_KEEPALIVE\n");
         // -------------------------------------------------
         // keep-alive: <len=0000>
         // -------------------------------------------------
@@ -1696,7 +1618,6 @@ int32_t peer::btp_send_keepalive(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_send_choke(void)
 {
-        //NDBG_PRINT("[BTP] [SEND] BTP_CMD_CHOKE\n");
         // -------------------------------------------------
         // BTP_CMD_CHOKE
         // choke: <len=0001><id=0>
@@ -1712,7 +1633,6 @@ int32_t peer::btp_send_choke(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_send_unchoke(void)
 {
-        //NDBG_PRINT("[BTP] [SEND] BTP_CMD_UNCHOKE\n");
         // -------------------------------------------------
         // BTP_CMD_UNCHOKE
         // unchoke: <len=0001><id=1>
@@ -1728,7 +1648,6 @@ int32_t peer::btp_send_unchoke(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_send_interested(void)
 {
-        //NDBG_PRINT("[BTP] [SEND] BTP_CMD_INTERESTED\n");
         // -------------------------------------------------
         // BTP_CMD_INTERESTED
         // interested: <len=0001><id=2>
@@ -1744,7 +1663,6 @@ int32_t peer::btp_send_interested(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_send_not_interested(void)
 {
-        //NDBG_PRINT("[BTP] [SEND] BTP_CMD_NOT_INTERESTED\n");
         // -------------------------------------------------
         // BTP_CMD_NOT_INTERESTED
         // not interested: <len=0001><id=3>
@@ -1760,7 +1678,6 @@ int32_t peer::btp_send_not_interested(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_send_have(uint32_t a_idx)
 {
-        //NDBG_PRINT("[BTP] [SEND] BTP_CMD_HAVE\n");
         // -------------------------------------------------
         // BTP_CMD_REQUEST
         // have: <len=0005><id=4><piece index>
@@ -1777,7 +1694,6 @@ int32_t peer::btp_send_have(uint32_t a_idx)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_send_bitfield(void)
 {
-        //NDBG_PRINT("[BTP] [SEND] BTP_CMD_BITFIELD\n");
         // -------------------------------------------------
         // get bitfield
         // -------------------------------------------------
@@ -1807,8 +1723,6 @@ int32_t peer::btp_send_bitfield(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_send_request(uint32_t a_idx, uint32_t a_off, uint32_t a_len)
 {
-        //NDBG_PRINT("[BTP] [SEND] BTP_CMD_REQUEST [IDX: %u] [OFF: %u] [LEN: %u]\n",
-        //           a_idx, a_off, a_len);
         // -------------------------------------------------
         // BTP_CMD_REQUEST
         // request: <len=0013><id=6><index><begin><length>
@@ -1827,8 +1741,6 @@ int32_t peer::btp_send_request(uint32_t a_idx, uint32_t a_off, uint32_t a_len)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_send_piece(uint32_t a_idx, uint32_t a_off, uint32_t a_len)
 {
-        //NDBG_PRINT("[BTP] [SEND] BTP_CMD_PIECE [IDX: %u] [OFF: %u] [len: %u]\n",
-        //           a_idx, a_off, a_len);
         // -------------------------------------------------
         // prevent overly large piece sending
         // -------------------------------------------------
@@ -1873,7 +1785,6 @@ int32_t peer::btp_send_piece(uint32_t a_idx, uint32_t a_off, uint32_t a_len)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_send_cancel(uint32_t a_idx, uint32_t a_off, uint32_t a_len)
 {
-        //NDBG_PRINT("[BTP] [SEND] BTP_CMD_CANCEL\n");
         // -------------------------------------------------
         // BTP_CMD_CANCEL
         // cancel: <len=0013><id=8><index><begin><length>
@@ -1892,7 +1803,6 @@ int32_t peer::btp_send_cancel(uint32_t a_idx, uint32_t a_off, uint32_t a_len)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_recv_have(void)
 {
-        //NDBG_PRINT("[BTP] [RECV] BTP_CMD_HAVE\n");
         int64_t l_rd;
         // -------------------------------------------------
         // BTP_CMD_HAVE
@@ -1920,7 +1830,6 @@ int32_t peer::btp_recv_have(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_recv_bitfield(void)
 {
-        //NDBG_PRINT("[BTP] [RECV] BTP_CMD_BITFIELD\n");
         // -------------------------------------------------
         // BTP_CMD_BITFIELD
         // bitfield: <len=0001+X><id=5><bitfield>
@@ -1929,7 +1838,6 @@ int32_t peer::btp_recv_bitfield(void)
         char* l_btfield = (char*)malloc(sizeof(char)*l_len);
         int64_t l_rd;
         l_rd = m_in_q.read(l_btfield, l_len);
-        //NDBG_HEXDUMP(l_btfield, l_len);
         UNUSED(l_rd);
         int32_t l_s;
         l_s = m_btp_pieces_have.import_raw((const uint8_t*)l_btfield,
@@ -1951,7 +1859,6 @@ int32_t peer::btp_recv_bitfield(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_recv_piece(void)
 {
-        //NDBG_PRINT("[BTP] [RECV] BTP_CMD_PIECE\n");
         int64_t l_rd;
         // -------------------------------------------------
         // BTP_CMD_PIECE
@@ -1972,8 +1879,6 @@ int32_t peer::btp_recv_piece(void)
         // -------------------------------------------------
         uint32_t l_len = m_btp_cmd_len-1-4-4;
         int32_t l_s;
-        //NDBG_PRINT("[BTP] [RECV] BTP_CMD_PIECE [IDX: %u] [OFF: %u] [LEN: %u]\n",
-        //           l_idx, l_off, l_len);
         l_s = m_session.get_pickr().recv_piece(this, m_in_q, l_idx, l_off, l_len);
         if (l_s != NTRNT_STATUS_OK)
         {
@@ -1989,7 +1894,6 @@ int32_t peer::btp_recv_piece(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_recv_request(void)
 {
-        //NDBG_PRINT("[BTP] [RECV] BTP_CMD_REQUEST\n");
         int64_t l_rd;
         // -------------------------------------------------
         // BTP_CMD_REQUEST
@@ -2013,8 +1917,6 @@ int32_t peer::btp_recv_request(void)
         // -------------------------------------------------
         // send piece
         // -------------------------------------------------
-        //NDBG_PRINT("[BTP] [RECV] BTP_CMD_REQUEST [IDX: %u] [OFF: %u] [LEN: %u]\n",
-        //           l_idx, l_off, l_len);
         int32_t l_s;
         l_s = btp_send_piece(l_idx, l_off, l_len);
         if (l_s != NTRNT_STATUS_OK)
@@ -2035,7 +1937,6 @@ int32_t peer::btp_recv_request(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_recv_cancel(void)
 {
-        //NDBG_PRINT("[BTP] [RECV] BTP_CMD_CANCEL\n");
         int64_t l_rd;
         // -------------------------------------------------
         // BTP_CMD_CANCEL
@@ -2056,9 +1957,10 @@ int32_t peer::btp_recv_cancel(void)
         l_rd = m_in_q.read((char*)&l_len, sizeof(l_len));
         UNUSED(l_rd);
         l_len = ntohl(l_len);
-        //NDBG_PRINT("[BTP] [RECV] BTP_CMD_CANCEL [IDX: %u] [OFF: %u] [LEN: %u]\n",
-        //                l_idx, l_off, l_len);
-        //NDBG_PRINT("[PEER: %s]\n", m_btp_peer_str.c_str());
+        // -------------------------------------------------
+        // TODO -cancel outstanding requests for:
+        // idx/offset/len
+        // -------------------------------------------------
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -2068,7 +1970,6 @@ int32_t peer::btp_recv_cancel(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::btp_recv_port(void)
 {
-        //NDBG_PRINT("[BTP] [RECV] BTP_CMD_PORT\n");
         int64_t l_rd;
         // -------------------------------------------------
         // BTP_CMD_PORT
@@ -2079,8 +1980,9 @@ int32_t peer::btp_recv_port(void)
         l_rd = m_in_q.read((char*)&l_port, sizeof(l_port));
         UNUSED(l_rd);
         l_port = ntohs(l_port);
-        //NDBG_PRINT("[BTP] [RECV] BTP_CMD_PORT [PORT: %u]\n", l_port);
+        // -------------------------------------------------
         // TODO -add to DHT ??? <peer ip>+<this port>
+        // -------------------------------------------------
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -2200,7 +2102,6 @@ void peer::ltep_create_handshake(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::ltep_send_handshake(void)
 {
-        //NDBG_PRINT("[BTP] [LTEP [SEND] HANDSHAKE\n");
         // -------------------------------------------------
         // recreate -changes if upload only
         // -------------------------------------------------
@@ -2354,7 +2255,6 @@ int32_t peer::ltep_send_pex(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::ltep_send_metadata_request(uint32_t a_idx)
 {
-        //NDBG_PRINT("[BTP] [LTEP [SEND] METADATA_REQUEST [IDX: %u]\n", a_idx);
         // -------------------------------------------------
         // create bencoded body
         // ref:
@@ -2399,7 +2299,6 @@ int32_t peer::ltep_send_metadata_request(uint32_t a_idx)
 //! ----------------------------------------------------------------------------
 int32_t peer::ltep_send_metadata(uint32_t a_idx)
 {
-        //NDBG_PRINT("[BTP] [LTEP [SEND] METADATA [IDX: %u]\n", a_idx);
         // -------------------------------------------------
         // get buffer for metadata piece
         // -------------------------------------------------
@@ -2460,7 +2359,6 @@ int32_t peer::ltep_send_metadata(uint32_t a_idx)
 //! ----------------------------------------------------------------------------
 int32_t peer::ltep_send_metadata_reject(uint32_t a_idx)
 {
-        //NDBG_PRINT("[BTP] [LTEP [SEND] METADATA_REJECT [IDX: %u]\n", a_idx);
         // -------------------------------------------------
         // create bencoded body
         // ref:
@@ -2563,17 +2461,12 @@ int32_t peer::ltep_read_cmd(void)
         // -------------------------------------------------
         else
         {
-                NDBG_PRINT("[HOST: %s] [CLIENT: %s] unhandled ltep cmd: %u\n",
-                           m_host.c_str(),
-                           m_ltep_peer_id.c_str(),
-                           m_btp_cmd);
-                char* l_buf = nullptr;
-                l_buf = (char*)malloc(l_rem);
-                m_in_q.read(l_buf, l_rem);
-                NDBG_HEXDUMP(l_buf, 128);
-                if (l_buf) { free(l_buf); l_buf = nullptr; }
-                // TODO discard for now
-                //m_in_q.discard(l_rem);
+                TRC_WARN("[HOST: %s] [CLIENT: %s] unhandled ltep cmd: %u\n",
+                         m_host.c_str(),
+                         m_ltep_peer_id.c_str(),
+                         m_btp_cmd);
+                // discard for now
+                m_in_q.discard(l_rem);
         }
         return NTRNT_STATUS_OK;
 }
@@ -2584,7 +2477,6 @@ int32_t peer::ltep_read_cmd(void)
 //! ----------------------------------------------------------------------------
 int32_t peer::ltep_recv_handshake(size_t a_len)
 {
-        //NDBG_PRINT("[BTP] [RECV] [LTEP] LTEP_CMD_HANDSHAKE LEN: %lu\n", a_len);
         // -------------------------------------------------
         // read up to max size
         // -------------------------------------------------
@@ -2606,7 +2498,6 @@ int32_t peer::ltep_recv_handshake(size_t a_len)
         // discard anything left over
         if (l_rem)
         {
-                NDBG_PRINT("[BTP] [RECV] [LTEP] LTEP_CMD_HANDSHAKE discard: %lu\n", l_rem);
                 m_in_q.discard(l_rem);
         }
         // -------------------------------------------------
@@ -2767,8 +2658,6 @@ int32_t peer::ltep_recv_handshake(size_t a_len)
                                 continue;
                         }
                         const be_string_t& i_str = *((const be_string_t*)i_obj.m_obj);
-                        //NDBG_PRINT("yourip\n");
-                        //NDBG_HEXDUMP(i_str.m_data, i_str.m_len);
                         UNUSED(i_str);
                 }
                 // -----------------------------------------
@@ -2826,7 +2715,6 @@ int32_t peer::ltep_recv_handshake(size_t a_len)
 //! ----------------------------------------------------------------------------
 int32_t peer::ltep_recv_pex(size_t a_len)
 {
-        //NDBG_PRINT("[BTP] [RECV] [LTEP] LTEP_CMD_PEX AVAIL: %lu\n", m_in_q.read_avail());
         // -------------------------------------------------
         // parse pex message
         // -------------------------------------------------
@@ -2956,7 +2844,6 @@ int32_t peer::ltep_recv_pex(size_t a_len)
 //! ----------------------------------------------------------------------------
 int32_t peer::ltep_recv_metadata(size_t a_len)
 {
-        //NDBG_PRINT("[BTP] [LTEP] [RECV] METADATA_REQUEST\n");
         // -------------------------------------------------
         // decode
         // -------------------------------------------------
