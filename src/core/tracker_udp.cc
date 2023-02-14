@@ -605,7 +605,12 @@ int32_t tracker_udp_rqst::recv_announce(uint8_t* a_msg, uint32_t a_msg_len)
         if (m_host_info.m_sock_family == AF_INET)
         {
                 int32_t l_s;
-                l_s = m_tracker.m_session.add_peer_raw(AF_INET, a_msg + l_off, l_p_size, NTRNT_PEER_FROM_TRACKER);
+                l_s = m_tracker.m_session.add_peer_raw(AF_INET,
+                                                       a_msg + l_off,
+                                                       l_p_size,
+                                                       nullptr,
+                                                       0,
+                                                       NTRNT_PEER_FROM_TRACKER);
                 UNUSED(l_s);
         }
         // -------------------------------------------------
@@ -614,7 +619,12 @@ int32_t tracker_udp_rqst::recv_announce(uint8_t* a_msg, uint32_t a_msg_len)
         else if (m_host_info.m_sock_family == AF_INET6)
         {
                 int32_t l_s;
-                l_s = m_tracker.m_session.add_peer_raw(AF_INET6, a_msg + l_off, l_p_size, NTRNT_PEER_FROM_TRACKER);
+                l_s = m_tracker.m_session.add_peer_raw(AF_INET6,
+                                                       a_msg + l_off,
+                                                       l_p_size,
+                                                       nullptr,
+                                                       0,
+                                                       NTRNT_PEER_FROM_TRACKER);
                 UNUSED(l_s);
         }
         return NTRNT_STATUS_OK;

@@ -383,7 +383,12 @@ void dht_mgr::dht_cb(void* a_ctx,
         case DHT_EVENT_VALUES:
         {
                 int32_t l_s;
-                l_s = l_ses.add_peer_raw(AF_INET, (uint8_t*)a_data, a_data_len, NTRNT_PEER_FROM_DHT);
+                l_s = l_ses.add_peer_raw(AF_INET,
+                                         (uint8_t*)a_data,
+                                         a_data_len,
+                                         nullptr,
+                                         0,
+                                         NTRNT_PEER_FROM_DHT);
                 UNUSED(l_s);
                 break;
         }
@@ -393,7 +398,12 @@ void dht_mgr::dht_cb(void* a_ctx,
         case DHT_EVENT_VALUES6:
         {
                 int32_t l_s;
-                l_s = l_ses.add_peer_raw(AF_INET6, (uint8_t*)a_data, a_data_len, NTRNT_PEER_FROM_DHT);
+                l_s = l_ses.add_peer_raw(AF_INET6,
+                                         (uint8_t*)a_data,
+                                         a_data_len,
+                                         nullptr,
+                                         0,
+                                         NTRNT_PEER_FROM_DHT);
                 UNUSED(l_s);
                 break;
         }

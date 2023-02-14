@@ -444,12 +444,12 @@ int32_t peer_mgr::connect_peers(void)
         // -------------------------------------------------
         // check peer state
         // -------------------------------------------------
-#if 0
         uint64_t l_now_s = get_time_s();
         for (auto && i_p : m_peer_connected_vec)
         {
                 if (!i_p) { continue; }
                 peer& l_p = *i_p;
+#if 1
                 // -----------------------------------------
                 // check for too many expired
                 // -----------------------------------------
@@ -464,6 +464,7 @@ int32_t peer_mgr::connect_peers(void)
                         l_p.shutdown(peer::ERROR_EXPIRED_BR);
                         continue;
                 }
+#endif
                 // -----------------------------------------
                 // check for idle
                 // -----------------------------------------
@@ -478,7 +479,6 @@ int32_t peer_mgr::connect_peers(void)
                         continue;
                 }
         }
-#endif
         // -------------------------------------------------
         // update swarm
         // -------------------------------------------------
