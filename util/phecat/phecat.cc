@@ -65,218 +65,215 @@ static void _sig_handler(int signo)
         }
 }
 //! ----------------------------------------------------------------------------
+//! ****************************************************************************
+//!                        U T P   C A L L B A C K S
+//! ****************************************************************************
+//! ----------------------------------------------------------------------------
+//! ----------------------------------------------------------------------------
 //! \details: TODO
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-static uint64 _utp_cb(utp_callback_arguments* a_args)
+static uint64 _pm_utp_log(utp_callback_arguments* a_args)
 {
-        int32_t l_s;
-        NDBG_PRINT("[%sUTP%s]: cb type: %d ctx: %p conn: %p\n",
-                   ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
-                   a_args->callback_type,
-                   a_args->context,
-                   a_args->socket);
         // -------------------------------------------------
-        // get session
+        // get peer manager
         // -------------------------------------------------
-        ns_ntrnt::session* l_ses = static_cast<ns_ntrnt::session*>(utp_context_get_userdata(a_args->context));
-        if (!l_ses)
+        ns_ntrnt::peer_mgr* l_pm = static_cast<ns_ntrnt::peer_mgr*>(utp_context_get_userdata(a_args->context));
+        if (!l_pm)
         {
-                TRC_ERROR("session == null");
+                TRC_ERROR("peer_mgr == null");
                 return 0;
         }
+        // TODO unused if trace not enabled???
+        // TODO cap length with a_args->len
+        NDBG_OUTPUT("[UTP_LOG] %s\n", a_args->buf);
+        return 0;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+static uint64 _pm_utp_on_accept(utp_callback_arguments* a_args)
+{
+        // -------------------------------------------------
+        // get peer manager
+        // -------------------------------------------------
+        ns_ntrnt::peer_mgr* l_pm = static_cast<ns_ntrnt::peer_mgr*>(utp_context_get_userdata(a_args->context));
+        if (!l_pm)
+        {
+                TRC_ERROR("peer_mgr == null");
+                return 0;
+        }
+        // -------------------------------------------------
+        // accept
+        // -------------------------------------------------
+        int32_t l_s;
+        l_s = l_pm->pm_utp_on_accept(a_args->socket);
+        if (l_s != NTRNT_STATUS_OK)
+        {
+                TRC_ERROR("performing pm_utp_on_accept");
+                return 0;
+        }
+        return 0;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+static uint64 _pm_utp_on_sendto(utp_callback_arguments* a_args)
+{
+        // -------------------------------------------------
+        // get peer manager
+        // -------------------------------------------------
+        ns_ntrnt::peer_mgr* l_pm = static_cast<ns_ntrnt::peer_mgr*>(utp_context_get_userdata(a_args->context));
+        if (!l_pm)
+        {
+                TRC_ERROR("peer_mgr == null");
+                return 0;
+        }
+        // -------------------------------------------------
+        // sendto
+        // -------------------------------------------------
+        int32_t l_s;
+        l_s = l_pm->pm_utp_sendto(a_args->buf, a_args->len, a_args->address, a_args->address_len);
+        if (l_s != NTRNT_STATUS_OK)
+        {
+                TRC_ERROR("performing pm_utp_sendto");
+                return 0;
+        }
+        return 0;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+static uint64 _pm_utp_on_read(utp_callback_arguments* a_args)
+{
         // -------------------------------------------------
         // get peer
         // -------------------------------------------------
         ns_ntrnt::peer* l_peer = nullptr;
-        if (a_args->socket)
+        if (!a_args->socket)
         {
-                l_peer = static_cast<ns_ntrnt::peer*>(utp_get_userdata(a_args->socket));
+                return 0;
         }
-        if (l_peer)
+        l_peer = static_cast<ns_ntrnt::peer*>(utp_get_userdata(a_args->socket));
+        if (!l_peer)
         {
-                ns_ntrnt::peer::state_t l_ls = l_peer->get_state();
-                // TODO FIX!!!
-#if 0
-                l_s = l_peer->utp_cb(a_args->socket,
-                                     a_args->callback_type,
-                                     a_args->state,
-                                     a_args->buf,
-                                     a_args->len);
-#endif
-                // EOF
-                if (l_s == NTRNT_STATUS_DONE)
-                {
-                        //shutdown_peer(*l_peer);
-                }
-                // error
-                else if (l_s == NTRNT_STATUS_ERROR)
-                {
-                        //shutdown_peer(*l_peer);
-                }
-                // -----------------------------------------
-                // check is new active
-                // -----------------------------------------
-                if (l_ls != ns_ntrnt::peer::STATE_CONNECTED)
-                {
-                        ns_ntrnt::peer::state_t l_ns = l_peer->get_state();
-                        if (l_ns == ns_ntrnt::peer::STATE_CONNECTED)
-                        {
-                                //set_peer_active(*l_peer);
-                        }
-                }
-                return NTRNT_STATUS_OK;
+                return 0;
         }
         // -------------------------------------------------
-        // for msg type...
+        // on read
         // -------------------------------------------------
-        switch(a_args->callback_type)
+        l_peer->pr_utp_on_read(a_args->buf, a_args->len);
+        return 0;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+static uint64 _pm_utp_get_read_buffer_size(utp_callback_arguments* a_args)
+{
+        // -------------------------------------------------
+        // get peer
+        // -------------------------------------------------
+        ns_ntrnt::peer* l_peer = nullptr;
+        if (!a_args->socket)
         {
-        // -------------------------------------------------
-        // UTP_ON_ACCEPT
-        // -------------------------------------------------
-        case UTP_ON_ACCEPT:
+                return 0;
+        }
+        l_peer = static_cast<ns_ntrnt::peer*>(utp_get_userdata(a_args->socket));
+        if (!l_peer)
         {
-                if (!a_args->socket)
-                {
-                        TRC_ERROR("a_args->socket == null");
-                        return 0;
-                }
-                sockaddr_storage l_sas;
-                socklen_t l_sas_len;
-                int32_t l_s;
-                l_s = utp_getpeername(a_args->socket, (struct sockaddr*)&l_sas, &l_sas_len);
-                if (l_s != 0)
-                {
-                        TRC_ERROR("performing utp_getpeername");
-                        return 0;
-                }
-                std::string l_host;
-                l_host = ns_ntrnt::sas_to_str(l_sas);
-                NDBG_PRINT("[%sUTP%s]: [HOST: %s] %sON_ACCEPT%s\n",
-                           ANSI_COLOR_FG_MAGENTA, ANSI_COLOR_OFF,
-                           l_host.c_str(),
-                           ANSI_COLOR_BG_RED, ANSI_COLOR_OFF);
-                // -------------------------------------------------
-                // find
-                // -------------------------------------------------
-                auto i_p = g_peer_map.find(l_sas);
-                if (i_p != g_peer_map.end())
-                {
-                        return NTRNT_STATUS_OK;
-                }
-                // -------------------------------------------------
-                // make new
-                // -------------------------------------------------
-                ns_ntrnt::peer* l_peer = new ns_ntrnt::peer(ns_ntrnt::NTRNT_PEER_FROM_SELF, *g_session, *g_peer_mgr, l_sas);
-                l_s = l_peer->accept_utp(a_args->socket);
-                if (l_s != NTRNT_STATUS_OK)
-                {
-                        TRC_ERROR("performing accept_utp");
-                        if (l_peer) { delete l_peer; l_peer = nullptr; }
-                        return NTRNT_STATUS_ERROR;
-                }
-                l_peer->set_state(ns_ntrnt::peer::STATE_PHE_SETUP);
-                // -------------------------------------------------
-                // add to map
-                // -------------------------------------------------
-                g_peer_map[l_sas] = l_peer;
-                break;
+                return 0;
         }
         // -------------------------------------------------
-        // UTP_ON_ACCEPT
+        // return sizeof in buffer
         // -------------------------------------------------
-        case UTP_ON_ERROR:
+        return l_peer->pr_utp_get_read_buffer_size();
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+static uint64 _pm_utp_on_error(utp_callback_arguments* a_args)
+{
+        // -------------------------------------------------
+        // get peer
+        // -------------------------------------------------
+        ns_ntrnt::peer* l_peer = nullptr;
+        if (!a_args->socket)
         {
-                // TODO
-                break;
+                return 0;
         }
-        // -------------------------------------------------
-        // UTP_ON_ACCEPT
-        // -------------------------------------------------
-        case UTP_ON_READ:
+        l_peer = static_cast<ns_ntrnt::peer*>(utp_get_userdata(a_args->socket));
+        if (!l_peer)
         {
-                // TODO
-                break;
+                return 0;
         }
         // -------------------------------------------------
-        // UTP_ON_OVERHEAD_STATISTICS
+        // on error
         // -------------------------------------------------
-        case UTP_ON_OVERHEAD_STATISTICS:
+        l_peer->pr_utp_on_error(a_args->error_code);
+        return 0;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+static uint64 _pm_utp_on_overhead_statistics(utp_callback_arguments* a_args)
+{
+        // -------------------------------------------------
+        // get peer
+        // -------------------------------------------------
+        ns_ntrnt::peer* l_peer = nullptr;
+        if (!a_args->socket)
         {
-                // TODO
-                break;
+                return 0;
         }
-        // -------------------------------------------------
-        // UTP_GET_READ_BUFFER_SIZE
-        // -------------------------------------------------
-        case UTP_GET_READ_BUFFER_SIZE:
+        l_peer = static_cast<ns_ntrnt::peer*>(utp_get_userdata(a_args->socket));
+        if (!l_peer)
         {
-                // TODO
-                // FIX!!!
-                return (64*1024);
+                return 0;
         }
         // -------------------------------------------------
-        // UTP_LOG
+        // on overhead stats
         // -------------------------------------------------
-        case UTP_LOG:
+        l_peer->pr_utp_on_overhead_statistics(a_args->send, a_args->len);
+        return 0;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+static uint64 _pm_utp_on_state_change(utp_callback_arguments* a_args)
+{
+        // -------------------------------------------------
+        // get peer
+        // -------------------------------------------------
+        ns_ntrnt::peer* l_peer = nullptr;
+        if (!a_args->socket)
         {
-                // TODO
-                break;
+                return 0;
         }
-        // -------------------------------------------------
-        // UTP_ON_STATE_CHANGE
-        // -------------------------------------------------
-        case UTP_ON_STATE_CHANGE:
+        l_peer = static_cast<ns_ntrnt::peer*>(utp_get_userdata(a_args->socket));
+        if (!l_peer)
         {
-                // TODO ???
-                break;
+                return 0;
         }
         // -------------------------------------------------
-        // UTP_SENDTO
+        // on state change
         // -------------------------------------------------
-        case UTP_SENDTO:
-        {
-                int l_fd = g_session->get_udp_fd();
-                const struct sockaddr* l_sa = a_args->address;
-                if(l_sa->sa_family == AF_INET6)
-                {
-                        l_fd = g_session->get_udp6_fd();
-                }
-                int l_s;
-                errno = 0;
-                l_s = sendto(l_fd, a_args->buf, a_args->len, 0, l_sa, a_args->address_len);
-                if (l_s < 0)
-                {
-                        // -----------------------------------------
-                        // EAGAIN
-                        // -----------------------------------------
-                        if (errno == EAGAIN)
-                        {
-                                NDBG_PRINT("unexpected EAGAIN from sendto\n");
-                                return NTRNT_STATUS_AGAIN;
-                        }
-                        TRC_ERROR("error performing sendto. Reason: %s\n", strerror(errno));
-                        TRC_ERROR("fd:                  %d", l_fd);
-                        TRC_ERROR("a_args->buf:         %p", a_args->buf);
-                        TRC_ERROR("a_args->len:         %lu", a_args->len);
-                        TRC_ERROR("a_args->address:     %p", l_sa);
-                        TRC_ERROR("a_args->address_len: %u", a_args->address_len);
-                        return 0;
-                }
-                break;
-        }
-        // -------------------------------------------------
-        // ???
-        // -------------------------------------------------
-        default:
-        {
-                TRC_ERROR("unhandled utp msg type: %d", a_args->callback_type);
-                break;
-        }
-        }
-        return NTRNT_STATUS_OK;
+        l_peer->pr_utp_on_state_change(a_args->state);
+        return 0;
 }
 //! ----------------------------------------------------------------------------
 //! \details: Print the version.
@@ -320,7 +317,7 @@ int main(int argc, char** argv)
         // -------------------------------------------------
         // vars
         // -------------------------------------------------
-        ns_ntrnt::trc_log_level_set(ns_ntrnt::TRC_LOG_LEVEL_ERROR);
+        ns_ntrnt::trc_log_level_set(ns_ntrnt::TRC_LOG_LEVEL_DEBUG);
         ns_ntrnt::trc_log_file_open("/dev/stdout");
         int l_s;
         std::string l_info_hash;
@@ -490,29 +487,39 @@ int main(int argc, char** argv)
         // -------------------------------------------------
         // TODO HACK UTP CB
         // -------------------------------------------------
-        utp_context* l_utp_ctx = l_ses.get_peer_mgr().get_utp_ctx();
+        // -------------------------------------------------
+        // utp initialization
+        // -------------------------------------------------
+        g_peer_mgr = &(l_ses.get_peer_mgr());
+        utp_context* l_utp_ctx = g_peer_mgr->get_utp_ctx();
         // set callbacks
-        utp_set_callback(l_utp_ctx, UTP_ON_ACCEPT, _utp_cb);
-        utp_set_callback(l_utp_ctx, UTP_SENDTO, _utp_cb);
-        utp_set_callback(l_utp_ctx, UTP_ON_READ, _utp_cb);
-        // TODO -don't implement for now...
-#if 0
-        utp_set_callback(m_utp_ctx, UTP_GET_READ_BUFFER_SIZE, _utp_cb);
-#endif
-        utp_set_callback(l_utp_ctx, UTP_ON_ERROR, _utp_cb);
-        utp_set_callback(l_utp_ctx, UTP_ON_OVERHEAD_STATISTICS, _utp_cb);
-        utp_set_callback(l_utp_ctx, UTP_ON_STATE_CHANGE, _utp_cb);
+        utp_set_callback(l_utp_ctx, UTP_ON_ACCEPT, _pm_utp_on_accept);
+        utp_set_callback(l_utp_ctx, UTP_SENDTO, _pm_utp_on_sendto);
+        utp_set_callback(l_utp_ctx, UTP_ON_READ, _pm_utp_on_read);
+        utp_set_callback(l_utp_ctx, UTP_GET_READ_BUFFER_SIZE, _pm_utp_get_read_buffer_size);
+        utp_set_callback(l_utp_ctx, UTP_ON_ERROR, _pm_utp_on_error);
+        utp_set_callback(l_utp_ctx, UTP_ON_OVERHEAD_STATISTICS, _pm_utp_on_overhead_statistics);
+        utp_set_callback(l_utp_ctx, UTP_ON_STATE_CHANGE, _pm_utp_on_state_change);
         // tracing
+//#ifdef UTP_DEBUG_LOGGING
 #if 0
-        utp_set_callback(m_utp_ctx, UTP_LOG, &_utp_cb);
+        utp_set_callback(m_utp_ctx, UTP_LOG, &_pm_utp_log);
         utp_context_set_option(m_utp_ctx, UTP_LOG_NORMAL, 1);
         utp_context_set_option(m_utp_ctx, UTP_LOG_MTU, 1);
         utp_context_set_option(m_utp_ctx, UTP_LOG_DEBUG, 1);
+#else
+        UNUSED(_pm_utp_log);
 #endif
+        // set recv buffer size?
+        l_s = utp_context_set_option(l_utp_ctx, UTP_RCVBUF, NTRNT_SESSION_UTP_RECV_BUF_SIZE);
+        if (l_s != 0)
+        {
+                TRC_ERROR("performing utp_context_set_option");
+                return NTRNT_STATUS_ERROR;
+        }
         // -------------------------------------------------
         // peer
         // -------------------------------------------------
-        g_peer_mgr = &(l_ses.get_peer_mgr());
         ns_ntrnt::peer* l_peer  = nullptr;
         if (!l_listen)
         {

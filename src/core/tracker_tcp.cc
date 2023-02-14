@@ -1472,26 +1472,26 @@ int32_t tracker_tcp::handle_announce_response(http_resp& a_resp)
                 if ((i_m.first == "peers") &&
                     (i_obj.m_type == BE_OBJ_STRING))
                 {
-                        for (size_t i_p = 0; i_p < i_obj.m_len/6; ++i_p)
-                        {
-                                off_t l_off = i_p*6;
-                                uint8_t* l_buf = (uint8_t*)i_obj.m_ptr + l_off;
-                                int32_t l_s;
-                                l_s = m_session.add_peer_raw(AF_INET, l_buf, 6, NTRNT_PEER_FROM_TRACKER);
-                                UNUSED(l_s);
-                        }
+                        int32_t l_s;
+                        l_s = m_session.add_peer_raw(AF_INET,
+                                                     (const uint8_t*)i_obj.m_ptr,
+                                                     i_obj.m_len,
+                                                     nullptr,
+                                                     0,
+                                                     NTRNT_PEER_FROM_TRACKER);
+                        UNUSED(l_s);
                 }
                 else if ((i_m.first == "peers6") &&
                          (i_obj.m_type == BE_OBJ_STRING))
                 {
-                        for (size_t i_p = 0; i_p < i_obj.m_len/18; ++i_p)
-                        {
-                                off_t l_off = i_p*18;
-                                uint8_t* l_buf = (uint8_t*)i_obj.m_ptr + l_off;
-                                int32_t l_s;
-                                l_s = m_session.add_peer_raw(AF_INET6, l_buf, 18, NTRNT_PEER_FROM_TRACKER);
-                                UNUSED(l_s);
-                        }
+                        int32_t l_s;
+                        l_s = m_session.add_peer_raw(AF_INET6,
+                                                     (const uint8_t*)i_obj.m_ptr,
+                                                     i_obj.m_len,
+                                                     nullptr,
+                                                     0,
+                                                     NTRNT_PEER_FROM_TRACKER);
+                        UNUSED(l_s);
                 }
         }
         // -------------------------------------------------

@@ -612,8 +612,106 @@ int32_t session::add_peer(struct sockaddr_storage& a_sas, peer_from_t a_from)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-int32_t session::add_peer_raw(int a_family, const uint8_t* a_buf, size_t a_len, peer_from_t a_from)
+bool session::validate_pex_flags(uint8_t a_flags)
 {
+        // -------------------------------------------------
+        // pex flags from peer exchange
+        // -------------------------------------------------
+        // ref: https://www.bittorrent.org/beps/bep_0011.html
+        // -----+-------------------------------------------
+        // Bit  |  when set
+        // -----+-------------------------------------------
+        // 0x01 |  prefers encryption, as indicated by e field in extension handshake
+        // 0x02 |  seed/upload_only
+        // 0x04 |  supports uTP
+        // 0x08 |  peer indicated ut_holepunch support in extension handshake
+        // 0x10 |  outgoing connection, peer is reachable
+        // -------------------------------------------------
+        // -------------------------------------------------
+        // PREFERS_ENCRYPTION
+        // -------------------------------------------------
+        if (a_flags & peer::LTEP_PEER_FLAG_PREFERS_ENCRYPTION)
+        {
+                // do nothing
+        }
+        // -------------------------------------------------
+        // SEED
+        // -------------------------------------------------
+        if (a_flags & peer::LTEP_PEER_FLAG_SEED)
+        {
+                // do nothing
+        }
+        // -------------------------------------------------
+        // SUPPORTS_UTP
+        // -------------------------------------------------
+        if (a_flags & peer::LTEP_PEER_FLAG_SUPPORTS_UTP)
+        {
+                // do nothing
+        }
+        else
+        {
+                // -----------------------------------------
+                // TODO
+                // -----------------------------------------
+                // currently only support utp
+                // have to return invalid for now
+                // -----------------------------------------
+                return false;
+        }
+        // -------------------------------------------------
+        // SUPPORTS_HOLEPUNCH
+        // -------------------------------------------------
+        if (a_flags & peer::LTEP_PEER_FLAG_SUPPORTS_HOLEPUNCH)
+        {
+                // do nothing
+        }
+        // -------------------------------------------------
+        // OUTGOING_CONNECTION
+        // -------------------------------------------------
+        if (a_flags & peer::LTEP_PEER_FLAG_OUTGOING_CONNECTION)
+        {
+                // do nothing
+        }
+        else
+        {
+                // -----------------------------------------
+                // not an outgoing connection -was accepted
+                // by peer
+                // -----------------------------------------
+                return false;
+        }
+        return true;
+}
+//! ----------------------------------------------------------------------------
+//! \details: TODO
+//! \return:  TODO
+//! \param:   TODO
+//! ----------------------------------------------------------------------------
+int32_t session::add_peer_raw(int a_family,
+                              const uint8_t* a_buf,
+                              size_t a_len,
+                              const uint8_t* a_flags_buf,
+                              size_t a_flags_len,
+                              peer_from_t a_from)
+{
+
+        // -------------------------------------------------
+        // sanity check flag lengths
+        // -------------------------------------------------
+        if (a_flags_buf &&
+            a_flags_len)
+        {
+                size_t l_addr_len = 6;
+                if (a_family == AF_INET6)
+                {
+                        l_addr_len = 18;
+                }
+                if (a_flags_len != (a_len/l_addr_len))
+                {
+                        TRC_ERROR("ip list / flags length mismatch");
+                        return NTRNT_STATUS_ERROR;
+                }
+        }
         off_t l_off = 0;
         // -------------------------------------------------
         // get peer addresses (ipv4)
@@ -623,6 +721,17 @@ int32_t session::add_peer_raw(int a_family, const uint8_t* a_buf, size_t a_len, 
                 //NDBG_OUTPUT("peers: raw: %lu -- ipv4: %lu\n", a_len, a_len/6);
                 for (size_t i_p = 0; i_p <a_len/6; ++i_p)
                 {
+                        // ---------------------------------
+                        // flags
+                        // ---------------------------------
+                        if (a_flags_buf)
+                        {
+                                const uint8_t l_flags = a_flags_buf[i_p];
+                                if (!validate_pex_flags(l_flags))
+                                {
+                                        continue;
+                                }
+                        }
                         // ---------------------------------
                         // get offset
                         // ---------------------------------
@@ -662,6 +771,17 @@ int32_t session::add_peer_raw(int a_family, const uint8_t* a_buf, size_t a_len, 
                 for (size_t i_p = 0; i_p <a_len/18; ++i_p)
                 {
                         // ---------------------------------
+                        // flags
+                        // ---------------------------------
+                        if (a_flags_buf)
+                        {
+                                const uint8_t l_flags = a_flags_buf[i_p];
+                                if (!validate_pex_flags(l_flags))
+                                {
+                                        continue;
+                                }
+                        }
+                        // ---------------------------------
                         // get offset
                         // ---------------------------------
                         off_t i_off = i_p*18;
@@ -680,10 +800,10 @@ int32_t session::add_peer_raw(int a_family, const uint8_t* a_buf, size_t a_len, 
                         l_sin6.sin6_family = AF_INET6;
                         sockaddr_storage l_sas;
                         memcpy(&l_sas, &l_sin6, sizeof(l_sin6));
-                        int32_t l_s;
                         // ---------------------------------
                         // add
                         // ---------------------------------
+                        int32_t l_s;
                         l_s = add_peer(l_sas, a_from);
                         UNUSED(l_s);
                 }

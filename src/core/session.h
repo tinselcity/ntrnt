@@ -61,7 +61,12 @@ public:
         // add peers
         // -------------------------------------------------
         int32_t add_peer(struct sockaddr_storage& a_sas, peer_from_t a_from);
-        int32_t add_peer_raw(int a_family, const uint8_t* a_buf, size_t a_len, peer_from_t a_from);
+        int32_t add_peer_raw(int a_family,
+                             const uint8_t* a_buf,
+                             size_t a_len,
+                             const uint8_t* a_flags_buf,
+                             size_t a_flags_len,
+                             peer_from_t a_from);
         // -------------------------------------------------
         // udp helpers
         // -------------------------------------------------
@@ -152,6 +157,7 @@ private:
         int32_t init(void);
         int32_t setup_udp(void);
         int32_t setup_udp6(void);
+        bool validate_pex_flags(uint8_t a_flags);
         // -------------------------------------------------
         // private members
         // -------------------------------------------------

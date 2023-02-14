@@ -492,7 +492,6 @@ int32_t peer::connect(void)
         // debugging
         // -------------------------------------------------
         m_peer_mgr.m_ctx_peer_map[m_utp_conn] = this;
-#if 0
         // -------------------------------------------------
         // kick off timeout
         // -------------------------------------------------
@@ -502,7 +501,6 @@ int32_t peer::connect(void)
                 TRC_ERROR("performing add_timer");
                 return NTRNT_STATUS_ERROR;
         }
-#endif
         // -------------------------------------------------
         // utp connect
         // -------------------------------------------------
@@ -550,7 +548,6 @@ int32_t peer::accept_utp(void *a_ctx)
         l_ptr = utp_set_userdata(m_utp_conn, this);
         // TODO -check return???
         UNUSED(l_ptr);
-#if 0
         // -------------------------------------------------
         // kick off timeout
         // -------------------------------------------------
@@ -560,7 +557,6 @@ int32_t peer::accept_utp(void *a_ctx)
                 TRC_ERROR("performing add_timer");
                 return NTRNT_STATUS_ERROR;
         }
-#endif
         return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
@@ -832,7 +828,6 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
                         // connected
                         // ---------------------------------
                         m_state = STATE_CONNECTED;
-#if 0
                         // -----------------------------------------
                         // reset timer
                         // -----------------------------------------
@@ -843,7 +838,6 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
                                 TRC_ERROR("performing cancel_timer");
                                 return NTRNT_STATUS_ERROR;
                         }
-#endif
                 }
                 break;
         }
@@ -871,7 +865,6 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
                 // connected
                 // -----------------------------------------
                 m_state = STATE_CONNECTED;
-#if 0
                 // -----------------------------------------
                 // reset timer
                 // -----------------------------------------
@@ -881,7 +874,6 @@ int32_t peer::utp_read(const uint8_t* a_buf, size_t a_len)
                         TRC_ERROR("performing cancel_timer");
                         return NTRNT_STATUS_ERROR;
                 }
-#endif
                 break;
         }
         // -------------------------------------------------
@@ -2743,6 +2735,14 @@ int32_t peer::ltep_recv_pex(size_t a_len)
         // -------------------------------------------------
         // read pex fields
         // -------------------------------------------------
+        const char* l_added_buf = nullptr;
+        size_t l_added_buf_len = 0;
+        const char* l_added_flags_buf = nullptr;
+        size_t l_added_flags_buf_len = 0;
+        const char* l_added6_buf = nullptr;
+        size_t l_added6_buf_len = 0;
+        const char* l_added6_flags_buf = nullptr;
+        size_t l_added6_flags_buf_len = 0;
         for(auto && i_m : l_bd.m_dict)
         {
 #define _ELIF_UT_FIELD(_str) else if(i_m.first == _str)
@@ -2755,13 +2755,8 @@ int32_t peer::ltep_recv_pex(size_t a_len)
                 {
                         if (i_obj.m_type != BE_OBJ_STRING) { continue; }
                         const be_string_t& i_str = *((const be_string_t*)i_obj.m_obj);
-                        int32_t l_s;
-                        l_s = m_session.add_peer_raw(AF_INET, (const uint8_t*)i_str.m_data, i_str.m_len, NTRNT_PEER_FROM_PEX);
-                        if (l_s != NTRNT_STATUS_OK)
-                        {
-                                TRC_ERROR("performing add_peer_raw(AF_INET)");
-                                if (l_buf) { free(l_buf); l_buf = nullptr; }
-                        }
+                        l_added_buf = i_str.m_data;
+                        l_added_buf_len = i_str.m_len;
                 }
                 // -----------------------------------------
                 // added.f
@@ -2780,8 +2775,8 @@ int32_t peer::ltep_recv_pex(size_t a_len)
                 {
                         if (i_obj.m_type != BE_OBJ_STRING) { continue; }
                         const be_string_t& i_str = *((const be_string_t*)i_obj.m_obj);
-                        UNUSED(i_str);
-                        // TODO -add flags to add peer
+                        l_added_flags_buf = i_str.m_data;
+                        l_added_flags_buf_len = i_str.m_len;
                 }
                 // -----------------------------------------
                 // added6
@@ -2790,13 +2785,8 @@ int32_t peer::ltep_recv_pex(size_t a_len)
                 {
                         if (i_obj.m_type != BE_OBJ_STRING) { continue; }
                         const be_string_t& i_str = *((const be_string_t*)i_obj.m_obj);
-                        int32_t l_s;
-                        l_s = m_session.add_peer_raw(AF_INET6, (const uint8_t*)i_str.m_data, i_str.m_len, NTRNT_PEER_FROM_PEX);
-                        if (l_s != NTRNT_STATUS_OK)
-                        {
-                                TRC_ERROR("performing add_peer_raw(AF_INET)");
-                                if (l_buf) { free(l_buf); l_buf = nullptr; }
-                        }
+                        l_added6_buf = i_str.m_data;
+                        l_added6_buf_len = i_str.m_len;
                 }
                 // -----------------------------------------
                 // added6.f
@@ -2805,8 +2795,8 @@ int32_t peer::ltep_recv_pex(size_t a_len)
                 {
                         if (i_obj.m_type != BE_OBJ_STRING) { continue; }
                         const be_string_t& i_str = *((const be_string_t*)i_obj.m_obj);
-                        UNUSED(i_str);
-                        // TODO -add flags to add peer
+                        l_added6_flags_buf = i_str.m_data;
+                        l_added6_flags_buf_len = i_str.m_len;
                 }
                 // -----------------------------------------
                 // dropped
@@ -2829,6 +2819,44 @@ int32_t peer::ltep_recv_pex(size_t a_len)
                 else
                 {
                         TRC_WARN("[BPT] [LTEP] [PEX] unrecognized field: %s", i_m.first.c_str());
+                }
+        }
+        // -------------------------------------------------
+        // add ipv4
+        // -------------------------------------------------
+        if (l_added_buf &&
+            l_added_buf_len)
+        {
+                int32_t l_s;
+                l_s = m_session.add_peer_raw(AF_INET,
+                                             (const uint8_t*)l_added_buf,
+                                             l_added_buf_len,
+                                             (const uint8_t*)l_added_flags_buf,
+                                             l_added_flags_buf_len,
+                                             NTRNT_PEER_FROM_PEX);
+                if (l_s != NTRNT_STATUS_OK)
+                {
+                        TRC_ERROR("performing add_peer_raw(AF_INET)");
+                        if (l_buf) { free(l_buf); l_buf = nullptr; }
+                }
+        }
+        // -------------------------------------------------
+        // add ipv4
+        // -------------------------------------------------
+        if (l_added6_buf &&
+            l_added6_buf_len)
+        {
+                int32_t l_s;
+                l_s = m_session.add_peer_raw(AF_INET,
+                                             (const uint8_t*)l_added6_buf,
+                                             l_added6_buf_len,
+                                             (const uint8_t*)l_added6_flags_buf,
+                                             l_added6_flags_buf_len,
+                                             NTRNT_PEER_FROM_PEX);
+                if (l_s != NTRNT_STATUS_OK)
+                {
+                        TRC_ERROR("performing add_peer_raw(AF_INET)");
+                        if (l_buf) { free(l_buf); l_buf = nullptr; }
                 }
         }
         // -------------------------------------------------

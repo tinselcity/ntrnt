@@ -112,14 +112,13 @@ static int32_t _t_display_status(void *a_data)
                             ANSI_COLOR_OFF,
                             l_info_pickr.get_info_buf_pieces_size());
                 NDBG_OUTPUT("+-------------------------+--------------------------------+\n");
-                NDBG_OUTPUT("Received metadata for torrent:\n");
+                }
+                NDBG_OUTPUT("%sRequesting Pieces for torrent%s:\n",
+                             ANSI_COLOR_FG_CYAN, ANSI_COLOR_OFF);
                 NDBG_OUTPUT("  %s%s%s\n",
                                 ANSI_COLOR_FG_WHITE,
                                 l_info_pickr.get_info_name().c_str(),
                                 ANSI_COLOR_OFF);
-                }
-                NDBG_OUTPUT("%sRequesting Pieces%s\n",
-                             ANSI_COLOR_FG_CYAN, ANSI_COLOR_OFF);
                 NDBG_OUTPUT("+-------------------------+--------------------------+----------------------+\n");
                 NDBG_OUTPUT("| %sPeers%s (connected/total) | %sBlocks%s (requested/recvd) | %sPieces%s (recvd/total) |\n",
                             ANSI_COLOR_FG_YELLOW, ANSI_COLOR_OFF,
