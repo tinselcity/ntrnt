@@ -26,9 +26,7 @@ BitTorrent client in C++
 
 #### Running
 ```bash
->ntrnt sample.torrent
-TODO...
-...
+>ntrnt <magnet / *.torrent file>
 ```
 
 #### *Disclaimer*
