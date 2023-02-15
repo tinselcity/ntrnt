@@ -57,8 +57,7 @@ std::string to_string(const T& a_num)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-tracker::tracker(session& a_session):
-        m_session(a_session),
+tracker::tracker(void):
         m_announce(),
         m_scheme(SCHEME_NONE),
         m_host(),
@@ -122,7 +121,6 @@ std::string tracker::str(void)
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
 int32_t init_tracker_w_url(tracker** ao_tracker,
-                           session& a_session,
                            const char* a_url,
                            size_t a_url_len)
 {
@@ -254,7 +252,7 @@ int32_t init_tracker_w_url(tracker** ao_tracker,
         // -------------------------------------------------
         case SCHEME_TCP:
         {
-                *ao_tracker = new tracker_tcp(a_session);
+                *ao_tracker = new tracker_tcp();
                 break;
         }
         // -------------------------------------------------
@@ -262,7 +260,7 @@ int32_t init_tracker_w_url(tracker** ao_tracker,
         // -------------------------------------------------
         case SCHEME_TLS:
         {
-                *ao_tracker = new tracker_tcp(a_session);
+                *ao_tracker = new tracker_tcp();
                 break;
         }
         // -------------------------------------------------
@@ -270,7 +268,7 @@ int32_t init_tracker_w_url(tracker** ao_tracker,
         // -------------------------------------------------
         case SCHEME_UDP:
         {
-                *ao_tracker = new tracker_udp(a_session);
+                *ao_tracker = new tracker_udp();
                 break;
         }
         // -------------------------------------------------

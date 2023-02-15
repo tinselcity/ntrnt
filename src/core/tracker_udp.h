@@ -8,7 +8,6 @@
 #include <string>
 #include "ntrnt/types.h"
 #include "core/tracker.h"
-#include "core/session.h"
 namespace ns_ntrnt {
 //! ----------------------------------------------------------------------------
 //! fwd decl's
@@ -32,7 +31,7 @@ public:
         // -------------------------------------------------
         // public methods
         // -------------------------------------------------
-        tracker_udp(session& a_session);
+        tracker_udp(void);
         ~tracker_udp(void);
         int32_t init(const char* a_str, size_t a_str_len);
         virtual int32_t announce(void);

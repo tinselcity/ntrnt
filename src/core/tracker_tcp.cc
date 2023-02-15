@@ -21,7 +21,6 @@
 #include "dns/nresolver.h"
 #include "http/http_resp.h"
 #include "http/http_resp_strs.h"
-#include "core/session.h"
 #include "core/tracker_tcp.h"
 // ---------------------------------------------------------
 // ext
@@ -1179,8 +1178,8 @@ void tracker_tcp_rqst::show(bool a_color)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-tracker_tcp::tracker_tcp(session& a_session):
-        tracker(a_session),
+tracker_tcp::tracker_tcp(void):
+        tracker(),
         m_orphan_in_q(nullptr),
         m_orphan_out_q(nullptr),
         m_rqst_list(),
@@ -1391,7 +1390,10 @@ int32_t tracker_tcp::rqst_dequeue(void *a_data)
                 l_s = l_rqst.start(l_session);
                 if (l_s == NTRNT_STATUS_AGAIN)
                 {
-                        // break since ran out of available connections
+                        // ---------------------------------
+                        // break since ran out of available
+                        // ---------------------------------
+                        // connections
                         l_list.push_back(&l_rqst);
                         break;
                 }

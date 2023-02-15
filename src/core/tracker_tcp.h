@@ -31,7 +31,7 @@ public:
         // -------------------------------------------------
         // public methods
         // -------------------------------------------------
-        tracker_tcp(session& a_session);
+        tracker_tcp(void);
         ~tracker_tcp(void);
         int32_t init(const char* a_str, size_t a_str_len);
         nbq *get_nbq(nbq *a_nbq);

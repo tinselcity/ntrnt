@@ -19,7 +19,6 @@
 #include "bencode/bencode.h"
 #include "dns/nresolver.h"
 #include "http/http_resp.h"
-#include "core/session.h"
 #include "core/tracker_udp.h"
 // ---------------------------------------------------------
 // ext
@@ -754,8 +753,8 @@ int32_t tracker_udp_rqst::recv_scrape(uint8_t* a_msg, uint32_t a_msg_len)
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
-tracker_udp::tracker_udp(session& a_session):
-        tracker(a_session),
+tracker_udp::tracker_udp():
+        tracker(),
         m_gc_udp_rqst_list()
 {
 }

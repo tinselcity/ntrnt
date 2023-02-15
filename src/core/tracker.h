@@ -24,7 +24,7 @@ public:
         // -------------------------------------------------
         // public methods
         // -------------------------------------------------
-        tracker(session& a_session);
+        tracker(void);
         virtual ~tracker(void);
         virtual int32_t announce(void) = 0;
         virtual int32_t scrape(void) = 0;
@@ -33,7 +33,6 @@ public:
         // -------------------------------------------------
         // public members
         // -------------------------------------------------
-        session& m_session;
         std::string m_announce;
         scheme_t m_scheme;
         std::string m_host;
