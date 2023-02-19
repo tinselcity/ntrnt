@@ -37,7 +37,7 @@ BitTorrent client in C++
 #### `info hash` Torrenting
 This is probably an easy addition to the open source clients, but just not exposed.  The prerequisites are a healthy DHT locally, which might be untenable, but it seems like a great censorship resistant way to distribute data (ie for "[Trackerless Publishing](https://lwn.net/Articles/137523/)".
 
-[ntrnt-info-hash.webm](https://user-images.githubusercontent.com/3515625/218380681-69268a34-5449-443c-9f73-26bdcc077cc2.webm)
+![ntrnt](https://user-images.githubusercontent.com/3515625/219908167-32cbcdba-cf76-4bee-926f-02e3a1b92340.gif)
 
 #### Visualizing Peers Geographically
 Apart from learning the protocols, the other thing I wanted to do with `ntrnt` was to be able to visualize where the peers were.  I wrote a basic [web-gui](https://github.com/tinselcity/ntrnt-ui) and interact with the `ntrnt` client application over a json API.
