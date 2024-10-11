@@ -35,7 +35,7 @@ BitTorrent client in C++
 ### Some Features I Liked
 
 #### `info hash` Torrenting
-This is probably an easy addition to the open source clients, but just not exposed.  The prerequisites are a healthy DHT locally, which might be untenable, but it seems like a great censorship resistant way to distribute data (ie for "[Trackerless Publishing](https://lwn.net/Articles/137523/)".
+This is probably an easy addition to the open source clients, but just not exposed.  The prerequisites are a healthy DHT locally, which might be untenable, but it seems like a great censorship resistant way to distribute data (ie for [Trackerless Publishing](https://lwn.net/Articles/137523/).
 
 ![ntrnt](https://user-images.githubusercontent.com/3515625/219908167-32cbcdba-cf76-4bee-926f-02e3a1b92340.gif)
 
