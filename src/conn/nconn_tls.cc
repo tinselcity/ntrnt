@@ -207,8 +207,8 @@ SSL_CTX* tls_init_ctx(const std::string& a_cipher_list, long a_options,
 #pragma GCC diagnostic pop
   UNUSED(l_s);
   //TODO -check error
-#endif  // OPENSSL_VERSION_NUMBER >= 0x10002000L \
-    // ???
+#endif  // OPENSSL_VERSION_NUMBER >= 0x10002000L
+  // ???
   SSL_CTX_set_mode(l_ctx, SSL_MODE_AUTO_RETRY);
   SSL_CTX_set_mode(l_ctx, SSL_MODE_RELEASE_BUFFERS);
   return l_ctx;
