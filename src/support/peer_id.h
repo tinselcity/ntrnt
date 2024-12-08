@@ -5,7 +5,8 @@
 //! ----------------------------------------------------------------------------
 #include <stdint.h>
 #include <string>
+#include "ntrnt/types.h"
 namespace ns_ntrnt {
 std::string peer_id_to_str(peer_id_t& a_peer_id);
-} //namespace ns_ntrnt {
+}  // namespace ns_ntrnt
 #endif

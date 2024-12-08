@@ -8,6 +8,6 @@ namespace ns_ntrnt {
 //! ----------------------------------------------------------------------------
 //! Prototypes
 //! ----------------------------------------------------------------------------
-const char *get_date_str(void);
-} //namespace ns_ntrnt {
+const char* get_date_str(void);
+}  // namespace ns_ntrnt
 #endif
