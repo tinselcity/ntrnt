@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <vector>
 #include "ntrnt/def.h"
+#include "core/session.h"
 namespace ns_ntrnt {
 //! ----------------------------------------------------------------------------
 //! internal fwd decl's
