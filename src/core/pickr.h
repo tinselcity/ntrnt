@@ -9,6 +9,7 @@
 #include <list>
 #include <unordered_map>
 #include <vector>
+#include "ntrnt/def.h"
 namespace ns_ntrnt {
 //! ----------------------------------------------------------------------------
 //! internal fwd decl's
