@@ -13,6 +13,7 @@ struct host_info;
 //! ----------------------------------------------------------------------------
 //! Lookup inline
 //! ----------------------------------------------------------------------------
-int32_t nlookup(const std::string &a_host, uint16_t a_port, host_info &ao_host_info);
-} //namespace ns_ntrnt {
+int32_t nlookup(const std::string& a_host, uint16_t a_port,
+                host_info& ao_host_info);
+}  // namespace ns_ntrnt
 #endif
