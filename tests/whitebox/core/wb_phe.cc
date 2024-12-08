@@ -1,13 +1,13 @@
 //! ----------------------------------------------------------------------------
 //! includes
 //! ----------------------------------------------------------------------------
+#include <string.h>
 #include "catch/catch.hpp"
+#include "core/phe.h"
 #include "ntrnt/def.h"
 #include "support/nbq.h"
 #include "support/ndebug.h"
 #include "support/util.h"
-#include "core/phe.h"
-#include <string.h>
 #if 0
 #include <openssl/evp.h>
 #endif
@@ -131,18 +131,17 @@ private:
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
 #define _SKEY "abcdefghijklmnopqrst"
-static int _select_skey_cb(void* a_data, void* a_cb_ctx, void* a_buf, size_t a_len)
-{
-        if (!a_data)
-        {
-                return NTRNT_STATUS_ERROR;
-        }
-        std::string l_obfs_key;
-        ns_ntrnt::bin2hex_str(l_obfs_key, (const uint8_t*)a_buf, a_len);
-        NDBG_PRINT("obfs_key: %s\n", l_obfs_key.c_str());
-        // -------------------------------------------------
-        // compare
-        // -------------------------------------------------
+static int _select_skey_cb(void* a_data, void* a_cb_ctx, void* a_buf,
+                           size_t a_len) {
+  if (!a_data) {
+    return NTRNT_STATUS_ERROR;
+  }
+  std::string l_obfs_key;
+  ns_ntrnt::bin2hex_str(l_obfs_key, (const uint8_t*)a_buf, a_len);
+  NDBG_PRINT("obfs_key: %s\n", l_obfs_key.c_str());
+  // -------------------------------------------------
+  // compare
+  // -------------------------------------------------
 #if 0
         _sha1 l_req3_sha;
         l_req3_sha.update((const uint8_t*)("req2"), sizeof("req2")-1);
@@ -150,22 +149,22 @@ static int _select_skey_cb(void* a_data, void* a_cb_ctx, void* a_buf, size_t a_l
         l_req3_sha.finish();
         NDBG_PRINT("compare:  %s\n", l_req3_sha.get_hash_hex());
 #endif
-        // -------------------------------------------------
-        //
-        // -------------------------------------------------
-        ns_ntrnt::phe* l_phe = (ns_ntrnt::phe*)a_data;
-        l_phe->set_skey((const uint8_t*)_SKEY, sizeof(_SKEY)-1);
-        return NTRNT_STATUS_OK;
+  // -------------------------------------------------
+  //
+  // -------------------------------------------------
+  ns_ntrnt::phe* l_phe = (ns_ntrnt::phe*)a_data;
+  l_phe->set_skey((const uint8_t*)_SKEY, sizeof(_SKEY) - 1);
+  return NTRNT_STATUS_OK;
 }
 //! ----------------------------------------------------------------------------
 //! phe tests
 //! ----------------------------------------------------------------------------
-TEST_CASE( "protocol header encryption", "[phe]" ) {
-        ns_ntrnt::phe::s_phe_select_skey_cb = _select_skey_cb;
-        srand(time(NULL));
-        // -------------------------------------------------
-        // validate sha1 sum
-        // -------------------------------------------------
+TEST_CASE("protocol header encryption", "[phe]") {
+  ns_ntrnt::phe::s_phe_select_skey_cb = _select_skey_cb;
+  srand(time(NULL));
+  // -------------------------------------------------
+  // validate sha1 sum
+  // -------------------------------------------------
 #if 0
         SECTION("sha1") {
                 char const l_str[] = "hello world";
@@ -173,94 +172,102 @@ TEST_CASE( "protocol header encryption", "[phe]" ) {
                 REQUIRE((l_sha1 == "2aae6c35c94fcfb415dbe95f408b9ce91ee846ed"));
         }
 #endif
-        SECTION("two peers connecting") {
+  SECTION("two peers connecting") {
 #define _HANDSHAKE_PEER1 "HELLO FROM PEER 1"
 #define _HANDSHAKE_PEER2 "HELLO FROM PEER 2"
-                ns_ntrnt::phe l_peer1;
-                ns_ntrnt::nbq l_peer1_in_q(4096);
-                ns_ntrnt::nbq l_peer1_out_q(4096);
-                ns_ntrnt::phe l_peer2;
-                ns_ntrnt::nbq l_peer2_in_q(4096);
-                ns_ntrnt::nbq l_peer2_out_q(4096);
-                NDBG_PRINT("[%sPHE%s]: SKEY\n", ANSI_COLOR_BG_MAGENTA, ANSI_COLOR_OFF);
-                ns_ntrnt::mem_display((const uint8_t*)_SKEY, sizeof(_SKEY)-1);
-                // -----------------------------------------
-                // init
-                // -----------------------------------------
-                int32_t l_s;
-                l_s = l_peer1.init();
-                REQUIRE((l_s == NTRNT_STATUS_OK));
-                l_peer1.set_skey((const uint8_t*)_SKEY, sizeof(_SKEY)-1);
-                l_peer1.set_ia((const uint8_t*)_HANDSHAKE_PEER1, sizeof(_HANDSHAKE_PEER1)-1);
-                // TODO -should only add skey if initiating
-                l_s = l_peer2.init();
-                REQUIRE((l_s == NTRNT_STATUS_OK));
-                l_peer2.set_ia((const uint8_t*)_HANDSHAKE_PEER2, sizeof(_HANDSHAKE_PEER2)-1);
-                // -----------------------------------------
-                // send ya
-                // -----------------------------------------
-                l_peer1.set_state(ns_ntrnt::phe::PHE_STATE_NONE);
-                l_s = l_peer1.connect(l_peer1_in_q, l_peer1_out_q);
-                REQUIRE((l_s == NTRNT_STATUS_AGAIN));
-                REQUIRE((l_peer1.get_state() == ns_ntrnt::phe::PHE_STATE_WAITING_FOR_YB));
-                // -----------------------------------------
-                // recv ya+send yb
-                // -----------------------------------------
-                NDBG_PRINT("peer2 state: %d\n", l_peer2.get_state());
-                l_peer2_in_q.write_q(l_peer1_out_q);
-                l_s = l_peer2.connect(l_peer2_in_q, l_peer2_out_q);
-                REQUIRE((l_s == NTRNT_STATUS_AGAIN));
-                NDBG_PRINT("peer2 state: %d\n", l_peer2.get_state());
-                REQUIRE((l_peer2.get_state() == ns_ntrnt::phe::PHE_STATE_WAITING_FOR_AB_NEEDLE));
-                // -----------------------------------------
-                // recv yb+send ab
-                // -----------------------------------------
-                NDBG_PRINT("peer1 state: %d\n", l_peer1.get_state());
-                l_peer1_in_q.write_q(l_peer2_out_q);
-                l_s = l_peer1.connect(l_peer1_in_q, l_peer1_out_q);
-                REQUIRE((l_s == NTRNT_STATUS_AGAIN));
-                NDBG_PRINT("peer1 state: %d\n", l_peer1.get_state());
-                REQUIRE((l_peer1.get_state() == ns_ntrnt::phe::PHE_STATE_WAITING_FOR_BA_NEEDLE));
-                // -----------------------------------------
-                // recv ab+send ba
-                // -----------------------------------------
-                NDBG_PRINT("peer2 state: %d\n", l_peer2.get_state());
-                l_peer2_in_q.write_q(l_peer1_out_q);
-                l_s = l_peer2.connect(l_peer2_in_q, l_peer2_out_q);
-                REQUIRE((l_s == NTRNT_STATUS_OK));
-                NDBG_PRINT("peer2 state: %d\n", l_peer2.get_state());
-                REQUIRE((l_peer2.get_state() == ns_ntrnt::phe::PHE_STATE_CONNECTED));
-                // -----------------------------------------
-                // recv ba
-                // -----------------------------------------
-                NDBG_PRINT("peer1 state: %d\n", l_peer1.get_state());
-                l_peer1_in_q.write_q(l_peer2_out_q);
-                l_s = l_peer1.connect(l_peer1_in_q, l_peer1_out_q);
-                REQUIRE((l_s == NTRNT_STATUS_OK));
-                NDBG_PRINT("peer1 state: %d\n", l_peer1.get_state());
-                REQUIRE((l_peer1.get_state() == ns_ntrnt::phe::PHE_STATE_CONNECTED));
-                // -----------------------------------------
-                // check handshakes p2 -is in ia
-                // -----------------------------------------
-                const uint8_t* l_p2_rcvd_ia;
-                size_t l_p2_rcvd_ia_len;
-                l_peer2.get_recvd_ia(&l_p2_rcvd_ia, l_p2_rcvd_ia_len);
-                NDBG_PRINT("PEER2 RECVD IA LEN: %lu\n", l_p2_rcvd_ia_len);
-                NDBG_PRINT("l_p2_rcvd_ia: %.*s\n", (int)l_p2_rcvd_ia_len, l_p2_rcvd_ia);
-                REQUIRE((memcmp(l_p2_rcvd_ia, _HANDSHAKE_PEER1, l_p2_rcvd_ia_len) == 0));
-                // -----------------------------------------
-                // p1 is in remainder of buffer
-                // -----------------------------------------
-                size_t l_p1_rcvd_ia_len = l_peer1_in_q.read_avail();
-                uint8_t* l_p1_rcvd_ia = (uint8_t*)malloc(sizeof(uint8_t)*l_p1_rcvd_ia_len);
-                off_t l_off;
-                l_off = l_peer1_in_q.read((char*)l_p1_rcvd_ia, l_p1_rcvd_ia_len);
-                UNUSED(l_off);
-                // decrypt
-                l_peer1.decrypt(l_p1_rcvd_ia, l_p1_rcvd_ia_len);
-                NDBG_PRINT("PEER1 RECVD IA LEN: %lu\n", l_p1_rcvd_ia_len);
-                NDBG_PRINT("l_p1_rcvd_ia: %.*s\n", (int)l_p1_rcvd_ia_len, l_p1_rcvd_ia);
-                //REQUIRE((memcmp(l_p1_rcvd_ia, _HANDSHAKE_PEER2, l_p1_rcvd_ia_len) == 0));
-                if (l_p1_rcvd_ia) { free(l_p1_rcvd_ia); l_p1_rcvd_ia = nullptr; }
-        }
+    ns_ntrnt::phe l_peer1;
+    ns_ntrnt::nbq l_peer1_in_q(4096);
+    ns_ntrnt::nbq l_peer1_out_q(4096);
+    ns_ntrnt::phe l_peer2;
+    ns_ntrnt::nbq l_peer2_in_q(4096);
+    ns_ntrnt::nbq l_peer2_out_q(4096);
+    NDBG_PRINT("[%sPHE%s]: SKEY\n", ANSI_COLOR_BG_MAGENTA, ANSI_COLOR_OFF);
+    ns_ntrnt::mem_display((const uint8_t*)_SKEY, sizeof(_SKEY) - 1);
+    // -----------------------------------------
+    // init
+    // -----------------------------------------
+    int32_t l_s;
+    l_s = l_peer1.init();
+    REQUIRE((l_s == NTRNT_STATUS_OK));
+    l_peer1.set_skey((const uint8_t*)_SKEY, sizeof(_SKEY) - 1);
+    l_peer1.set_ia((const uint8_t*)_HANDSHAKE_PEER1,
+                   sizeof(_HANDSHAKE_PEER1) - 1);
+    // TODO -should only add skey if initiating
+    l_s = l_peer2.init();
+    REQUIRE((l_s == NTRNT_STATUS_OK));
+    l_peer2.set_ia((const uint8_t*)_HANDSHAKE_PEER2,
+                   sizeof(_HANDSHAKE_PEER2) - 1);
+    // -----------------------------------------
+    // send ya
+    // -----------------------------------------
+    l_peer1.set_state(ns_ntrnt::phe::PHE_STATE_NONE);
+    l_s = l_peer1.connect(l_peer1_in_q, l_peer1_out_q);
+    REQUIRE((l_s == NTRNT_STATUS_AGAIN));
+    REQUIRE((l_peer1.get_state() == ns_ntrnt::phe::PHE_STATE_WAITING_FOR_YB));
+    // -----------------------------------------
+    // recv ya+send yb
+    // -----------------------------------------
+    NDBG_PRINT("peer2 state: %d\n", l_peer2.get_state());
+    l_peer2_in_q.write_q(l_peer1_out_q);
+    l_s = l_peer2.connect(l_peer2_in_q, l_peer2_out_q);
+    REQUIRE((l_s == NTRNT_STATUS_AGAIN));
+    NDBG_PRINT("peer2 state: %d\n", l_peer2.get_state());
+    REQUIRE((l_peer2.get_state() ==
+             ns_ntrnt::phe::PHE_STATE_WAITING_FOR_AB_NEEDLE));
+    // -----------------------------------------
+    // recv yb+send ab
+    // -----------------------------------------
+    NDBG_PRINT("peer1 state: %d\n", l_peer1.get_state());
+    l_peer1_in_q.write_q(l_peer2_out_q);
+    l_s = l_peer1.connect(l_peer1_in_q, l_peer1_out_q);
+    REQUIRE((l_s == NTRNT_STATUS_AGAIN));
+    NDBG_PRINT("peer1 state: %d\n", l_peer1.get_state());
+    REQUIRE((l_peer1.get_state() ==
+             ns_ntrnt::phe::PHE_STATE_WAITING_FOR_BA_NEEDLE));
+    // -----------------------------------------
+    // recv ab+send ba
+    // -----------------------------------------
+    NDBG_PRINT("peer2 state: %d\n", l_peer2.get_state());
+    l_peer2_in_q.write_q(l_peer1_out_q);
+    l_s = l_peer2.connect(l_peer2_in_q, l_peer2_out_q);
+    REQUIRE((l_s == NTRNT_STATUS_OK));
+    NDBG_PRINT("peer2 state: %d\n", l_peer2.get_state());
+    REQUIRE((l_peer2.get_state() == ns_ntrnt::phe::PHE_STATE_CONNECTED));
+    // -----------------------------------------
+    // recv ba
+    // -----------------------------------------
+    NDBG_PRINT("peer1 state: %d\n", l_peer1.get_state());
+    l_peer1_in_q.write_q(l_peer2_out_q);
+    l_s = l_peer1.connect(l_peer1_in_q, l_peer1_out_q);
+    REQUIRE((l_s == NTRNT_STATUS_OK));
+    NDBG_PRINT("peer1 state: %d\n", l_peer1.get_state());
+    REQUIRE((l_peer1.get_state() == ns_ntrnt::phe::PHE_STATE_CONNECTED));
+    // -----------------------------------------
+    // check handshakes p2 -is in ia
+    // -----------------------------------------
+    const uint8_t* l_p2_rcvd_ia;
+    size_t l_p2_rcvd_ia_len;
+    l_peer2.get_recvd_ia(&l_p2_rcvd_ia, l_p2_rcvd_ia_len);
+    NDBG_PRINT("PEER2 RECVD IA LEN: %lu\n", l_p2_rcvd_ia_len);
+    NDBG_PRINT("l_p2_rcvd_ia: %.*s\n", (int)l_p2_rcvd_ia_len, l_p2_rcvd_ia);
+    REQUIRE((memcmp(l_p2_rcvd_ia, _HANDSHAKE_PEER1, l_p2_rcvd_ia_len) == 0));
+    // -----------------------------------------
+    // p1 is in remainder of buffer
+    // -----------------------------------------
+    size_t l_p1_rcvd_ia_len = l_peer1_in_q.read_avail();
+    uint8_t* l_p1_rcvd_ia =
+        (uint8_t*)malloc(sizeof(uint8_t) * l_p1_rcvd_ia_len);
+    off_t l_off;
+    l_off = l_peer1_in_q.read((char*)l_p1_rcvd_ia, l_p1_rcvd_ia_len);
+    UNUSED(l_off);
+    // decrypt
+    l_peer1.decrypt(l_p1_rcvd_ia, l_p1_rcvd_ia_len);
+    NDBG_PRINT("PEER1 RECVD IA LEN: %lu\n", l_p1_rcvd_ia_len);
+    NDBG_PRINT("l_p1_rcvd_ia: %.*s\n", (int)l_p1_rcvd_ia_len, l_p1_rcvd_ia);
+    //REQUIRE((memcmp(l_p1_rcvd_ia, _HANDSHAKE_PEER2, l_p1_rcvd_ia_len) == 0));
+    if (l_p1_rcvd_ia) {
+      free(l_p1_rcvd_ia);
+      l_p1_rcvd_ia = nullptr;
+    }
+  }
 }

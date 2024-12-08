@@ -12,16 +12,18 @@ namespace ns_ntrnt {
 //! enum
 //! ----------------------------------------------------------------------------
 typedef enum {
-        NTRNT_PEER_FROM_NONE = 0,
-        NTRNT_PEER_FROM_SELF,
-        NTRNT_PEER_FROM_TRACKER,
-        NTRNT_PEER_FROM_DHT,
-        NTRNT_PEER_FROM_INBOUND,
-        NTRNT_PEER_FROM_PEX,
+  NTRNT_PEER_FROM_NONE = 0,
+  NTRNT_PEER_FROM_SELF,
+  NTRNT_PEER_FROM_TRACKER,
+  NTRNT_PEER_FROM_DHT,
+  NTRNT_PEER_FROM_INBOUND,
+  NTRNT_PEER_FROM_PEX,
 } peer_from_t;
 //! ----------------------------------------------------------------------------
 //! inline
 //! ----------------------------------------------------------------------------
-inline const char* get_err_msg(void) { return g_ntrnt_err_msg; }
+inline const char* get_err_msg(void) {
+  return g_ntrnt_err_msg;
 }
+}  // namespace ns_ntrnt
 #endif
