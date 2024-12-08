@@ -12,7 +12,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-22.04, ubuntu-20.04, ubuntu-18.04, macos-latest]
+        os: [ubuntu-24.04 ubuntu-22.04, macos-latest]
       fail-fast: false
 
     runs-on: ${{ matrix.os }}
@@ -22,17 +22,11 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Install Ubuntu 22 dependencies
-      if: matrix.os == 'ubuntu-22.04'
+    - name: Install Ubuntu 22/24 dependencies
+      if: matrix.os == 'ubuntu-22.04' || matrix.os == 'ubuntu-24.04'
       run: |
         sudo apt-get update
         sudo apt-get install -y libssl-dev rapidjson-dev libminiupnpc-dev
-
-    - name: Install Ubuntu 20/18 dependencies
-      if: matrix.os == 'ubuntu-20.04' || matrix.os == 'ubuntu-18.04'
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y rapidjson-dev libminiupnpc-dev
 
     - name: Install macOS dependencies
       if: matrix.os == 'macos-latest'
@@ -42,3 +36,4 @@ jobs:
     - name: Run build script
       run: |
         ./build.sh
+
