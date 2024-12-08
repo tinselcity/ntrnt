@@ -1082,6 +1082,7 @@ int32_t phe::recv_ba_needle(nbq& a_in_q) {
     a_in_q.discard(1);
     ++l_discarded;
   }
+  UNUSED(l_discarded);
   // -------------------------------------------------
   // decrypt init
   // -------------------------------------------------

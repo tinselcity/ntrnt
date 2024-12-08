@@ -134,6 +134,9 @@ void mem_display(const uint8_t* a_buf, size_t a_len) {
 //! \return:  TODO
 //! \param:   TODO
 //! ----------------------------------------------------------------------------
+// TODO fix for
+//   error: array designators are a C99 extension [-Werror,-Wc99-designator]
+#if 0
 static const char* g_bit_rep[16] = {
     [0] = "0000",  [1] = "0001",  [2] = "0010",  [3] = "0011",
     [4] = "0100",  [5] = "0101",  [6] = "0110",  [7] = "0111",
@@ -147,4 +150,5 @@ void bin_display(const uint8_t* a_buf, size_t a_len) {
   }
   NDBG_OUTPUT("\n");
 }
+#endif
 }  // namespace ns_ntrnt

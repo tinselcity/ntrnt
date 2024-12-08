@@ -62,12 +62,16 @@
     fflush(stdout);                                     \
   } while (0)
 #endif
+// TODO fix for
+//   error: array designators are a C99 extension [-Werror,-Wc99-designator]
+#if 0
 #ifndef NDBG_BINDUMP
 #define NDBG_BINDUMP(buffer, len)                       \
   do {                                                  \
     ns_ntrnt::bin_display((const uint8_t*)buffer, len); \
     fflush(stdout);                                     \
   } while (0)
+#endif
 #endif
 #ifndef NDBG_PRINT_BT
 #define NDBG_PRINT_BT() print_bt(__FILE__, __FUNCTION__, __LINE__)

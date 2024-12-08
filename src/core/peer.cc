@@ -1082,6 +1082,7 @@ int32_t peer::btp_parse_handshake(void) {
     m_in_q.discard(1);
     ++l_discarded;
   }
+  UNUSED(l_discarded);
   // -------------------------------------------------
   // read into buf
   // -------------------------------------------------
