@@ -6,6 +6,7 @@
 #include <stddef.h>
 #include <sys/types.h>
 #include <list>
+#include <cstdint>
 namespace ns_ntrnt {
 //! ----------------------------------------------------------------------------
 //! internal fwd decl's
