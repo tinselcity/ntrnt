@@ -7,6 +7,7 @@
 #include "farmhash.h"
 #include "core/peer.h"
 #include <arpa/inet.h>
+#include <pthread.h>
 #include <unordered_map>
 #include <set>
 #include <deque>

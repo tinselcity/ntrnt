@@ -6,6 +6,7 @@
 #include <string>
 #include <list>
 #include <vector>
+#include <cstdint>
 namespace ns_ntrnt {
 //! ----------------------------------------------------------------------------
 //! types

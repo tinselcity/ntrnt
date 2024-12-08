@@ -39,3 +39,6 @@ build/
 .settings/
 .pydevproject
 
+# vscode
+.vscode/
+
