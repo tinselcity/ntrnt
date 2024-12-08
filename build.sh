@@ -25,7 +25,7 @@ pushd build && \
     -DBUILD_TESTS=ON \
     -DBUILD_APP=ON \
     -DCMAKE_INSTALL_PREFIX=/usr && \
-    make -j$(nproc) && \
+    make && \
     umask 0022 && chmod -R a+rX . && \
     make test && \
     popd && \
