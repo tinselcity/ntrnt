@@ -8,11 +8,11 @@
 #include <stdint.h>
 #include <string>
 #include <unordered_map>
+#include "ntrnt/types.h"
+#include "core/pickr.h"
 #include "core/info_pickr.h"
 #include "core/peer_mgr.h"
-#include "core/pickr.h"
 #include "evr/evr.h"
-#include "ntrnt/types.h"
 //! ----------------------------------------------------------------------------
 //! ext fwd decl's
 //! ----------------------------------------------------------------------------

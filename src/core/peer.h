@@ -7,6 +7,7 @@
 #include <string.h>
 #include <string>
 #include "ntrnt/ntrnt.h"
+#include "support/nbq.h"
 #include "support/btfield.h"
 #include "support/nbq.h"
 //! ----------------------------------------------------------------------------
@@ -24,9 +25,9 @@ namespace ns_ntrnt {
 //! ----------------------------------------------------------------------------
 //! fwd decl's
 //! ----------------------------------------------------------------------------
+class pickr;
 class session;
 class peer_mgr;
-class pickr;
 class phe;
 //! ----------------------------------------------------------------------------
 //! globals
