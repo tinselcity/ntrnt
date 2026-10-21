@@ -1027,8 +1027,8 @@ void bencode_writer::s_dict(const be_dict_t& a_dict) {
     // -----------------------------------------
     // write key
     // -----------------------------------------
-    char l_len_str[16];
-    snprintf(l_len_str, 16, "%lu", i_m.first.length());
+    char l_len_str[21];
+    snprintf(l_len_str, 21, "%lu", i_m.first.length());
     m_data.insert(m_data.end(), l_len_str,
                   l_len_str + strnlen(l_len_str, sizeof(l_len_str)));
     m_data.push_back(':');

@@ -111,8 +111,10 @@ int32_t upnp::init(void) {
   // -------------------------------------------------
   int32_t l_s;
   TRC_DEBUG(": UPNP_GetValidIGD: ...");
-  l_s = UPNP_GetValidIGD(l_dev, &m_urls, &m_datas, m_lan_addr,
-                         sizeof(m_lan_addr));
+  char l_wanaddr[64];
+  l_s = UPNP_GetValidIGD(l_dev, &m_urls, &m_datas,
+    m_lan_addr, sizeof(m_lan_addr),
+    l_wanaddr, sizeof(l_wanaddr));
   if (l_s != UPNP_IGD_VALID_CONNECTED) {
     TRC_ERROR("performing UPNP_GetValidIGD. Reason[%d]: %s", errno,
               strerror(errno));
